@@ -287,7 +287,7 @@ private func tapState() -> TapState {
     capture.store(.image(try image(800)), for: big)
     capture.store(.image(try image(200)), for: small) // already small: kept
     capture.shrinkStills([big, small, WindowID(pid: 1, number: 3)])
-    let deadline = Date().addingTimeInterval(3)
+    let deadline = Date().addingTimeInterval(30) // utility work waits long on a busy CI runner
     while capture.generation(for: big) == 1, Date() < deadline { Thread.sleep(forTimeInterval: 0.01) }
     guard case let .image(shrunk)? = capture.latestFrame(for: big), case let .image(kept)? = capture.latestFrame(for: small) else {
         Issue.record("stills missing")
@@ -343,7 +343,8 @@ private func socketPath(_ name: String) -> String { "/tmp/mielwm-\(getpid())-\(n
         reply(try! JSONEncoder().encode(["echo": args]))
     }
     defer { server.stop() }
-    let response = try await Task.detached { try IPCClient.send(["focus", "left"], path: path) }.value
+    // The server replies on the main queue, which other tests keep busy on slow CI runners.
+    let response = try await Task.detached { try IPCClient.send(["focus", "left"], path: path, timeout: 30) }.value
     #expect(try JSONDecoder().decode([String: [String]].self, from: response) == ["echo": ["focus", "left"]])
     #expect(throws: IPCError.alreadyRunning) { try IPCServer(path: path) { _, _ in } }
 }
