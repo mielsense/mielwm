@@ -16,7 +16,9 @@ The file is `~/.config/mielwm/config.json`. mielwm reads it when it starts and a
 }
 ```
 
-Write keys flat (`"distortion:strength": 0.18`) or nested (`"distortion": { "strength": 0.18 }`), they mean the same. If the file isn't valid JSON, mielwm keeps its defaults and lists the error in the menu bar. A key with a bad value is skipped on its own. Values outside a setting's range are clamped.
+Keys can be flat, like `"distortion:strength": 0.18`, or nested, like `"distortion": { "strength": 0.18 }`. Both mean the same.
+
+If the file isn't valid JSON, mielwm keeps its defaults and shows the error in the menu bar. A key with a bad value is skipped on its own, and a value outside a setting's range is clamped to the nearest one that works.
 
 ## Layout and gaps
 
@@ -123,4 +125,4 @@ The action names are the same as the [command line](command-line.md) ones.
 
 ## The layout file
 
-Where windows sit on the canvas is kept in `~/Library/Application Support/mielwm/layout.json`, so windows come back to their spots after a restart. mielwm writes it on its own. If it gets in a bad state, quit mielwm and delete it.
+mielwm remembers where your windows sit in `~/Library/Application Support/mielwm/layout.json`, so they come back to their spots after a restart. It writes that file on its own, and you never need to edit it. If windows keep coming back in strange places, quit mielwm, delete the file and open mielwm again.

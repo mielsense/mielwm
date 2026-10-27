@@ -22,4 +22,3 @@
 
 - [Performance](performance.md)
 - [Troubleshooting](troubleshooting.md)
-- [Development](development.md)

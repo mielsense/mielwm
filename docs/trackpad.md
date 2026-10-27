@@ -4,7 +4,7 @@ Swipe between workspaces with three fingers, and use the pointer to move windows
 
 ## Swipe between workspaces
 
-Three fingers left go to the next workspace, three fingers right to the previous one, the same directions as Spaces. Each swipe moves one workspace, and the Force Touch trackpad gives a click you can feel when it does. At the first or last workspace nothing happens, and there's no click.
+Three fingers left go to the next workspace, three fingers right to the previous one, the same directions as Spaces. Each swipe moves one workspace, and a Force Touch trackpad gives a click you can feel when it does. At the first or last workspace nothing happens, and there's no click.
 
 Turn it on or off in Settings > Layout & workspaces > Trackpad. It's on by default.
 
@@ -12,11 +12,11 @@ Turn it on or off in Settings > Layout & workspaces > Trackpad. It's on by defau
 
 macOS swipes between full-screen apps with three fingers too. With both on, the screen does a small bounce as you swipe. Set macOS's gesture to four fingers under System Settings > Trackpad > More Gestures > Swipe between full-screen applications. Settings > Layout & workspaces shows a warning with a button that opens that page whenever the two overlap.
 
-Three-finger drag (an Accessibility setting) also uses three fingers. If you have it on, swipes and drags get in each other's way, so pick one.
+Three-finger drag, an Accessibility setting, also uses three fingers. With both on, swipes and drags get in each other's way, so pick one.
 
-### What it costs
+### Does it slow anything down?
 
-To read your fingers, mielwm watches trackpad touch events. Each one passes through mielwm for a few microseconds before reaching the app under the pointer, the same way SwipeAeroSpace works. Nothing is held back, and turning the setting off removes the hook entirely.
+No. To count your fingers, mielwm looks at each trackpad touch on its way to the app under the pointer, which takes a few microseconds. It doesn't hold touches back or record them. SwipeAeroSpace works the same way. Turning swipes off removes the hook completely.
 
 ## In the overview
 
