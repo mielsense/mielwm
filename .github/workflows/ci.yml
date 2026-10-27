@@ -23,7 +23,13 @@ jobs:
       - name: Build
         run: swift build
       - name: Test
-        run: swift test
+        # One process per test target, as with the Command Line Tools: in a single
+        # process the render tests starve the system tests' main and utility queues.
+        run: |
+          swift build --build-tests
+          for target in MielCoreTests MielRenderTests MielSystemTests; do
+            swift test --skip-build --filter "$target"
+          done
       - name: Build the app bundle
         run: scripts/build-app.sh
 
