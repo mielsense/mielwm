@@ -176,11 +176,13 @@ if [ ! -f "$KEYCHAIN" ] || ! security find-certificate -c "$IDENTITY" "$KEYCHAIN
 fi
 if [ -f "$KEYCHAIN" ]; then
     security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN" 2>/dev/null || true
-    if sign_all --timestamp=none --keychain "$KEYCHAIN" -s "$IDENTITY" 2>/tmp/mielwm-codesign.log; then
+    sign_log=$(mktemp)
+    if sign_all --timestamp=none --keychain "$KEYCHAIN" -s "$IDENTITY" 2>"$sign_log"; then
         SIGNED=identity
     else
-        echo "signing with \"$IDENTITY\" failed:"; sed 's/^/  /' /tmp/mielwm-codesign.log
+        echo "signing with \"$IDENTITY\" failed:"; sed 's/^/  /' "$sign_log"
     fi
+    rm -f "$sign_log"
 fi
 if [ "$SIGNED" = adhoc ]; then
     [ "$REQUIRE" = 1 ] && fail "could not sign with \"$IDENTITY\""
