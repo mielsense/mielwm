@@ -282,6 +282,7 @@ private func tapState() -> TapState {
         try #require(CGContext(data: nil, width: width, height: width / 2, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
                                bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue)?.makeImage())
     }
+    #expect(CaptureManager.scaled(try image(800), by: 0.5)?.width == 400) // the scaling itself, apart from the queue
     let capture = CaptureManager()
     let big = WindowID(pid: 1, number: 1), small = WindowID(pid: 1, number: 2)
     capture.store(.image(try image(800)), for: big)
