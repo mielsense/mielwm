@@ -1,21 +1,23 @@
 # Performance
 
-`scripts/benchmark.sh` builds a release copy and measures it. The copy it
-measures runs as a separate test instance with its own socket and settings,
-managing 8 throwaway windows of 1200×800. Your own windows and a running mielwm
-stay out of it. `scripts/benchmark.sh <bin dir>` measures another build
-instead, so you can compare two. The table also goes to `build/benchmark.txt`.
-The zoomed-out view shows on screen for about 15 seconds of the run.
+What mielwm costs your Mac in CPU and memory, measured, and how to measure it yourself.
 
-CPU is the share of one core, wakeups are package idle wakeups per second, and
-memory is the physical footprint. These are single runs on an M3 Pro with
-macOS 27.0. The rows with playing windows move by about 2 points from one run
-to the next.
+## In short
+
+At rest, mielwm uses about 0.01% of one CPU core and about 89 MB of memory. It does nothing between your actions, with no timers polling or windows being redrawn. Switching workspaces costs a short spike while the windows move.
+
+The overview is the expensive part, because it shows live pictures of your windows. With still windows it costs about 4% of a core, and with every window playing video about 10%. It holds roughly 265 to 395 MB while open, depending on how many windows are live. When it closes, the live pictures turn into small stills, and 45 seconds later mielwm is back under 185 MB.
+
+## How it's measured
+
+`scripts/benchmark.sh` builds a release copy and measures it as a separate test instance, with its own socket and settings, managing 8 throwaway windows of 1200×800. Your own windows and a running mielwm stay out of it. `scripts/benchmark.sh <bin dir>` measures another build instead, so you can compare two, and the table also goes to `build/benchmark.txt`. The overview shows on screen for about 15 seconds of the run.
+
+CPU is the share of one core, wakeups are package idle wakeups per second, and memory is the physical footprint. These are single runs on an M3 Pro with macOS 27.0. The rows with playing windows move by about 2 points from one run to the next.
 
 ## Numbers
 
-"Before" is commit 14a6d6a, before any optimisation work. "Now" is commit
-0c74a5c and later.
+"Before" is the build before any optimisation work. "Now" is the current
+release.
 
 | Scenario                                 | Before CPU | Now CPU    | Before memory | Now memory |
 |------------------------------------------|-----------:|-----------:|--------------:|-----------:|
@@ -61,7 +63,7 @@ times a second, about 1.4%, and the check on each live stream at 15 fps.
 
 ## Offscreen measurements
 
-These come from the optimisation pass, measured with the renderer drawing
+These come from the optimisation work, measured with the renderer drawing
 offscreen.
 
 | Scenario                                   | Before                 | After                   |

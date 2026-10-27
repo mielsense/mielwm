@@ -1,0 +1,65 @@
+# Keyboard
+
+Every shortcut mielwm has, and how to change them. The defaults are AeroSpace's wherever AeroSpace has the same action.
+
+## Anywhere
+
+| Keys | What it does |
+| --- | --- |
+| `⌃⌥G` | Zoom out to the [overview](overview.md), and back. |
+| `⌥1` … `⌥9` | Go to that workspace. |
+| `⌥⇧1` … `⌥⇧9` | Move the window to that workspace and go with it. |
+| `⌃←`, `⌃→` | Previous, next workspace. |
+| `⌥/` | Tile. Pressed again, the tiles flip between side by side and above each other. |
+| `⌥,` | Stack the workspace, or go back to tiles. |
+| `⌥.` | Float the window, or tile it again. |
+| `⌥` arrows | Focus the nearest window that way. In a stack, the next or previous window. |
+| `⌥⇧` arrows | Swap tiles, or nudge a floating window a grid step (hold to keep going). |
+| `⌥Tab`, `⌥⇧Tab` | A tap goes back to the last window. Hold `⌥` for the list and let go to switch. In a stack, the next window. |
+| `⌥T` | Fill the screen, keeping the gaps. Again to put it back. |
+| `⌥F` | Fullscreen, no gaps (the menu bar stays). Again to put it back. |
+| `⌥O` | Pin the window so it stays put while the canvas moves. |
+| `⌥-`, `⌥=` | Shrink, grow the window. |
+| `⌃⌥` + drag | Move a window with the left button, resize it with the right. |
+
+`⌥0`, `⌥⇧0` and `⌥;` do nothing on purpose, so they never type º, ‚ or … by accident.
+
+`⌃←` and `⌃→` are also Mission Control's keys for switching Spaces. mielwm uses one Space, so they're free, but Settings warns you about it.
+
+## In the overview
+
+| Keys | What it does |
+| --- | --- |
+| Type | Search window titles and app names. |
+| `↑` `↓`, `Tab` `⇧Tab` | Move through the results. |
+| `⌘1` … `⌘9` | Go straight to that result. |
+| `Return` | Go to the selected window. |
+| `⇧Return` | Bring the selected window to where you are. |
+| `Esc` | Clear the search, then go back to where you started. |
+| Arrows | Select the nearest window that way. |
+| `⇧` arrows | Nudge the selected window. |
+| `⌘` arrows | Pan. |
+| `⌘=`, `⌘-` | Zoom in, out. |
+| `⌘0` | Fit every window. |
+| `⌘F` | Frame the selected window. |
+| `⌘A` | Tidy every floating window onto the grid. |
+| `⌘Z`, `⌘⇧Z` | Undo, redo. |
+| `⌘⌫` | Clear the search. |
+| `⌘,` | Open Settings at Appearance. |
+| `⌘/` | Show every key on screen. |
+
+The `⌃` versions (`⌃0`, `⌃Z` and so on) and `F1` work too, and `⌃U`, `⌃W`, `⌃N` and `⌃P` work in the search field the way they do in any Mac text field.
+
+## Changing shortcuts
+
+Open Settings > Keyboard. Click a shortcut and press the new keys. `Esc` cancels and `Delete` removes it. The arrow next to a changed row restores its default, and Restore defaults does every row.
+
+![The Keyboard pane in Settings](images/settings-keyboard-dark.png)
+
+The families of keys take one row each: going to a workspace ("⌥1–9"), moving to one ("⌥⇧1–9"), focus and move ("⌥←→↑↓"). Click the row, hold the new modifiers and press one of its keys, and all nine or four change together. If you changed some of them one by one in the config file, the row says Custom and opens to each key.
+
+If the keys you press already belong to another action, the row says which one and offers to take them. It also warns when macOS uses the same keys, such as screenshots or switching input sources. mielwm refuses `⌘Q`, `⌘W`, `⌘C`, `⌘V` and the other keys every app relies on, because a global shortcut on them would break them everywhere.
+
+While you record, mielwm's own shortcuts pause, so keys it already uses reach the recorder.
+
+Shortcuts are saved as `keys:<chord>` entries in the [configuration file](configuration.md), so you can also edit them there.
