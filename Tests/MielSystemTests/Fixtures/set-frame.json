@@ -1,0 +1,118 @@
+{
+  "initialFrame" : [
+    [
+      200,
+      180
+    ],
+    [
+      420,
+      300
+    ]
+  ],
+  "note" : "One setFrame (size, position, size) on a visible window.",
+  "scenario" : "set-frame",
+  "screens" : [
+    {
+      "frame" : [
+        [
+          0,
+          0
+        ],
+        [
+          1800,
+          1169
+        ]
+      ],
+      "id" : 1,
+      "isBuiltIn" : true,
+      "name" : "Built-in Retina Display",
+      "safeAreaTop" : 38,
+      "scale" : 2,
+      "visibleFrame" : [
+        [
+          0,
+          38
+        ],
+        [
+          1800,
+          1131
+        ]
+      ]
+    },
+    {
+      "frame" : [
+        [
+          -79,
+          -1080
+        ],
+        [
+          1920,
+          1080
+        ]
+      ],
+      "id" : 3,
+      "isBuiltIn" : false,
+      "name" : "PHL 273V7",
+      "safeAreaTop" : 0,
+      "scale" : 1,
+      "visibleFrame" : [
+        [
+          -79,
+          -1080
+        ],
+        [
+          1920,
+          1080
+        ]
+      ]
+    }
+  ],
+  "steps" : [
+    {
+      "command" : "setFrame",
+      "frame" : [
+        [
+          360,
+          240
+        ],
+        [
+          520,
+          360
+        ]
+      ],
+      "t" : 0
+    },
+    {
+      "event" : "frameChanged",
+      "frame" : [
+        [
+          360,
+          240
+        ],
+        [
+          520,
+          360
+        ]
+      ],
+      "t" : 0.004
+    },
+    {
+      "event" : "frameChanged",
+      "frame" : [
+        [
+          360,
+          240
+        ],
+        [
+          520,
+          360
+        ]
+      ],
+      "t" : 0.008
+    }
+  ],
+  "window" : {
+    "number" : 5029,
+    "pid" : 49958
+  }
+}
