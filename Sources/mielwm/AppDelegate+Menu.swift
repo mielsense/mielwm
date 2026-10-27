@@ -83,6 +83,8 @@ extension AppDelegate {
             model.onWrite = { [weak self] in self?.controller?.reloadConfig() }
             model.onLive = { [weak self] in self?.controller?.applyLive($0) }
             model.onRecording = { [weak self] on in self?.controller?.bindingsSuspended = on }
+            model.onBarik = { [weak self, weak model] on in if let model { self?.setBarik(on, model) } }
+            model.barikAvailable = barik != nil
             settingsWindow = SettingsWindow(model: model)
         }
         settingsWindow?.show(pane)

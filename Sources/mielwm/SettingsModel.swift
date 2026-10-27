@@ -46,6 +46,9 @@ final class SettingsModel: ObservableObject {
     var onLive: (MielCore.Settings) -> Void = { _ in }
     /// While a recorder listens, the canvas's shortcuts must let keys through.
     var onRecording: (Bool) -> Void = { _ in }
+    /// The Work with Barik switch: the app asks first, then saves it.
+    var onBarik: (Bool) -> Void = { _ in }
+    var barikAvailable = false // mielwm.app has the `aerospace` command and the helper
     let remembersPane: Bool
     private var pending: [String: SettingValue?] = [:]
     private var flushWork: DispatchWorkItem?

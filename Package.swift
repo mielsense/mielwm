@@ -19,6 +19,8 @@ let package = Package(
     name: "mielwm",
     platforms: [.macOS(.v15)],
     products: [.executable(name: "mielwm", targets: ["mielwm"])],
+    // Test only: Barik's TOML decoder, at the version Barik pins, to read the configs mielwm edits as Barik does.
+    dependencies: [.package(url: "https://github.com/dduan/TOMLDecoder", exact: "0.3.1")],
     targets: [
         // Pure logic and the shared types every other target codes against.
         .target(name: "MielCore"),
@@ -26,18 +28,24 @@ let package = Package(
         // the Command Line Tools have no `metal` compiler.
         .target(name: "MielRender", dependencies: ["MielCore"],
                 swiftSettings: [.swiftLanguageMode(.v5)]),
+        // The socket `mielwm <action>` and the `aerospace` command talk over. Foundation only.
+        .target(name: "MielIPC", swiftSettings: [.swiftLanguageMode(.v5)]),
         // Accessibility, event tap, ScreenCaptureKit, displays.
         .target(name: "MielSystem", dependencies: ["MielCore"],
                 swiftSettings: [.swiftLanguageMode(.v5)]),
         .executableTarget(name: "mielwm",
-                          dependencies: ["MielCore", "MielRender", "MielSystem"],
+                          dependencies: ["MielCore", "MielIPC", "MielRender", "MielSystem"],
                           swiftSettings: [.swiftLanguageMode(.v5)]),
+        // Barik's `aerospace` command and the hidden AeroSpace helper app, one small binary
+        // (docs/aerospace.md). Barik runs it every few seconds, so it links no AppKit.
+        .executableTarget(name: "mielwm-aerospace", dependencies: ["MielIPC"], path: "Sources/MielAeroSpace"),
         // Throwaway windows for system tests, so tests never move real ones.
         .executableTarget(name: "mielwm-testwindows", path: "Sources/MielTestWindows",
                           swiftSettings: [.swiftLanguageMode(.v5)]),
-        .testTarget(name: "MielCoreTests", dependencies: ["MielCore"], swiftSettings: testing),
+        .testTarget(name: "MielCoreTests", dependencies: ["MielCore", .product(name: "TOMLDecoder", package: "TOMLDecoder")],
+                    swiftSettings: testing),
         .testTarget(name: "MielRenderTests", dependencies: ["MielRender", "MielCore"], swiftSettings: testing),
-        .testTarget(name: "MielSystemTests", dependencies: ["MielSystem", "MielCore"],
+        .testTarget(name: "MielSystemTests", dependencies: ["MielSystem", "MielIPC", "MielCore"],
                     exclude: ["Fixtures"], swiftSettings: testing),
     ]
 )

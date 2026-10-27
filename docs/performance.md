@@ -39,6 +39,17 @@ CPU in the overview and about 27 MB more memory, and nobody has found where
 those 27 MB go. Closing costs more for a few seconds, mostly because each live
 picture is turned into a still.
 
+## Barik
+
+With [Work with Barik](aerospace.md#barik) on, Barik runs mielwm's `aerospace` command four times for each update. `scripts/benchmark.sh` runs it at upstream Barik's pace, ten updates a second (40 calls a second), for 10 seconds against the 8 test windows:
+
+| Scenario                          | mielwm CPU | mielwm memory |
+|-----------------------------------|-----------:|--------------:|
+| Idle, 30 s                        |      0.01% |       88.3 MB |
+| 40 `aerospace` calls a second, 10 s |      0.67% |       88.4 MB |
+
+Each call takes 6.6 ms from start to exit (median of 400), and the command spends 4.8 ms of CPU itself, mostly on starting up. At 40 calls a second that adds up to about 19% of a core in the command, on top of what Barik spends to start it. Barik Enhanced 1.8.7 updates every 5 seconds, 0.8 calls a second, so scaled down the command costs under 0.4% of a core and mielwm about 0.01%.
+
 ## What made still windows expensive
 
 On macOS 27, ScreenCaptureKit sends a window's picture again every time the

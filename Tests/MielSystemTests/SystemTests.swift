@@ -6,6 +6,7 @@ import CoreVideo
 import Foundation
 import ImageIO
 import MielCore
+@testable import MielIPC
 @testable import MielSystem
 import Testing
 

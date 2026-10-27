@@ -105,6 +105,7 @@ Write keys flat (`"distortion:strength": 0.18`) or nested (`"distortion": { "str
 | `animation:speed` | `1` | 1 flies in 0.8 seconds, 2 in 0.4. |
 | `animation:curve` | `"spring"` | `spring` or `bezier`. |
 | `menubar:workspaces` | `true` | Workspace numbers in the menu bar instead of the icon. |
+| `integrations:barik` | `false` | [Barik](aerospace.md#barik) shows mielwm's workspaces. Turn it on in Settings, which also edits Barik's config. |
 
 ## Shortcuts
 

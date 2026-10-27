@@ -19,6 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var onboardingDone = false // Continue without Screen Recording: don't ask again this run
     var settingsWindow: SettingsWindow?
     var importNote: String? // a first-launch AeroSpace import, told once
+    lazy var barik: BarikLink? = Self.makeBarikLink()
 
     init(mode: Mode) {
         self.mode = mode
@@ -39,6 +40,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             statusItem = item
             refreshIcon()
             importNote = importAeroSpaceOnFirstLaunch()
+            if loadSettings(.standard()).settings.barik { barik?.resume() }
         }
         begin()
         if let note = takeImportNote() { showImportNotice(note) }

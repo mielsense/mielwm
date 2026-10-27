@@ -6,8 +6,10 @@ import os
 /// strings (the CLI arguments); the response is one line of JSON chosen by
 /// the app; then the connection closes.
 public enum IPC {
+    /// `MIELWM_SOCKET` moves the socket (tests run beside a real instance).
     public static var socketPath: String {
-        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        ProcessInfo.processInfo.environment["MIELWM_SOCKET"]
+            ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("mielwm/mielwm.sock").path
     }
 }

@@ -17,15 +17,17 @@ scripts/build-app.sh --dmg    # also build/mielwm-<version>.dmg
 
 ## How the code is laid out
 
-The package has four modules and two executables.
+The package has five modules and three executables.
 
 `MielCore` is the logic, and it's pure: no AppKit, no windows, no timers. Everything the app knows lives in `CanvasState`, and every event (a key, a window moving, a tick of the clock) goes through one function that returns the window moves to make. Workspaces, tiling, the camera, search, the overview's keys, the configuration format and the AeroSpace import are all here, and so are most of the tests.
 
 `MielRender` draws the overview with Metal: the lens, window pictures, the search panel, the help sheet and the minimap. It reads a `Scene` from `MielCore` and knows nothing else.
 
-`MielSystem` talks to macOS: Accessibility for moving windows, the event taps for shortcuts and swipes, ScreenCaptureKit for window pictures, displays, the IPC socket and the file watcher.
+`MielSystem` talks to macOS: Accessibility for moving windows, the event taps for shortcuts and swipes, ScreenCaptureKit for window pictures, displays, the file watcher and the link to Barik.
 
-`mielwm` is the app. It wires the three together, owns the overlay windows, the Settings window, the menu bar item and onboarding, and is also the `mielwm` command-line tool. `mielwm-testwindows` opens throwaway windows for tests.
+`MielIPC` is the socket protocol the app, the `mielwm` command and the `aerospace` command share. It uses only Foundation, so the `aerospace` command starts fast.
+
+`mielwm` is the app. It wires the modules together, owns the overlay windows, the Settings window, the menu bar item and onboarding, and is also the `mielwm` command-line tool. `mielwm-aerospace` is the `aerospace` command Barik runs, and also the hidden AeroSpace helper app ([AeroSpace and Barik](aerospace.md)). `mielwm-testwindows` opens throwaway windows for tests.
 
 ## Testing without touching your windows
 
@@ -36,6 +38,7 @@ swift test                     # pure logic, rendering and the system layer
 scripts/system-test.sh         # opens throwaway windows and checks parking,
                                # unparking, adoption and quitting end to end
 scripts/benchmark.sh           # CPU and memory, see performance.md
+scripts/barik-test.sh          # Barik's own AeroSpace code against a test copy
 ```
 
 - `mielwm snapshot --state overview|search:<text>|help|switcher|desktop [--light|--dark] --out x.png` draws any state of the overview to a PNG from made-up windows. `--real` uses your windows' pictures but still moves nothing.

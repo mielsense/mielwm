@@ -46,14 +46,17 @@ APP=build/mielwm.app
 
 echo "== swift build -c release"
 # Short output, but a failed build stops here: never sign and ship the last good binary.
-if ! build_log=$(swift build -c release --product mielwm 2>&1); then
-    echo "$build_log" | grep -E "error" || echo "$build_log" | tail -20
-    echo "build failed" >&2
-    exit 1
-fi
-echo "$build_log" | grep -E "error|Build complete" || true
-BIN=$(swift build -c release --product mielwm --show-bin-path)/mielwm
-[ -x "$BIN" ] || { echo "build failed" >&2; exit 1; }
+for product in mielwm mielwm-aerospace; do
+    if ! build_log=$(swift build -c release --product $product 2>&1); then
+        echo "$build_log" | grep -E "error" || echo "$build_log" | tail -20
+        echo "build failed" >&2
+        exit 1
+    fi
+    echo "$build_log" | grep -E "error|Build complete" || true
+done
+BIN_DIR=$(swift build -c release --show-bin-path)
+BIN=$BIN_DIR/mielwm
+[ -x "$BIN" ] && [ -x "$BIN_DIR/mielwm-aerospace" ] || { echo "build failed" >&2; exit 1; }
 
 echo "== $APP"
 rm -rf "$APP"
@@ -80,6 +83,29 @@ cat > "$APP/Contents/Info.plist" <<EOF
     <string>mielwm moves and focuses your windows on the canvas and listens for its keyboard shortcuts.</string>
     <key>NSScreenCaptureUsageDescription</key>
     <string>mielwm shows live pictures of your windows on the zoomed-out canvas.</string>
+</dict>
+</plist>
+EOF
+
+# Barik (docs/aerospace.md): its `aerospace` command, and the hidden app called
+# AeroSpace it looks for. One binary does both.
+HELPER="$APP/Contents/Helpers/AeroSpace.app"
+mkdir -p "$HELPER/Contents/MacOS"
+cp "$BIN_DIR/mielwm-aerospace" "$APP/Contents/Helpers/aerospace"
+cp "$BIN_DIR/mielwm-aerospace" "$HELPER/Contents/MacOS/AeroSpace"
+cat > "$HELPER/Contents/Info.plist" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleIdentifier</key><string>$BUNDLE_ID.aerospace-helper</string>
+    <key>CFBundleName</key><string>AeroSpace</string>
+    <key>CFBundleExecutable</key><string>AeroSpace</string>
+    <key>CFBundlePackageType</key><string>APPL</string>
+    <key>CFBundleShortVersionString</key><string>$VERSION</string>
+    <key>CFBundleVersion</key><string>$BUILD</string>
+    <key>LSMinimumSystemVersion</key><string>15.0</string>
+    <key>LSUIElement</key><true/>
 </dict>
 </plist>
 EOF
@@ -121,6 +147,12 @@ EOF
 
 echo "== signing"
 SIGNED=adhoc
+# Inside out, all with the same signature: the command, the helper, then mielwm.app.
+sign_all() {
+    codesign --force "$@" -i "$BUNDLE_ID.aerospace" "$APP/Contents/Helpers/aerospace" &&
+        codesign --force "$@" "$HELPER" &&
+        codesign --force "$@" -i "$BUNDLE_ID" "$APP"
+}
 # A fixed password would let any program sign as "mielwm Dev" and inherit
 # the app's permission grants, so it is random and lives in the login keychain.
 REQUIRE=${MIELWM_REQUIRE_IDENTITY:-0}
@@ -144,8 +176,7 @@ if [ ! -f "$KEYCHAIN" ] || ! security find-certificate -c "$IDENTITY" "$KEYCHAIN
 fi
 if [ -f "$KEYCHAIN" ]; then
     security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN" 2>/dev/null || true
-    if codesign --force --timestamp=none --keychain "$KEYCHAIN" -s "$IDENTITY" \
-        -i "$BUNDLE_ID" "$APP" 2>/tmp/mielwm-codesign.log; then
+    if sign_all --timestamp=none --keychain "$KEYCHAIN" -s "$IDENTITY" 2>/tmp/mielwm-codesign.log; then
         SIGNED=identity
     else
         echo "signing with \"$IDENTITY\" failed:"; sed 's/^/  /' /tmp/mielwm-codesign.log
@@ -153,7 +184,7 @@ if [ -f "$KEYCHAIN" ]; then
 fi
 if [ "$SIGNED" = adhoc ]; then
     [ "$REQUIRE" = 1 ] && fail "could not sign with \"$IDENTITY\""
-    codesign --force -s - -i "$BUNDLE_ID" "$APP"
+    sign_all -s -
     echo "signed ad hoc: macOS will ask for Accessibility and Screen Recording again after each rebuild."
     echo "If the identity is the problem, trusting it once (asks for your password) usually fixes it:"
     echo "  security find-certificate -c \"$IDENTITY\" -p \"$KEYCHAIN\" > /tmp/mielwm-dev.pem"

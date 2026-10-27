@@ -1,5 +1,6 @@
 import AppKit
 import MielCore
+import MielIPC
 import MielRender
 @preconcurrency import MielSystem
 import QuartzCore
@@ -131,7 +132,7 @@ final class Controller {
             MainActor.assumeIsolated { self?.checkConfig() }
         }
         do {
-            ipc = try IPCServer(path: socketPath) { [weak self] args, reply in
+            ipc = try IPCServer() { [weak self] args, reply in
                 MainActor.assumeIsolated { self?.command(args, reply) }
             }
         } catch {

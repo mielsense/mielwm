@@ -1,5 +1,6 @@
 import AppKit
 import MielCore
+import MielIPC
 import MielRender
 import MielSystem
 import QuartzCore
@@ -34,6 +35,14 @@ extension Controller {
     // MARK: Socket commands
 
     func command(_ args: [String], _ reply: @escaping (Data) -> Void) {
+        if args.first == "aerospace" { // Barik, through the `aerospace` command: read from the canvas, no Accessibility
+            switch state.aerospace(Array(args.dropFirst())) {
+            case let .output(json): return reply(Data(json.utf8))
+            case let .input(event): event.map(input)
+            case .unknown: return reply(Data(#"{"error":"unknown command"}"#.utf8))
+            }
+            return reply(Data())
+        }
         let text = args.joined(separator: " ")
         switch text {
         case "state":
@@ -74,6 +83,3 @@ extension Controller {
         return (try? encoder.encode(dump)) ?? Data("{}".utf8)
     }
 }
-
-/// `MIELWM_SOCKET` moves the socket (tests run beside a real instance).
-var socketPath: String { ProcessInfo.processInfo.environment["MIELWM_SOCKET"] ?? IPC.socketPath }

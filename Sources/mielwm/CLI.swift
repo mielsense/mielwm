@@ -1,5 +1,6 @@
 import AppKit
 import MielCore
+import MielIPC
 import MielSystem
 
 // The command-line tools. None of them moves a window except --unpark and
@@ -47,7 +48,7 @@ func send(_ args: [String]) -> Int32 {
         fail("mielwm: unknown action '\(text)' (see mielwm --help)")
     }
     do {
-        let data = try IPCClient.send(args, path: socketPath)
+        let data = try IPCClient.send(args)
         print(String(decoding: data, as: UTF8.self))
         return data.starts(with: Data(#"{"error""#.utf8)) ? 1 : 0
     } catch IPCError.notRunning {

@@ -1,0 +1,141 @@
+import AppKit
+import MielCore
+
+/// What `BarikLink` needs from macOS. Tests stand in for it, so they run
+/// without Barik or the helper.
+@MainActor
+public protocol BarikApps: AnyObject {
+    /// When the running Barik started, nil when it isn't running.
+    func barikLaunched() -> Date?
+    /// Quits a running Barik, waits until it has, and opens it again.
+    func relaunchBarik()
+    /// Starts the helper; `started` gets its start time, nil if it failed.
+    func startHelper(_ url: URL, started: @escaping (Date?) -> Void)
+    func stopHelper()
+}
+
+/// Barik shows mielwm's workspaces (docs/aerospace.md). It looks for a
+/// running app called AeroSpace once, when it starts, then runs the command
+/// at `aerospace.path` in its config. So: point that at mielwm's `aerospace`
+/// command, keep the AeroSpace helper running, and relaunch Barik.
+@MainActor
+public final class BarikLink {
+    public enum Problem: Error, Equatable {
+        case noConfig // Barik writes one the first time it runs
+        case unsupported(String) // aerospace is set in a form mielwm doesn't edit
+    }
+
+    /// BarikEnhanced, then upstream Barik.
+    public static let bundleIDs = ["com.mateocerquetella.BarikEnhanced", "Pansy.Barik"]
+    static let previousKey = "barikPreviousPath" // aerospace.path as it was, in TOML
+
+    let home: URL, shim: String, helper: URL, apps: BarikApps, defaults: UserDefaults
+
+    public init(home: URL = FileManager.default.homeDirectoryForCurrentUser, shim: String, helper: URL,
+                apps: BarikApps, defaults: UserDefaults = .standard) {
+        (self.home, self.shim, self.helper, self.apps, self.defaults) = (home, shim, helper, apps, defaults)
+    }
+
+    /// The file Barik reads, nil before Barik has made one.
+    public var config: URL? {
+        BarikConfig.candidates(home: home).first { FileManager.default.fileExists(atPath: $0.path) }
+    }
+
+    /// Points Barik at mielwm, starts the helper and relaunches a running Barik.
+    public func turnOn() throws {
+        guard let file = config else { throw Problem.noConfig }
+        let text = try String(contentsOf: file, encoding: .utf8)
+        guard let edited = BarikConfig.pointing(text, to: shim) else { throw Problem.unsupported(file.path) }
+        if edited.text != text {
+            let backup = URL(fileURLWithPath: file.path + ".mielwm-backup")
+            if !FileManager.default.fileExists(atPath: backup.path) {
+                try Data(text.utf8).write(to: backup, options: .withoutOverwriting)
+            }
+            try write(edited.text, to: file)
+            defaults.set(edited.previous, forKey: Self.previousKey)
+        }
+        apps.startHelper(helper) { [apps] _ in apps.relaunchBarik() }
+    }
+
+    /// Puts Barik's old aerospace.path back, stops the helper and relaunches a running Barik.
+    public func turnOff() throws {
+        apps.stopHelper()
+        defer { apps.relaunchBarik() }
+        guard let file = config else { return }
+        let text = try String(contentsOf: file, encoding: .utf8)
+        let restored = BarikConfig.restoring(text, from: shim, previous: defaults.string(forKey: Self.previousKey))
+        if restored != text { try write(restored, to: file) }
+        defaults.removeObject(forKey: Self.previousKey)
+    }
+
+    /// mielwm started with the switch on: start the helper, and relaunch
+    /// Barik if it started first and so did not see it.
+    public func resume() {
+        apps.startHelper(helper) { [apps] started in
+            if let started, let barik = apps.barikLaunched(), barik < started { apps.relaunchBarik() }
+        }
+    }
+
+    /// In place, through a symlink: Barik watches the file it opened.
+    private func write(_ text: String, to file: URL) throws {
+        try Data(text.utf8).write(to: file.resolvingSymlinksInPath())
+    }
+}
+
+/// The real apps.
+@MainActor
+public final class SystemBarikApps: BarikApps {
+    private var helper: NSRunningApplication?
+
+    public init() {}
+
+    private func barik() -> NSRunningApplication? {
+        NSWorkspace.shared.runningApplications.first { BarikLink.bundleIDs.contains($0.bundleIdentifier ?? "") }
+    }
+
+    public func barikLaunched() -> Date? {
+        barik().map { $0.launchDate ?? .distantPast }
+    }
+
+    public func relaunchBarik() {
+        guard let app = barik(), let url = app.bundleURL else { return }
+        app.terminate()
+        Task { @MainActor in
+            for _ in 0 ..< 50 { // 5 s
+                guard app.isTerminated else {
+                    try? await Task.sleep(for: .milliseconds(100))
+                    continue
+                }
+                let config = NSWorkspace.OpenConfiguration()
+                config.activates = false
+                NSWorkspace.shared.openApplication(at: url, configuration: config) { _, error in
+                    if let error { log("Barik did not open again: \(error)") }
+                }
+                return
+            }
+            log("Barik did not quit; quit and open it yourself")
+        }
+    }
+
+    public func startHelper(_ url: URL, started: @escaping (Date?) -> Void) {
+        stopHelper()
+        let config = NSWorkspace.OpenConfiguration()
+        config.activates = false
+        config.addsToRecentItems = false
+        config.createsNewApplicationInstance = true
+        config.arguments = ["--mielwm-pid", String(getpid())] // it quits when mielwm does
+        NSWorkspace.shared.openApplication(at: url, configuration: config) { app, error in
+            Task { @MainActor in
+                if let error { log("AeroSpace helper did not start: \(error)") }
+                self.helper = app
+                started(app.map { $0.launchDate ?? Date() })
+            }
+        }
+    }
+
+    /// SIGTERM: the helper has no run loop that would take a Quit event.
+    public func stopHelper() {
+        if let pid = helper?.processIdentifier { kill(pid, SIGTERM) }
+        helper = nil
+    }
+}

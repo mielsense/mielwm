@@ -12,7 +12,7 @@ Open at login, the workspace numbers in the menu bar, how far the overview zooms
 
 ## Layout & workspaces
 
-The layout new windows get (tiles, stack or floating) and the orientation of tiles, the gaps, with a small diagram that updates as you type, three-finger swipes, workspace rules (an app always opens on a given workspace), floating apps, Barik support and Import from AeroSpace. [Workspaces and layouts](workspaces.md) explains what each of these does.
+The layout new windows get (tiles, stack or floating) and the orientation of tiles, the gaps, with a small diagram that updates as you type, three-finger swipes, workspace rules (an app always opens on a given workspace), floating apps, Work with Barik (Barik's menu bar shows your workspaces, see [AeroSpace and Barik](aerospace.md#barik)) and Import from AeroSpace. [Workspaces and layouts](workspaces.md) explains what each of these does.
 
 ## Keyboard
 

@@ -82,6 +82,12 @@ struct LayoutPane: View {
                 Text("Windows of these apps float above the tiles.").settingsFooter()
             }
             Section {
+                Toggle(isOn: Binding(get: { s.barik }, set: { model.onBarik($0) })) {
+                    Text("Work with Barik")
+                    Text(model.barikAvailable ? "Barik's menu bar shows mielwm's workspaces and windows. mielwm asks before it edits Barik's config and relaunches Barik."
+                        : "Works when mielwm runs from mielwm.app.")
+                }
+                .disabled(!model.barikAvailable)
                 LabeledContent {
                     Button("Import…") { readAeroSpace() }.disabled(aeroSpaceURL == nil)
                 } label: {
