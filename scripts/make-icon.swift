@@ -1,6 +1,6 @@
 // Draws the mielwm app icon and menu bar glyph and writes them to Resources/:
 //   AppIcon.png (1024 px), AppIcon.icns, MenuBarIcon.png + MenuBarIcon@2x.png (template: black + alpha).
-// The mark: one honeycomb cell ("miel") cut into tiled window panes ("wm"), on a honey tile.
+// The mark: one honeycomb cell ("miel") cut into soft, rounded window panes ("wm"), on a black tile.
 //
 //   swift scripts/make-icon.swift
 import AppKit
@@ -142,8 +142,8 @@ func appIcon(_ px: Int) -> CGImage {
     // macOS 26+ redraws that shadow and adds its glass edge itself
     c.withShadow(rgb(0, 0.25), blur: 30, dy: 8, scale: s) {
         c.addPath(body); c.clip()
-        c.fill(body, [rgb(0xFFD35C), rgb(0xFBB031), rgb(0xF08A0C)], from: 100, to: 924)
-        c.drawRadialGradient(CGGradient(colorsSpace: sRGB, colors: [rgb(0xFFF2C4, 0.5), rgb(0xFFF2C4, 0)] as CFArray, locations: nil)!,
+        c.fill(body, [rgb(0x2C2C2F), rgb(0x161618), rgb(0x0A0A0B)], from: 100, to: 924)
+        c.drawRadialGradient(CGGradient(colorsSpace: sRGB, colors: [rgb(0xFFFFFF, 0.09), rgb(0xFFFFFF, 0)] as CFArray, locations: nil)!,
                              startCenter: CGPoint(x: 330, y: 200), startRadius: 0, endCenter: CGPoint(x: 330, y: 200),
                              endRadius: 560, options: [])
         if !small { // the canvas: a faint honeycomb that runs off the edges
@@ -153,23 +153,23 @@ func appIcon(_ px: Int) -> CGImage {
                 let x = 512 + CGFloat(i) * w, y = 512 + CGFloat(j) * h + (i & 1 == 0 ? 0 : h / 2)
                 comb.addPath(roundedPolygon(hexagon(cx: x, top: y - h / 2, bottom: y + h / 2), 5))
             } }
-            c.addPath(comb); c.setStrokeColor(rgb(0xB85E00, 0.07)); c.setLineWidth(4); c.strokePath()
+            c.addPath(comb); c.setStrokeColor(rgb(0xFFFFFF, 0.035)); c.setLineWidth(4); c.strokePath()
         }
 
         let cx: CGFloat = 512, cy: CGFloat = 512, hexHeight: CGFloat = 520
         let hex = hexagon(cx: cx, top: cy - hexHeight / 2, bottom: cy + hexHeight / 2)
         for poly in panes(hex, cx: cx, cy: cy, gap: small ? 64 : 32) {
-            let pane = roundedPolygon(poly, 34)
+            let pane = roundedPolygon(poly, small ? 40 : 62) // soft corners, as macOS windows have
             let box = pane.boundingBox
-            c.withShadow(rgb(0x7A3A00, 0.38), blur: 36, dy: 16, scale: s) { c.addPath(pane); c.setFillColor(rgb(0xFFFFFF)); c.fillPath() }
-            c.fill(pane, [rgb(0xFFFFFF), rgb(0xFFF6E8)], from: box.minY, to: box.maxY)
+            c.withShadow(rgb(0, 0.55), blur: 44, dy: 18, scale: s) { c.addPath(pane); c.setFillColor(rgb(0xFFFFFF)); c.fillPath() }
+            c.fill(pane, [rgb(0xFAFAFB), rgb(0xE6E6EA)], from: box.minY, to: box.maxY)
             guard !small else { continue }
-            c.innerShade(pane, rgb(0xC8741A, 0.22), blur: 10, dy: -4, scale: s)
+            c.innerShade(pane, rgb(0x5A5A66, 0.18), blur: 12, dy: -4, scale: s)
             if px >= 128 { // title-bar dots along the pane's top edge
                 let top = poly.map(\.y).min()!
                 let left = poly.filter { abs($0.y - top) < 0.5 }.map(\.x).min()!
-                c.setFillColor(rgb(0xE9A23B, 0.75))
-                for k in 0..<3 { c.fillEllipse(in: CGRect(x: left + 34 + CGFloat(k) * 30, y: top + 30, width: 18, height: 18)) }
+                c.setFillColor(rgb(0x8E8E96, 0.7))
+                for k in 0..<3 { c.fillEllipse(in: CGRect(x: left + 46 + CGFloat(k) * 30, y: top + 34, width: 18, height: 18)) }
             }
         }
     }
