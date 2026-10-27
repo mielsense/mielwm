@@ -1,12 +1,19 @@
 // swift-tools-version:6.0
+import Foundation
 import PackageDescription
 
-// shortcut: with an executable target in the package, Command Line Tools'
-// SwiftPM loses the Swift Testing macro plugin; point at it directly. Drop
-// this once `swift test` works without it.
-let testing: [SwiftSetting] = [.unsafeFlags([
-    "-plugin-path", "/Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing",
-])]
+// The Command Line Tools lose the Swift Testing macro plugin once a package has
+// an executable target, so point at it directly. Xcode (and CI) finds it on its
+// own. The active toolchain is DEVELOPER_DIR, else what xcode-select chose.
+let cltTesting = "/Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing"
+let developerDir = ProcessInfo.processInfo.environment["DEVELOPER_DIR"]
+    ?? (try? FileManager.default.destinationOfSymbolicLink(atPath: "/var/db/xcode_select_link")) ?? ""
+// xcode-select falls back to the Command Line Tools when the chosen Xcode is gone.
+let usesCommandLineTools = developerDir.hasPrefix("/Library/Developer/CommandLineTools")
+    || !FileManager.default.fileExists(atPath: developerDir)
+let testing: [SwiftSetting] = usesCommandLineTools && FileManager.default.fileExists(atPath: cltTesting)
+    ? [.unsafeFlags(["-plugin-path", cltTesting])]
+    : []
 
 let package = Package(
     name: "mielwm",

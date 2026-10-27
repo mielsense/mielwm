@@ -8,6 +8,13 @@
 #
 # Open at login is a switch in Settings > General.
 #
+# For CI (see .github/workflows/release.yml):
+#   MIELWM_VERSION            the version, default 1.0.0
+#   MIELWM_KEYCHAIN           a keychain that already holds the identity, and
+#   MIELWM_KEYCHAIN_PASSWORD  its password: no login keychain is touched
+#   MIELWM_REQUIRE_IDENTITY=1 never create an identity, never sign ad hoc
+#   MIELWM_EXPECT_CERT_SHA1   the identity's leaf certificate SHA-1; any other fails
+#
 # Signing: macOS ties the Accessibility and Screen Recording grants to the
 # app's signature. An ad-hoc signature changes with every build, so every
 # rebuild would need the grants again. The script therefore creates a
@@ -31,9 +38,9 @@ done
 
 BUNDLE_ID=my.miel.mielwm
 IDENTITY="mielwm Dev"
-KEYCHAIN="$HOME/Library/Keychains/mielwm-dev.keychain-db"
+KEYCHAIN="${MIELWM_KEYCHAIN:-$HOME/Library/Keychains/mielwm-dev.keychain-db}"
 PASSWORD_SERVICE=my.miel.mielwm.signing-keychain
-VERSION=1.0.0
+VERSION=${MIELWM_VERSION:-1.0.0}
 BUILD=$(git rev-list --count HEAD 2>/dev/null || echo 1)
 APP=build/mielwm.app
 
@@ -110,13 +117,22 @@ echo "== signing"
 SIGNED=adhoc
 # A fixed password would let any program sign as "mielwm Dev" and inherit
 # the app's permission grants, so it is random and lives in the login keychain.
-KEYCHAIN_PASSWORD=$(security find-generic-password -s "$PASSWORD_SERVICE" -a "$USER" -w 2>/dev/null || true)
+REQUIRE=${MIELWM_REQUIRE_IDENTITY:-0}
+fail() { echo "signing: $*" >&2; exit 1; }
+if [ -n "${MIELWM_KEYCHAIN_PASSWORD:-}" ]; then
+    KEYCHAIN_PASSWORD=$MIELWM_KEYCHAIN_PASSWORD
+else
+    KEYCHAIN_PASSWORD=$(security find-generic-password -s "$PASSWORD_SERVICE" -a "$USER" -w 2>/dev/null || true)
+fi
 if [ -z "$KEYCHAIN_PASSWORD" ]; then
+    [ "$REQUIRE" = 1 ] && fail "no keychain password"
+
     KEYCHAIN_PASSWORD=$(/usr/bin/openssl rand -hex 24)
     security add-generic-password -U -s "$PASSWORD_SERVICE" -a "$USER" -w "$KEYCHAIN_PASSWORD" -T /usr/bin/security
     [ -f "$KEYCHAIN" ] && security delete-keychain "$KEYCHAIN" # its password is lost: make the identity again
 fi
 if [ ! -f "$KEYCHAIN" ] || ! security find-certificate -c "$IDENTITY" "$KEYCHAIN" >/dev/null 2>&1; then
+    [ "$REQUIRE" = 1 ] && fail "no \"$IDENTITY\" identity in $KEYCHAIN"
     echo "creating the \"$IDENTITY\" identity in $KEYCHAIN"
     make_identity || echo "could not create the identity"
 fi
@@ -130,13 +146,20 @@ if [ -f "$KEYCHAIN" ]; then
     fi
 fi
 if [ "$SIGNED" = adhoc ]; then
+    [ "$REQUIRE" = 1 ] && fail "could not sign with \"$IDENTITY\""
     codesign --force -s - -i "$BUNDLE_ID" "$APP"
     echo "signed ad hoc: macOS will ask for Accessibility and Screen Recording again after each rebuild."
     echo "If the identity is the problem, trusting it once (asks for your password) usually fixes it:"
     echo "  security find-certificate -c \"$IDENTITY\" -p \"$KEYCHAIN\" > /tmp/mielwm-dev.pem"
     echo "  sudo security add-trusted-cert -d -r trustRoot -p codeSign -k /Library/Keychains/System.keychain /tmp/mielwm-dev.pem"
 fi
-codesign --verify "$APP" && echo "signed ($SIGNED): $(codesign -dr - "$APP" 2>&1 | grep designated | sed 's/^# //')"
+codesign --verify --deep --strict "$APP" || fail "the signature does not verify"
+REQUIREMENT=$(codesign -dr - "$APP" 2>&1 | grep designated | sed 's/^# //')
+echo "signed ($SIGNED): $REQUIREMENT"
+if [ -n "${MIELWM_EXPECT_CERT_SHA1:-}" ]; then
+    # Another certificate would make every user grant Accessibility and Screen Recording again.
+    echo "$REQUIREMENT" | grep -qi "H\"$MIELWM_EXPECT_CERT_SHA1\"" || fail "signed by an unexpected certificate"
+fi
 
 # Quits a running app the clean way (both take SIGTERM as Quit and put their
 # windows back on screen first); true if it was running.
