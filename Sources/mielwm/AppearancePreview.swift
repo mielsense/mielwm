@@ -100,7 +100,6 @@ struct AppearancePreviewView: View {
         .aspectRatio(aspect, contentMode: .fit)
         .frame(maxWidth: 400)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(.primary.opacity(0.12), lineWidth: 1))
         .shadow(color: .black.opacity(0.15), radius: 3, y: 1)
         .frame(maxWidth: .infinity)
         .padding(.vertical, 6)

@@ -30,7 +30,8 @@ struct LabeledSlider: View {
 }
 
 extension Text {
+    /// Indented like the section titles and row labels, so all text starts on one edge.
     func settingsFooter() -> some View {
-        font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.leading).frame(maxWidth: .infinity, alignment: .leading)
+        font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.leading).frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 10)
     }
 }

@@ -19,6 +19,8 @@ final class SettingsWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
         self.model = model
         // AppKit's split view: its sidebar item is the real translucent sidebar, full height under the title bar.
         let split = NSSplitViewController()
+        split.splitView = SeamlessSplitView()
+        split.splitView.isVertical = true
         let sidebar = NSSplitViewItem(sidebarWithViewController: NSHostingController(rootView: SettingsSidebar().environmentObject(model)))
         sidebar.canCollapse = false
         sidebar.minimumThickness = Self.sidebarWidth
@@ -99,6 +101,15 @@ final class SettingsWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
         submenu("Window", [NSMenuItem(title: "Close", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")])
         return main
     }()
+}
+
+/// No divider: the sidebar's translucency already sets it apart, as in System Settings.
+final class SeamlessSplitView: NSSplitView {
+    override func layout() {
+        super.layout()
+        // The sidebar's divider is its own (vibrant) view, beside the panes.
+        for v in subviews where !arrangedSubviews.contains(v) && String(describing: type(of: v)).contains("Divider") { v.isHidden = true }
+    }
 }
 
 struct SettingsSidebar: View {

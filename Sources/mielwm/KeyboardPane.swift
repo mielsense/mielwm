@@ -28,7 +28,7 @@ struct KeyboardPane: View {
                 } header: {
                     VStack(alignment: .leading, spacing: 14) {
                         // Said once, above the first shortcut it applies to.
-                        if index == 0 { Text("Click a shortcut, then press the new keys. Esc cancels, Delete clears it.").settingsFooter() }
+                        if index == 0 { Text("Click a shortcut, then press the new keys. Esc cancels, Delete clears it.").font(.callout).foregroundStyle(.secondary) }
                         Text(group.title)
                     }
                 }
