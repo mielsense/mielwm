@@ -177,7 +177,8 @@ fi
 if [ -f "$KEYCHAIN" ]; then
     security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN" 2>/dev/null || true
     sign_log=$(mktemp)
-    if sign_all --timestamp=none --keychain "$KEYCHAIN" -s "$IDENTITY" 2>"$sign_log"; then
+    # By hash when it is known: codesign may pass over an untrusted self-signed identity looked up by name.
+    if sign_all --timestamp=none --keychain "$KEYCHAIN" -s "${MIELWM_EXPECT_CERT_SHA1:-$IDENTITY}" 2>"$sign_log"; then
         SIGNED=identity
     else
         echo "signing with \"$IDENTITY\" failed:"; sed 's/^/  /' "$sign_log"
