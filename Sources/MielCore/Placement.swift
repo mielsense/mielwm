@@ -1,18 +1,18 @@
 import CoreGraphics
 import Foundation
 
-/// The canvas has one lattice: snap the origin to it (Phantomat snapCanvasWindowBox).
-public func snapToGrid(_ r: CGRect, grid: Double) -> CGRect {
+/// The canvas has one lattice: snap the origin to it.
+func snapToGrid(_ r: CGRect, grid: Double) -> CGRect {
     guard grid > 0 else { return r }
     return CGRect(x: (r.minX / grid).rounded() * grid, y: (r.minY / grid).rounded() * grid, width: r.width, height: r.height)
 }
 
 /// A free spot for a new window near `center`: the center first, then rings
-/// of window-sized steps outward (Phantomat manageCanvasWindow). `occupied`
+/// of window-sized steps outward. `occupied`
 /// are the other windows' canvas frames, kept `gap` apart. Odd sizes become
 /// 42% of the screen.
-public func autoPlace(size: CGSize, around center: CGPoint, occupied: [CGRect], gap: Double,
-                      screenSize: CGSize, grid: Double?) -> CGRect {
+func autoPlace(size: CGSize, around center: CGPoint, occupied: [CGRect], gap: Double,
+               screenSize: CGSize, grid: Double?) -> CGRect {
     var size = size
     if size.width <= 1 || size.height <= 1 || size.width > screenSize.width * 0.9 || size.height > screenSize.height * 0.9 {
         size = CGSize(width: screenSize.width * 0.42, height: screenSize.height * 0.42)
@@ -36,7 +36,7 @@ public func autoPlace(size: CGSize, around center: CGPoint, occupied: [CGRect], 
 // MARK: - Fill (⌥T) and fullscreen-on-its-screen (⌥F)
 
 /// What Fill covers: the screen minus menu bar and Dock, with `gap` all round.
-public func fillArea(on screen: ScreenInfo, gap: Double) -> CGRect {
+func fillArea(on screen: ScreenInfo, gap: Double) -> CGRect {
     screen.visibleFrame.insetBy(dx: gap, dy: gap)
 }
 
@@ -77,7 +77,7 @@ public enum ParkCorner: String, Hashable, Codable, Sendable { case bottomLeft, b
 
 /// AeroSpace's optimalHideCorner: probe just outside each bottom corner; the
 /// corner whose probes land on fewer other displays wins.
-public func parkCorner(for screen: ScreenInfo, among screens: [ScreenInfo]) -> ParkCorner {
+func parkCorner(for screen: ScreenInfo, among screens: [ScreenInfo]) -> ParkCorner {
     let f = screen.frame
     let xOff = f.width * 0.1, yOff = f.height * 0.1
     func score(_ side: CGFloat, _ inward: CGFloat) -> Int {
@@ -93,7 +93,7 @@ public func parkCorner(for screen: ScreenInfo, among screens: [ScreenInfo]) -> P
 }
 
 /// Where a window of `size` parks on `screen`.
-public func parkSlot(size: CGSize, on screen: ScreenInfo, corner: ParkCorner) -> CGRect {
+func parkSlot(size: CGSize, on screen: ScreenInfo, corner: ParkCorner) -> CGRect {
     let v = screen.visibleFrame
     let x = corner == .bottomRight ? v.maxX - 1 : v.minX + 1 - size.width
     return CGRect(x: x, y: v.maxY - 1, width: size.width, height: size.height)
@@ -111,7 +111,7 @@ public func isHiddenFrame(_ frame: CGRect, screens: [ScreenInfo]) -> Bool {
 /// A frame every screen shows: `frame` itself when a screen shows it, else
 /// moved (and if need be shrunk) into the visible frame of the nearest
 /// screen. Used to unpark everything on quit and for crash recovery.
-public func onScreenFrame(_ frame: CGRect, screens: [ScreenInfo]) -> CGRect {
+func onScreenFrame(_ frame: CGRect, screens: [ScreenInfo]) -> CGRect {
     guard isHiddenFrame(frame, screens: screens), let screen = nearestScreen(to: frame.center, of: screens) else { return frame }
     let v = screen.visibleFrame
     let w = min(frame.width, v.width), h = min(frame.height, v.height)

@@ -8,6 +8,13 @@
 #
 # Open at login is a switch in Settings > General.
 #
+# For CI (see .github/workflows/release.yml):
+#   MIELWM_VERSION            the version, default 0.1.0
+#   MIELWM_KEYCHAIN           a keychain that already holds the identity, and
+#   MIELWM_KEYCHAIN_PASSWORD  its password: no login keychain is touched
+#   MIELWM_REQUIRE_IDENTITY=1 never create an identity, never sign ad hoc
+#   MIELWM_EXPECT_CERT_SHA1   the identity's leaf certificate SHA-1; any other fails
+#
 # Signing: macOS ties the Accessibility and Screen Recording grants to the
 # app's signature. An ad-hoc signature changes with every build, so every
 # rebuild would need the grants again. The script therefore creates a
@@ -31,16 +38,25 @@ done
 
 BUNDLE_ID=my.miel.mielwm
 IDENTITY="mielwm Dev"
-KEYCHAIN="$HOME/Library/Keychains/mielwm-dev.keychain-db"
+KEYCHAIN="${MIELWM_KEYCHAIN:-$HOME/Library/Keychains/mielwm-dev.keychain-db}"
 PASSWORD_SERVICE=my.miel.mielwm.signing-keychain
-VERSION=1.0.0
+VERSION=${MIELWM_VERSION:-0.1.0}
 BUILD=$(git rev-list --count HEAD 2>/dev/null || echo 1)
 APP=build/mielwm.app
 
 echo "== swift build -c release"
-swift build -c release --product mielwm 2>&1 | grep -E "error|Build complete" || true
-BIN=$(swift build -c release --product mielwm --show-bin-path)/mielwm
-[ -x "$BIN" ] || { echo "build failed" >&2; exit 1; }
+# Short output, but a failed build stops here: never sign and ship the last good binary.
+for product in mielwm mielwm-aerospace; do
+    if ! build_log=$(swift build -c release --product $product 2>&1); then
+        echo "$build_log" | grep -E "error" || echo "$build_log" | tail -20
+        echo "build failed" >&2
+        exit 1
+    fi
+    echo "$build_log" | grep -E "error|Build complete" || true
+done
+BIN_DIR=$(swift build -c release --show-bin-path)
+BIN=$BIN_DIR/mielwm
+[ -x "$BIN" ] && [ -x "$BIN_DIR/mielwm-aerospace" ] || { echo "build failed" >&2; exit 1; }
 
 echo "== $APP"
 rm -rf "$APP"
@@ -67,6 +83,29 @@ cat > "$APP/Contents/Info.plist" <<EOF
     <string>mielwm moves and focuses your windows on the canvas and listens for its keyboard shortcuts.</string>
     <key>NSScreenCaptureUsageDescription</key>
     <string>mielwm shows live pictures of your windows on the zoomed-out canvas.</string>
+</dict>
+</plist>
+EOF
+
+# Barik (docs/aerospace.md): its `aerospace` command, and the hidden app called
+# AeroSpace it looks for. One binary does both.
+HELPER="$APP/Contents/Helpers/AeroSpace.app"
+mkdir -p "$HELPER/Contents/MacOS"
+cp "$BIN_DIR/mielwm-aerospace" "$APP/Contents/Helpers/aerospace"
+cp "$BIN_DIR/mielwm-aerospace" "$HELPER/Contents/MacOS/AeroSpace"
+cat > "$HELPER/Contents/Info.plist" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleIdentifier</key><string>$BUNDLE_ID.aerospace-helper</string>
+    <key>CFBundleName</key><string>AeroSpace</string>
+    <key>CFBundleExecutable</key><string>AeroSpace</string>
+    <key>CFBundlePackageType</key><string>APPL</string>
+    <key>CFBundleShortVersionString</key><string>$VERSION</string>
+    <key>CFBundleVersion</key><string>$BUILD</string>
+    <key>LSMinimumSystemVersion</key><string>15.0</string>
+    <key>LSUIElement</key><true/>
 </dict>
 </plist>
 EOF
@@ -108,35 +147,59 @@ EOF
 
 echo "== signing"
 SIGNED=adhoc
+# Inside out, all with the same signature: the command, the helper, then mielwm.app.
+sign_all() {
+    codesign --force "$@" -i "$BUNDLE_ID.aerospace" "$APP/Contents/Helpers/aerospace" &&
+        codesign --force "$@" "$HELPER" &&
+        codesign --force "$@" -i "$BUNDLE_ID" "$APP"
+}
 # A fixed password would let any program sign as "mielwm Dev" and inherit
 # the app's permission grants, so it is random and lives in the login keychain.
-KEYCHAIN_PASSWORD=$(security find-generic-password -s "$PASSWORD_SERVICE" -a "$USER" -w 2>/dev/null || true)
+REQUIRE=${MIELWM_REQUIRE_IDENTITY:-0}
+fail() { echo "signing: $*" >&2; exit 1; }
+if [ -n "${MIELWM_KEYCHAIN_PASSWORD:-}" ]; then
+    KEYCHAIN_PASSWORD=$MIELWM_KEYCHAIN_PASSWORD
+else
+    KEYCHAIN_PASSWORD=$(security find-generic-password -s "$PASSWORD_SERVICE" -a "$USER" -w 2>/dev/null || true)
+fi
 if [ -z "$KEYCHAIN_PASSWORD" ]; then
+    [ "$REQUIRE" = 1 ] && fail "no keychain password"
+
     KEYCHAIN_PASSWORD=$(/usr/bin/openssl rand -hex 24)
     security add-generic-password -U -s "$PASSWORD_SERVICE" -a "$USER" -w "$KEYCHAIN_PASSWORD" -T /usr/bin/security
     [ -f "$KEYCHAIN" ] && security delete-keychain "$KEYCHAIN" # its password is lost: make the identity again
 fi
 if [ ! -f "$KEYCHAIN" ] || ! security find-certificate -c "$IDENTITY" "$KEYCHAIN" >/dev/null 2>&1; then
+    [ "$REQUIRE" = 1 ] && fail "no \"$IDENTITY\" identity in $KEYCHAIN"
     echo "creating the \"$IDENTITY\" identity in $KEYCHAIN"
     make_identity || echo "could not create the identity"
 fi
 if [ -f "$KEYCHAIN" ]; then
     security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN" 2>/dev/null || true
-    if codesign --force --timestamp=none --keychain "$KEYCHAIN" -s "$IDENTITY" \
-        -i "$BUNDLE_ID" "$APP" 2>/tmp/mielwm-codesign.log; then
+    sign_log=$(mktemp)
+    # By hash when it is known: codesign may pass over an untrusted self-signed identity looked up by name.
+    if sign_all --timestamp=none --keychain "$KEYCHAIN" -s "${MIELWM_EXPECT_CERT_SHA1:-$IDENTITY}" 2>"$sign_log"; then
         SIGNED=identity
     else
-        echo "signing with \"$IDENTITY\" failed:"; sed 's/^/  /' /tmp/mielwm-codesign.log
+        echo "signing with \"$IDENTITY\" failed:"; sed 's/^/  /' "$sign_log"
     fi
+    rm -f "$sign_log"
 fi
 if [ "$SIGNED" = adhoc ]; then
-    codesign --force -s - -i "$BUNDLE_ID" "$APP"
+    [ "$REQUIRE" = 1 ] && fail "could not sign with \"$IDENTITY\""
+    sign_all -s -
     echo "signed ad hoc: macOS will ask for Accessibility and Screen Recording again after each rebuild."
     echo "If the identity is the problem, trusting it once (asks for your password) usually fixes it:"
     echo "  security find-certificate -c \"$IDENTITY\" -p \"$KEYCHAIN\" > /tmp/mielwm-dev.pem"
     echo "  sudo security add-trusted-cert -d -r trustRoot -p codeSign -k /Library/Keychains/System.keychain /tmp/mielwm-dev.pem"
 fi
-codesign --verify "$APP" && echo "signed ($SIGNED): $(codesign -dr - "$APP" 2>&1 | grep designated | sed 's/^# //')"
+codesign --verify --deep --strict "$APP" || fail "the signature does not verify"
+REQUIREMENT=$(codesign -dr - "$APP" 2>&1 | grep designated | sed 's/^# //')
+echo "signed ($SIGNED): $REQUIREMENT"
+if [ -n "${MIELWM_EXPECT_CERT_SHA1:-}" ]; then
+    # Another certificate would make every user grant Accessibility and Screen Recording again.
+    echo "$REQUIREMENT" | grep -qi "H\"$MIELWM_EXPECT_CERT_SHA1\"" || fail "signed by an unexpected certificate"
+fi
 
 # Quits a running app the clean way (both take SIGTERM as Quit and put their
 # windows back on screen first); true if it was running.

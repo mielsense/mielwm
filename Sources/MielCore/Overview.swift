@@ -2,8 +2,8 @@ import Foundation
 
 /// What the overview needs to know about the canvas.
 public struct OverviewContext: Sendable {
-    public var candidates: [SearchCandidate] // every window search can find
-    public var mru: [WindowID] // most recent first
+    var candidates: [SearchCandidate] // every window search can find
+    var mru: [WindowID] // most recent first
     public var focused: WindowID? // where the session starts
     public var rows: Int // result rows on screen
 
@@ -36,19 +36,19 @@ public enum OverviewEffect: Hashable, Sendable {
 /// navigatorKeyAction): the search palette, the ⌥Tab switcher and the help
 /// sheet. Pure: keys in, effects out.
 public struct OverviewMachine: Hashable, Sendable {
-    public static let switcherRevealDelay = 0.17
+    static let switcherRevealDelay = 0.17
 
-    public private(set) var isOpen = false
+    private(set) var isOpen = false
     public private(set) var query = ""
     public internal(set) var markedText = ""
-    public private(set) var listRevealed = false
+    private(set) var listRevealed = false
     public private(set) var selected = 0
-    public private(set) var listOffset = 0
-    public private(set) var results: [SearchResult] = []
+    private(set) var listOffset = 0
+    private(set) var results: [SearchResult] = []
     public internal(set) var helpOpen = false
     public private(set) var switcher = false // opened by ⌥Tab; releasing ⌥ lands
-    public private(set) var switcherRevealAt: Double?
-    public private(set) var returnWindow: WindowID?
+    private(set) var switcherRevealAt: Double?
+    private(set) var returnWindow: WindowID?
     var sessionOrder: [WindowID] = []
     var rows = 6
 
@@ -82,23 +82,23 @@ public struct OverviewMachine: Hashable, Sendable {
         switcherRevealAt = nil
     }
 
-    public func switcherRevealed(now: Double) -> Bool {
+    func switcherRevealed(now: Double) -> Bool {
         switcher && (switcherRevealAt.map { now >= $0 } ?? true)
     }
 
     // MARK: Results
 
-    public var queryActive: Bool { isOpen && matchSet != nil }
-    public var listVisible: Bool { isOpen && (queryActive || listRevealed) }
+    var queryActive: Bool { isOpen && matchSet != nil }
+    var listVisible: Bool { isOpen && (queryActive || listRevealed) }
 
     /// The windows that match while searching, nil with no query (all match).
-    public private(set) var matchSet: Set<WindowID>?
+    private(set) var matchSet: Set<WindowID>?
 
-    public var selectedWindow: WindowID? { results.indices.contains(selected) ? results[selected].id : nil }
+    var selectedWindow: WindowID? { results.indices.contains(selected) ? results[selected].id : nil }
 
     /// Re-ranks. Keeps the selected window when it still matches unless
     /// `resetSelection` (a new query always starts at its best hit).
-    public mutating func rebuild(_ ctx: OverviewContext, resetSelection: Bool) {
+    mutating func rebuild(_ ctx: OverviewContext, resetSelection: Bool) {
         guard isOpen else { return }
         rows = max(1, ctx.rows)
         let previous = resetSelection ? nil : selectedWindow
@@ -117,13 +117,13 @@ public struct OverviewMachine: Hashable, Sendable {
         (selected, listOffset) = scrolled(selected: selected, offset: listOffset, count: results.count, rows: rows)
     }
 
-    public mutating func selectWindow(_ id: WindowID) {
+    mutating func selectWindow(_ id: WindowID) {
         guard let i = results.firstIndex(where: { $0.id == id }) else { return }
         selected = i
         keepVisible()
     }
 
-    public mutating func moveSelection(_ delta: Int) {
+    mutating func moveSelection(_ delta: Int) {
         guard !results.isEmpty else { return }
         selected = wrapped(selected, delta, count: results.count)
         listRevealed = true
@@ -189,7 +189,7 @@ public struct OverviewMachine: Hashable, Sendable {
         if switcher { // only Esc means anything while the strip is up
             return key == .escape && !ctrl ? [.cancelSwitcher] : []
         }
-        // ⌘ the Mac way; ⌃ as Phantomat had it, still accepted.
+        // ⌘ the Mac way; ⌃ still accepted, as older versions had it.
         let command = (cmd || ctrl) && !opt
         if command && key == .character(",") { return [.action(.tune)] } // the usual settings chord: Appearance
         // ⌘/ (⌘?) is the Mac's Help shortcut; F1 needs fn on most Mac keyboards, so it is only a spare.

@@ -6,11 +6,9 @@ import ApplicationServices
 public enum AeroSpace {
     public static let bundleID = "bobko.aerospace"
 
+    /// By bundle id only: mielwm's own helper for Barik is also called AeroSpace.
     public static func running() -> NSRunningApplication? {
-        NSWorkspace.shared.runningApplications.first {
-            $0.bundleIdentifier == bundleID || $0.localizedName == "AeroSpace"
-                || $0.executableURL?.lastPathComponent == "AeroSpace"
-        }
+        NSWorkspace.shared.runningApplications.first { $0.bundleIdentifier == bundleID }
     }
 
     /// Asks AeroSpace to quit, like its own quit command. False if it is not running.

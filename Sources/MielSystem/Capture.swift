@@ -184,7 +184,7 @@ public final class CaptureManager: NSObject, WindowFrameSource, @unchecked Senda
     }
 
     /// Re-reads which windows SCK can capture. Runs by itself when an id is unknown.
-    public func refreshContent(_ completion: (() -> Void)? = nil) {
+    func refreshContent(_ completion: (() -> Void)? = nil) {
         SCShareableContent.getExcludingDesktopWindows(true, onScreenWindowsOnly: false) { content, _ in
             if let content {
                 let windows = Dictionary(content.windows.map { ($0.windowID, $0) }, uniquingKeysWith: { a, _ in a })

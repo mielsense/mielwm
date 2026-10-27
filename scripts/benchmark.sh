@@ -17,6 +17,7 @@ swift build -c release --product mielwm-testwindows >/dev/null 2>&1
 HELPER=$(swift build -c release --show-bin-path)/mielwm-testwindows
 if [ $# -ge 1 ]; then BINDIR=$1; else
     swift build -c release --product mielwm >/dev/null 2>&1
+    swift build -c release --product mielwm-aerospace >/dev/null 2>&1
     BINDIR=$(swift build -c release --show-bin-path)
 fi
 NAME=mielwm ENV=MIELWM
@@ -70,6 +71,29 @@ run() {
     for _ in $(seq 200); do [ "$(managed)" = 8 ] && break; sleep 0.05; done
     t1=$(now)
 }
+# Barik's load (docs/aerospace.md): its four `aerospace` commands every 0.1 s
+# for 10 s, 40 calls a second. Prints calls, seconds, median and slowest wall
+# time per call in ms, and the command's own CPU time per call in ms.
+barik_load() {
+    python3 -I - "$1" <<'PY'
+import resource, statistics, subprocess, sys, time
+shim = sys.argv[1]
+cmds = [["list-workspaces", "--all", "--json"],
+        ["list-windows", "--all", "--json", "--format", "%{window-id} %{app-name} %{window-title} %{workspace}"],
+        ["list-workspaces", "--focused", "--json"], ["list-windows", "--focused", "--json"]]
+walls, r0, start = [], resource.getrusage(resource.RUSAGE_CHILDREN), time.monotonic()
+for tick in range(100):
+    for c in cmds:
+        t = time.monotonic()
+        subprocess.run([shim] + c, stdout=subprocess.DEVNULL, check=True)
+        walls.append(time.monotonic() - t)
+    time.sleep(max(0, start + (tick + 1) * 0.1 - time.monotonic()))
+r1 = resource.getrusage(resource.RUSAGE_CHILDREN)
+cpu = (r1.ru_utime + r1.ru_stime - r0.ru_utime - r0.ru_stime) / len(walls)
+print(len(walls), f"{time.monotonic() - start:.1f}", f"{statistics.median(walls) * 1000:.1f}",
+      f"{max(walls) * 1000:.1f}", f"{cpu * 1000:.2f}")
+PY
+}
 stop() { "$BIN" quit >/dev/null 2>&1 || true; sleep 1; kill "$app" "$helper" 2>/dev/null || true; app="" helper=""; sleep 1; }
 
 run
@@ -81,6 +105,11 @@ say "| Scenario                           |     CPU | Wakeups/s  | Memory      |
 say "|------------------------------------|---------|------------|-------------|"
 sleep 3
 s0=$(snap); sleep 30; s1=$(snap); row "Idle, 30 s" "$s0" "$s1" 30
+barik=""
+if [ -x "$BINDIR/mielwm-aerospace" ]; then
+    s0=$(snap); barik=$(barik_load "$BINDIR/mielwm-aerospace"); s1=$(snap)
+    row "Barik, 40 aerospace calls/s, 10 s" "$s0" "$s1" "$(echo "$barik" | cut -d' ' -f2)"
+fi
 s0=$(snap); "$BIN" workspace 2 >/dev/null; sleep 1; "$BIN" workspace 1 >/dev/null; sleep 1; s1=$(snap)
 row "Two workspace switches, 2 s" "$s0" "$s1" 2
 sleep 2
@@ -94,3 +123,7 @@ sleep 3
 s0=$(snap); sleep 10; s1=$(snap); row "Overview open, windows still, 10 s" "$s0" "$s1" 10
 say ""
 say "CPU: share of one core. Wakeups: package idle wakeups per second. Memory: physical footprint."
+if [ -n "$barik" ]; then
+    read -r calls _ median slowest cpu <<< "$barik"
+    say "The aerospace command, $calls calls: ${median} ms median, ${slowest} ms slowest, ${cpu} ms of its own CPU per call."
+fi

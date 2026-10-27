@@ -1,9 +1,7 @@
 import CoreGraphics
 import Foundation
 
-// What each Action and overview key does to the canvas (Phantomat
-// flightDeckAction, landOnWindow, summonWindow, fitAllWindows, nudgeWindow,
-// canvasToggleFill, canvasTogglePin; docs/window-rules.md).
+// What each Action and overview key does to the canvas.
 
 extension CanvasState {
     /// The window an action means: the overview's selection, else the focused one.

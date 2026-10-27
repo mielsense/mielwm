@@ -5,8 +5,7 @@ import Foundation
 // order ("fas" finds FAStfetch, never Free imAgeS); case and accents are
 // ignored. Highlights are Character offsets into the displayed title.
 
-/// Coarse app families used by tidy-up, search and labels (Phantomat
-/// canvasWindowCategory, with macOS bundle ids added).
+/// Coarse app families used by tidy-up, search and labels, by bundle id.
 public enum WindowCategory: String, CaseIterable, Sendable {
     case terminal, browser, communication, development, filesNotes, media, other
 
@@ -36,7 +35,7 @@ public enum WindowCategory: String, CaseIterable, Sendable {
     }
 
     /// Searchable words ("term" finds every terminal).
-    public var searchName: String {
+    var searchName: String {
         switch self {
         case .terminal: "terminal"
         case .browser: "browser web"
@@ -148,12 +147,12 @@ public struct SearchCandidate: Hashable, Sendable {
 
 public struct SearchResult: Hashable, Sendable {
     public var id: WindowID
-    public var score: Int
-    public var titleMatches: [Int] // Character offsets into the title
-    public var appMatches: [Int] // Character offsets into the app name
+    var score: Int
+    var titleMatches: [Int] // Character offsets into the title
+    var appMatches: [Int] // Character offsets into the app name
 
     /// Matched title characters as contiguous ranges, for HUDRow.highlights.
-    public var titleRanges: [Range<Int>] {
+    var titleRanges: [Range<Int>] {
         var ranges: [Range<Int>] = []
         for i in titleMatches {
             if let last = ranges.last, last.upperBound == i {
@@ -169,8 +168,8 @@ public struct SearchResult: Hashable, Sendable {
 /// Ranks `candidates`, which come most recently used first. With no words,
 /// every window in that order. `returnWindow` (where the search started)
 /// yields slightly, so "term" from a terminal finds the other terminal.
-public func searchWindows(_ query: String, candidates: [SearchCandidate],
-                          returnWindow: WindowID? = nil) -> [SearchResult] {
+func searchWindows(_ query: String, candidates: [SearchCandidate],
+                   returnWindow: WindowID? = nil) -> [SearchResult] {
     let tokens = queryTokens(query)
     var results: [SearchResult] = []
     for (rank, c) in candidates.enumerated() {

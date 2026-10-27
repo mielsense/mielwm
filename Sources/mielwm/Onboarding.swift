@@ -102,12 +102,11 @@ struct OnboardingView: View {
             VStack(spacing: 0) {
                 PermissionRow(title: "Accessibility", detail: "To move and focus windows, and to hear your shortcuts.",
                               symbol: "accessibility", color: Color(nsColor: .systemBlue), granted: model.accessibility, open: model.openAccessibility)
-                Divider().padding(.leading, 52)
+                Divider().padding(.leading, 52).padding(.trailing, 12)
                 PermissionRow(title: "Screen Recording", detail: "To show live pictures of your windows when you zoom out.",
                               symbol: "rectangle.inset.filled.badge.record", color: Color(nsColor: .systemRed), granted: model.recording, open: model.openRecording)
             }
             .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color(nsColor: .quaternarySystemFill)))
-            .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Color(nsColor: .separatorColor).opacity(0.5)))
             .padding(.top, 24)
             VStack(alignment: .leading, spacing: 8) {
                 if !model.recording {

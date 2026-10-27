@@ -1,0 +1,107 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0 # the build number counts commits
+
+      - name: Version
+        id: version
+        run: |
+          echo "KEYCHAIN=$RUNNER_TEMP/mielwm-signing.keychain-db" >> "$GITHUB_ENV" # job env cannot read runner.temp
+          version="${GITHUB_REF_NAME#v}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          case "$version" in *-*) echo "prerelease=true" >> "$GITHUB_OUTPUT" ;; *) echo "prerelease=false" >> "$GITHUB_OUTPUT" ;; esac
+
+      - name: Test
+        # One process per test target, as with the Command Line Tools: in a single
+        # process the render tests starve the system tests' main and utility queues.
+        run: |
+          swift build --build-tests
+          for target in MielCoreTests MielRenderTests MielSystemTests; do
+            swift test --skip-build --filter "$target"
+          done
+
+      - name: Signing keychain
+        env:
+          P12: ${{ secrets.MIELWM_SIGNING_P12 }}
+          P12_PASSWORD: ${{ secrets.MIELWM_SIGNING_P12_PASSWORD }}
+        run: |
+          test -n "$P12" || { echo "the MIELWM_SIGNING_P12 secret is missing"; exit 1; }
+          password=$(openssl rand -hex 24)
+          echo "::add-mask::$password"
+          echo "KEYCHAIN_PASSWORD=$password" >> "$GITHUB_ENV"
+          echo "$P12" | base64 --decode > "$RUNNER_TEMP/identity.p12"
+          security create-keychain -p "$password" "$KEYCHAIN"
+          security set-keychain-settings "$KEYCHAIN"
+          security unlock-keychain -p "$password" "$KEYCHAIN"
+          security import "$RUNNER_TEMP/identity.p12" -k "$KEYCHAIN" -P "$P12_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$password" "$KEYCHAIN" > /dev/null
+          # codesign looks identities up through the search list, even with --keychain
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+          security find-identity -p codesigning "$KEYCHAIN"
+          rm "$RUNNER_TEMP/identity.p12"
+
+      - name: Build and sign
+        env:
+          MIELWM_VERSION: ${{ steps.version.outputs.version }}
+          MIELWM_KEYCHAIN: ${{ env.KEYCHAIN }}
+          MIELWM_KEYCHAIN_PASSWORD: ${{ env.KEYCHAIN_PASSWORD }}
+          MIELWM_REQUIRE_IDENTITY: "1"
+          MIELWM_EXPECT_CERT_SHA1: ${{ vars.MIELWM_CERT_SHA1 }}
+        run: |
+          test -n "$MIELWM_EXPECT_CERT_SHA1" || { echo "the MIELWM_CERT_SHA1 variable is missing"; exit 1; }
+          scripts/build-app.sh --dmg
+
+      - name: Check the DMG
+        run: |
+          dmg="build/mielwm-${{ steps.version.outputs.version }}.dmg"
+          mount=$(hdiutil attach -nobrowse -readonly "$dmg" | tail -1 | cut -f3)
+          codesign --verify --deep --strict --verbose=2 "$mount/mielwm.app"
+          codesign -dr - "$mount/mielwm.app" 2>&1 | grep -qi "H\"${{ vars.MIELWM_CERT_SHA1 }}\""
+          hdiutil detach "$mount"
+
+      - name: Assets
+        run: |
+          v="${{ steps.version.outputs.version }}"
+          cd build
+          cp "mielwm-$v.dmg" mielwm.dmg
+          ditto -c -k --keepParent mielwm.app "mielwm-$v.zip"
+          shasum -a 256 "mielwm-$v.dmg" mielwm.dmg "mielwm-$v.zip" > SHA256SUMS
+
+      - name: Notes
+        run: |
+          v="${{ steps.version.outputs.version }}"
+          base="${v%%-*}"
+          # The CHANGELOG section for this version, or for its base version on a pre-release.
+          for want in "$v" "$base"; do
+            awk -v want="$want" '/^## /{ if (found) exit; found = ($2 == want || $2 == "[" want "]") ; next } found' CHANGELOG.md > notes.md
+            [ -s notes.md ] && break
+          done
+          test -s notes.md || { echo "CHANGELOG.md has no section for $v"; exit 1; }
+          printf '\nDownload `mielwm.dmg`, open it and drag mielwm into Applications. It is signed but not notarized: open it once, then allow it in System Settings > Privacy & Security > Open Anyway.\n' >> notes.md
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          v="${{ steps.version.outputs.version }}"
+          flags=()
+          [ "${{ steps.version.outputs.prerelease }}" = true ] && flags+=(--prerelease) || flags+=(--latest)
+          gh release create "$GITHUB_REF_NAME" --title "mielwm $v" --notes-file notes.md "${flags[@]}" \
+            "build/mielwm-$v.dmg" build/mielwm.dmg "build/mielwm-$v.zip" build/SHA256SUMS
+
+      - name: Remove the keychain
+        if: always()
+        run: security delete-keychain "$KEYCHAIN" || true

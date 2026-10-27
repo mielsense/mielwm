@@ -8,6 +8,10 @@ import Testing
 
 private let outDir = URL(fileURLWithPath: "/tmp/mielwm-render")
 
+/// GitHub's macOS runners may have no GPU: the tests that draw skip there instead of failing.
+private let metal = ConditionTrait.enabled(if: MTLCreateSystemDefaultDevice() != nil,
+                                           "no Metal device (MTLCreateSystemDefaultDevice() is nil): skipping a test that draws")
+
 /// BGRA bytes of an image, premultiplied, row 0 at the top.
 private struct Pixels {
     let bytes: [UInt8]
@@ -101,7 +105,7 @@ private func render(_ scene: Scene, _ state: String, frames: SyntheticFrames? = 
         #expect(LensParameters(look: look, transition: 1) == LensParameters(look: look, transition: 0))
     }
 
-    @Test(arguments: Fixture.screens) func desktopAtRestIsExactlyTheDesktop(screen: ScreenInfo) throws {
+    @Test(metal, arguments: Fixture.screens) func desktopAtRestIsExactlyTheDesktop(screen: ScreenInfo) throws {
         // Dim and selection must not show at rest.
         let windows = Fixture.deskWindows.map { w in
             var w = w
@@ -128,7 +132,7 @@ private func render(_ scene: Scene, _ state: String, frames: SyntheticFrames? = 
         #expect(pixels.close(pixels[px, py], source[sx, sy]))
     }
 
-    @Test(arguments: Fixture.screens) func overview(screen: ScreenInfo) throws {
+    @Test(metal, arguments: Fixture.screens) func overview(screen: ScreenInfo) throws {
         var hud = HUDModel()
         hud.corners = Fixture.corners
         hud.toast = "Tidied 12 windows  {⌃Z} Undo"
@@ -142,14 +146,14 @@ private func render(_ scene: Scene, _ state: String, frames: SyntheticFrames? = 
         #expect(pixels[2, 2][3] == 255)
     }
 
-    @Test(arguments: Fixture.screens) func search(screen: ScreenInfo) throws {
+    @Test(metal, arguments: Fixture.screens) func search(screen: ScreenInfo) throws {
         let (hud, windows) = Fixture.searchHUD()
         let pixels = try render(Fixture.overview(screen, hud: hud, windows: windows, selected: windows[0].id), "search")
         #expect(pixels.looksDrawn)
     }
 
     /// Light chrome: the palette's panel is light where dark chrome's is dark.
-    @Test func lightAppearance() throws {
+    @Test(metal) func lightAppearance() throws {
         let (hud, windows) = Fixture.searchHUD()
         var look = Look()
         func panelPixel(dark: Bool) throws -> [Int] {
@@ -164,13 +168,13 @@ private func render(_ scene: Scene, _ state: String, frames: SyntheticFrames? = 
         #expect(dark[0] < 110 && light[0] > 170, "dark \(dark), light \(light)")
     }
 
-    @Test(arguments: Fixture.screens) func help(screen: ScreenInfo) throws {
+    @Test(metal, arguments: Fixture.screens) func help(screen: ScreenInfo) throws {
         let pixels = try render(Fixture.overview(screen, hud: Fixture.helpHUD()), "help")
         #expect(pixels.looksDrawn)
     }
 
     /// The ⌥Tab strip shows over the plain desktop.
-    @Test(arguments: Fixture.screens) func switcher(screen: ScreenInfo) throws {
+    @Test(metal, arguments: Fixture.screens) func switcher(screen: ScreenInfo) throws {
         let scene = Scene(screen: screen, desk: Fixture.desk, camera: Camera(center: Fixture.desk.center), transition: 0,
                           windows: Fixture.deskWindows, look: Look(), hud: Fixture.switcherHUD())
         let pixels = try render(scene, "switcher")
@@ -178,7 +182,7 @@ private func render(_ scene: Scene, _ state: String, frames: SyntheticFrames? = 
         #expect(pixels[0, 0] == [0, 0, 0, 0])
     }
 
-    @Test(arguments: Fixture.screens) func lensWithEveryEffect(screen: ScreenInfo) throws {
+    @Test(metal, arguments: Fixture.screens) func lensWithEveryEffect(screen: ScreenInfo) throws {
         var look = Look()
         look.lensStrength = 0.3
         look.lensFeather = 0.04
@@ -193,7 +197,7 @@ private func render(_ scene: Scene, _ state: String, frames: SyntheticFrames? = 
         #expect(pixels.looksDrawn)
     }
 
-    @Test func lensStrengthBendsTheEdgesButNotTheCenter() throws {
+    @Test(metal) func lensStrengthBendsTheEdgesButNotTheCenter() throws {
         let screen = Fixture.retina
         var look = Look()
         look.lensEdgeScale = 1
@@ -228,7 +232,7 @@ private final class Bumped: WindowFrameSource, @unchecked Sendable {
     func generation(for id: WindowID) -> UInt64 { inner.generation(for: id) + bump }
 }
 
-@Test func framesThatWouldLookTheSameAreSkipped() throws {
+@Test(metal) func framesThatWouldLookTheSameAreSkipped() throws {
     let renderer = try Renderer()
     let layer = CAMetalLayer()
     layer.device = renderer.device
@@ -270,7 +274,7 @@ private final class Bumped: WindowFrameSource, @unchecked Sendable {
     #expect(!renderer.needsDraw(search, frames: frames))
 }
 
-@Test func stillsInTheLiveFormatAreUploadedAsTheyAre() throws {
+@Test(metal) func stillsInTheLiveFormatAreUploadedAsTheyAre() throws {
     let device = try #require(MTLCreateSystemDefaultDevice())
     let ctx = try #require(CGContext(data: nil, width: 64, height: 32, bitsPerComponent: 8, bytesPerRow: 0,
                                      space: CGColorSpace(name: CGColorSpace.displayP3)!,

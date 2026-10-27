@@ -48,8 +48,8 @@ func primaryScreen(_ screens: [ScreenInfo]) -> ScreenInfo? {
 /// Tiles for `weights.count` windows in `area`, side by side when
 /// `horizontal`, `gap` apart and sized by weight; none under `minLength`
 /// while there is room. Edges are whole points and the tiles reach both ends.
-public func tileFrames(in area: CGRect, weights: [Double], horizontal: Bool, gap: Double,
-                       minLength: Double = 120) -> [CGRect] {
+func tileFrames(in area: CGRect, weights: [Double], horizontal: Bool, gap: Double,
+                minLength: Double = 120) -> [CGRect] {
     let n = weights.count
     guard n > 0 else { return [] }
     let a = area.roundedFrame

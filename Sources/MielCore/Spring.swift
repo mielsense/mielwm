@@ -6,7 +6,7 @@ public enum CameraCurve: String, Codable, Sendable {
     /// Critically damped spring: no overshoot, and a retarget mid-flight keeps
     /// the current velocity, so interrupted flights never jerk.
     case spring
-    /// Phantomat's overview curve, cubic-bezier(0.22, 1.0, 0.36, 1.0). A
+    /// An ease-out curve, cubic-bezier(0.22, 1.0, 0.36, 1.0). A
     /// retarget restarts the curve from where the camera is.
     case bezier
 }
@@ -77,7 +77,7 @@ func overviewBezier(_ x: Double) -> Double {
 /// The camera and the overview transition, animated together. Zoom moves in
 /// log space so zooming in and out feel the same speed. Time is injected.
 public struct CameraAnimator: Hashable, Sendable {
-    public var curve: CameraCurve
+    var curve: CameraCurve
     /// Flight length in seconds: the bezier's duration; the spring's stiffness
     /// is chosen so it is visually done by then.
     public var duration: Double
@@ -105,7 +105,6 @@ public struct CameraAnimator: Hashable, Sendable {
     }
 
     public var transition: Double { progress.value }
-    public var targetTransition: Double { progress.target }
 
     public var isSettled: Bool {
         x.settled(0.05) && y.settled(0.05) && logZoom.settled(1e-4) && progress.settled(1e-3)
@@ -113,8 +112,8 @@ public struct CameraAnimator: Hashable, Sendable {
 
     /// Flies to `camera` (and the transition, if given) from wherever the
     /// camera is now. `velocity` (canvas points per second) seeds a momentum flight.
-    public mutating func fly(to camera: Camera, transition: Double? = nil, now: Double,
-                             velocity: CGVector? = nil) {
+    mutating func fly(to camera: Camera, transition: Double? = nil, now: Double,
+                      velocity: CGVector? = nil) {
         step(to: now)
         guard enabled else { return warp(to: camera, transition: transition, now: now) }
         x.retarget(camera.center.x, now: now)
@@ -128,7 +127,7 @@ public struct CameraAnimator: Hashable, Sendable {
     }
 
     /// Jumps there with no animation (drag, pan, pinch).
-    public mutating func warp(to camera: Camera, transition: Double? = nil, now: Double) {
+    mutating func warp(to camera: Camera, transition: Double? = nil, now: Double) {
         x.warp(camera.center.x)
         y.warp(camera.center.y)
         logZoom.warp(log(camera.zoom))

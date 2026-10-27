@@ -184,8 +184,7 @@ public enum NamedKey: Hashable, Codable, Sendable {
     case character(String) // a letter with a modifier held, e.g. Control-A
 }
 
-/// Bindable actions. Names match Phantomat's `canvas(...)` actions where one
-/// exists, so `mielwm <action>` reads like `hl.plugin.spatialoverview.canvas`.
+/// Bindable actions, also `mielwm <action>` on the command line.
 public enum Action: Hashable, Codable, Sendable {
     case toggleOverview
     case search(String?)
@@ -225,7 +224,7 @@ public enum TileOrientation: String, Hashable, Codable, Sendable, CaseIterable {
     case auto, horizontal, vertical
 }
 
-// MARK: - Look (the tunable appearance, defaults match Phantomat)
+// MARK: - Look (the tunable appearance)
 
 public struct RGB: Hashable, Codable, Sendable {
     public var r: Double, g: Double, b: Double
@@ -235,7 +234,7 @@ public struct RGB: Hashable, Codable, Sendable {
         self.b = b
     }
 
-    public static let mielOrange = RGB(1.0, 0x6B / 255.0, 0x1A / 255.0) // #ff6b1a
+    static let mielOrange = RGB(1.0, 0x6B / 255.0, 0x1A / 255.0) // #ff6b1a
 }
 
 public struct Look: Hashable, Codable, Sendable {
@@ -273,14 +272,14 @@ public struct Look: Hashable, Codable, Sendable {
 
     // Minimap (canvas.minimap_*)
     public var minimapEnabled = true
-    public var minimapWidth = 240.0
-    public var minimapHeight = 150.0
-    public var minimapMargin = 24.0
+    var minimapWidth = 240.0
+    var minimapHeight = 150.0
+    var minimapMargin = 24.0
     public var minimapOpacity = 0.8
 
     // HUD (navigator.*). Text is SF Pro at 12, 13, 14, 16, 18 or 24 pt times hudScale.
     public var accent = RGB.mielOrange
-    public var monoFont = "" // no longer drawn; kept so old configs load
+    var monoFont = "" // no longer drawn; kept so old configs load
     public var hudScale = 1.0
     public var paletteWidth = 680.0
     public var paletteTop = 0.1 // fraction of the screen height
@@ -288,19 +287,19 @@ public struct Look: Hashable, Codable, Sendable {
     public var rowHeight = 44.0
     public var rounding = 8.0 // rows and pills; panels add 6
     public var panelOpacity = 0.8
-    public var uppercase = false // no longer drawn; kept so old configs load
-    public var letterSpacing = 0.0 // no longer drawn; kept so old configs load
+    var uppercase = false // no longer drawn; kept so old configs load
+    var letterSpacing = 0.0 // no longer drawn; kept so old configs load
     public var querySize = 24.0
     public var titleSize = 13.0
     public var detailSize = 12.0
     public var cornerSize = 12.0
     public var labelSize = 12.0
-    public var cornerLabels = false
+    var cornerLabels = false
     public var searchHeight = 56.0
-    public var searchBorder = 0.0 // no longer drawn; kept so old configs load
-    public var searchBorderOpacity = 0.85 // no longer drawn
-    public var searchBorderColor: RGB? = nil // no longer drawn
-    public var searchGlow = 0.0 // no longer drawn
+    var searchBorder = 0.0 // no longer drawn; kept so old configs load
+    var searchBorderOpacity = 0.85 // no longer drawn
+    var searchBorderColor: RGB? = nil // no longer drawn
+    var searchGlow = 0.0 // no longer drawn
     /// Dark or light chrome; the app follows the system appearance.
     public var dark = true
     /// The system's accessibility display options (the app sets them, nothing saves them):

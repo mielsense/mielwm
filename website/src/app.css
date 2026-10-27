@@ -1,0 +1,794 @@
+@import '@mielui/svelte/ui.css';
+@import 'lenis/dist/lenis.css';
+
+/* Instrument Serif italic, cut down to basic Latin: it only sets one word per headline */
+@font-face {
+	font-family: 'Instrument Serif';
+	font-style: italic;
+	font-weight: 400;
+	font-display: swap;
+	src: url('/fonts/instrument-serif-italic.woff2') format('woff2');
+}
+/* ui.css scans every Mielui file for classes; skip the ones this site never renders */
+@source not '../node_modules/.pnpm/@mielui+svelte@*/node_modules/@mielui/svelte/dist/svelte/{ai-components,chart-components,themes,_manifest}';
+@source not '../node_modules/.pnpm/@mielui+svelte@*/node_modules/@mielui/svelte/dist/svelte/actions/{morph,shimmer,number-shuffle}';
+@source not '../node_modules/.pnpm/@mielui+svelte@*/node_modules/@mielui/svelte/dist/svelte/blocks/{color-picker,data-table,file-diff,folder-card,markdown,notch,reorder-list,show-more,task-steps,toast,toolbar}';
+@source not '../node_modules/.pnpm/@mielui+svelte@*/node_modules/@mielui/svelte/dist/svelte/components/{accordion,alert,alert-dialog,avatar,breadcrumb,calendar,card,checkbox,collapsible,combobox,context-menu,date-picker,date-range-picker,drawer,dropdown-menu,empty-state,field,fieldset,file-upload,form,gauge,group,hover-card,input,label,native-select,number-field,otp-field,pagination,pie-chart,popover,progress,radio-group,range-calendar,scroll-area,select,separator,skeleton,slider,spinner,switch,table,tag-input,textarea,toggle,toggle-group,typography}';
+
+/*
+ * Five colors and six sizes. strong / default / subtle are the three inks, selected is the
+ * hover and current-row fill, border the hairline. Mielui's tokens are pointed at them so its
+ * components speak the same palette. Dark is the same recipe re-inked.
+ */
+@theme {
+	--font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter Tight', system-ui, sans-serif;
+	--font-mono: 'SF Mono', ui-monospace, 'Geist Mono', monospace;
+	/* the italic accent word in headlines */
+	--font-serif: 'Instrument Serif', Georgia, serif;
+
+	--color-strong: #292929;
+	--color-default: #5d5d5d;
+	--color-subtle: #7f7f7f;
+	--color-selected: #f5f5f5;
+	--color-page: #f5f5f5;
+	--color-plate: #ffffff;
+	--color-frame: #dcdcdc;
+
+	--color-background: var(--color-page);
+	--color-card: var(--color-plate);
+	--color-panel: var(--color-plate);
+	--color-secondary: var(--color-selected);
+	--color-foreground: var(--color-strong);
+	--color-foreground-muted: var(--color-subtle);
+	--color-border: #ebebeb;
+	--color-border-strong: #dedede;
+	--color-input: #e8e8e8;
+	--color-wash: var(--color-selected);
+	--color-field-hover: var(--color-selected);
+	--color-primary: var(--color-strong);
+	--color-primary-hover: color-mix(in srgb, var(--color-strong) 88%, white);
+	--color-on-primary: #ffffff;
+	--color-ring: color-mix(in srgb, var(--color-strong) 22%, transparent);
+	--chart-1: var(--color-strong);
+
+	/* 12, 13 (body), 14, 16, 18 and 24 */
+	--font-size-badge: 12px;
+	--font-size-body: 13px;
+	--font-size-label: 13px;
+	--font-size-button: 13px;
+	--font-size-header: 16px;
+	--font-size-title: 18px;
+	--font-size-display: 24px;
+	--text-xs: 12px;
+	--text-sm: 13px;
+	--text-base: 14px;
+	--text-lg: 16px;
+	--text-xl: 18px;
+	--text-2xl: 24px;
+	--text-3xl: 24px;
+	/* display sizes, for headlines only */
+	--text-4xl: 36px;
+	--text-5xl: 48px;
+	--text-6xl: 60px;
+	--text-7xl: 76px;
+}
+
+.dark {
+	--color-strong: #ededed;
+	--color-default: #b4b4b4;
+	--color-subtle: #858585;
+	--color-selected: #1d1d1d;
+	--color-page: #0e0e0e;
+	--color-plate: #161616;
+	--color-frame: #2a2a2a;
+
+	/* Mielui's own .dark block re-sets these, so they are repeated here */
+	--color-background: var(--color-page);
+	--color-card: var(--color-plate);
+	--color-panel: #1a1a1a;
+	--color-secondary: var(--color-selected);
+	--color-foreground: var(--color-strong);
+	--color-foreground-muted: var(--color-subtle);
+	--color-wash: var(--color-selected);
+	--color-field: var(--color-plate);
+	--color-primary: var(--color-strong);
+	--color-primary-stroke: transparent;
+	--color-border: #232323;
+	--color-border-strong: #2e2e2e;
+	--color-input: #2a2a2a;
+	--color-primary-hover: color-mix(in srgb, var(--color-strong) 88%, black);
+	--color-on-primary: #141414;
+}
+
+@layer base {
+	:root {
+		/* one tile of film grain, shared by everything grainy */
+		--noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+	}
+
+	html {
+		background-color: var(--color-page);
+		scrollbar-gutter: stable;
+		color-scheme: light;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+
+	html.dark {
+		color-scheme: dark;
+	}
+
+	body {
+		margin: 0;
+		background-color: var(--color-background);
+		color: var(--color-default);
+		font-family: var(--font-sans);
+		font-size: var(--font-size-body);
+		line-height: 1.5;
+		font-synthesis-weight: none;
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	img {
+		outline: 1px solid rgb(0 0 0 / 0.1);
+		outline-offset: -1px;
+	}
+
+	.dark img {
+		outline-color: rgb(255 255 255 / 0.1);
+	}
+
+	h1,
+	h2,
+	h3 {
+		color: var(--color-strong);
+		font-weight: 500;
+		text-wrap: balance;
+	}
+
+	p {
+		text-wrap: pretty;
+	}
+
+	/* one visible focus ring for custom links and buttons; :where keeps it overridable */
+	:where(a, button, [role='button'], summary):focus-visible {
+		outline: 2px solid color-mix(in oklab, var(--color-strong) 45%, transparent);
+		outline-offset: 2px;
+		border-radius: 6px;
+	}
+
+	::selection {
+		background: var(--color-strong);
+		color: var(--color-page);
+	}
+}
+
+/* A link inside a sentence. */
+@utility link {
+	color: var(--color-strong);
+	text-decoration-line: underline;
+	text-decoration-thickness: 1px;
+	text-underline-offset: 3px;
+	text-decoration-color: var(--color-border-strong);
+	transition: text-decoration-color var(--motion-duration-hover) ease;
+
+	&:hover {
+		text-decoration-color: currentColor;
+	}
+}
+
+/* A list row or nav row: muted until hovered, filled when current. */
+@utility row {
+	display: flex;
+	align-items: center;
+	gap: calc(var(--spacing) * 2.5);
+	border-radius: var(--radius-md);
+
+	&:hover,
+	&[aria-current='page'] {
+		background-color: var(--color-selected);
+		color: var(--color-strong);
+	}
+
+	&:focus-visible {
+		outline: none;
+		box-shadow: var(--focus-ring);
+	}
+}
+
+/* Between the landing page and the docs: the old page fades and sinks back a little, the new one
+   fades up from just below, and the logo glides from the nav to the sidebar and back. */
+.brand {
+	view-transition-name: brand;
+}
+
+::view-transition-old(root) {
+	animation: page-out 260ms var(--ease-out) both;
+}
+
+::view-transition-new(root) {
+	animation: page-in 300ms var(--ease-out) both;
+}
+
+::view-transition-group(brand) {
+	animation-duration: 300ms;
+	animation-timing-function: var(--ease-out);
+}
+
+@keyframes page-out {
+	to {
+		opacity: 0;
+		transform: scale(0.98);
+	}
+}
+
+@keyframes page-in {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+}
+
+/* The italic serif word inside a sans headline. */
+@utility accent {
+	font-family: var(--font-serif);
+	font-style: italic;
+	font-weight: 400;
+	letter-spacing: -0.01em;
+}
+
+/* Headlines: SF Pro Display picks itself up at these sizes; tracking tightens as they grow. */
+@utility display {
+	color: var(--color-strong);
+	font-weight: 500;
+	letter-spacing: -0.035em;
+	line-height: 1.02;
+}
+
+/* The landing page column: about 1330px of content at most, with gutters that grow with the screen. */
+@utility wrap {
+	@apply mx-auto w-full max-w-[88rem] px-5 sm:px-8 lg:px-10;
+}
+
+/* A quiet card on the page: the plate color and a hairline. Media inside sits 8px in with
+   radius 16, so the corners stay concentric. */
+@utility tile {
+	border-radius: 24px;
+	background-color: var(--color-plate);
+	box-shadow:
+		0 0 0 1px var(--color-border),
+		0 1px 2px rgb(0 0 0 / 0.03);
+}
+
+/* The double-bordered card, from madebyhex.com: a faint rim holding a white sheet.
+   Radii are concentric: sheet = shell 18 - padding 4 - border 1. */
+@utility shell {
+	padding: 4px;
+	border: 1px solid color-mix(in oklab, var(--color-strong) 9%, transparent);
+	border-radius: 18px;
+	background-color: color-mix(in oklab, var(--color-strong) 3.5%, transparent);
+}
+
+@utility sheet {
+	position: relative;
+	border-radius: 13px;
+	background-color: var(--color-plate);
+	box-shadow:
+		0 0 0 1px color-mix(in oklab, var(--color-strong) 7%, transparent),
+		0 1px 3px rgb(0 0 0 / 0.05),
+		0 5px 5px -1px rgb(0 0 0 / 0.04),
+		0 11px 6px -2px rgb(0 0 0 / 0.02);
+}
+
+/* A small raised square holding a glyph or a link, like a logo chip. */
+@utility chip {
+	display: grid;
+	flex-shrink: 0;
+	place-items: center;
+	border-radius: 8px;
+	background-color: var(--color-plate);
+	color: var(--color-strong);
+	box-shadow:
+		0 0 0 1px color-mix(in oklab, var(--color-strong) 9%, transparent),
+		0 1px 2px rgb(0 0 0 / 0.07);
+}
+
+/* Press feedback: a small scale while held, transform only so hover colors stay instant. */
+@utility press {
+	transition: transform 100ms ease-out;
+
+	&:active:not(:disabled) {
+		transform: scale(0.97);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		transition: none;
+	}
+}
+
+/* Large pressables shrink less. */
+@utility press-soft {
+	transition: transform 120ms ease-out;
+
+	&:active {
+		transform: scale(0.99);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		transition: none;
+	}
+}
+
+/* Small mono tag. */
+@utility tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	border-radius: 6px;
+	padding: 2px 7px;
+	background-color: color-mix(in oklab, var(--color-strong) 7%, transparent);
+	color: var(--color-strong);
+	font-family: var(--font-mono);
+	font-size: 11px;
+}
+
+/* Mielui buttons get the same press. */
+[data-ui='button'] {
+	transition-property: transform, background-color, color, box-shadow;
+}
+
+[data-ui='button']:active:not(:disabled) {
+	transform: scale(0.97);
+}
+
+/* Film grain over whatever background the element has: an SVG noise tile, blended into the color only. */
+@utility grain {
+	position: relative;
+	isolation: isolate;
+	overflow: hidden;
+
+	&::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		z-index: -1;
+		pointer-events: none;
+		background-image: var(--noise);
+		background-size: 200px 200px;
+		opacity: 0.22;
+		mix-blend-mode: overlay;
+	}
+}
+
+/* For Mielui's glow button: a white lit fill in light mode. In dark mode white light can't
+   show on white, so the fill drops to a lifted grey with light ink. */
+@utility glow-plain {
+	--mielui-glow-color: #fff;
+
+	.dark & {
+		--mielui-glow-color: #333;
+		--mielui-glow-light: 0.45;
+		color: var(--color-strong);
+	}
+}
+
+/* The warm booking card: soft blobs over orange. Pair with grain. */
+@utility sunrise {
+	background:
+		radial-gradient(circle at 18% 20%, #ffe14d 0, transparent 55%),
+		radial-gradient(circle at 85% 25%, #ff7a1a 0, transparent 50%),
+		radial-gradient(circle at 60% 100%, #ff2d87 0, transparent 60%),
+		#ffb21a;
+}
+
+/* Cool lavender mesh for the profile banner. Pair with grain. The mesh is drawn larger than the
+   banner and drifts across it very slowly, so the banner feels alive without anything moving fast. */
+@utility dusk {
+	position: relative;
+	isolation: isolate;
+	overflow: hidden;
+
+	/* the mesh is an oversized layer that slides, so the drift runs on the compositor instead of repainting */
+	&::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 160%;
+		height: 160%;
+		z-index: -1;
+		background:
+			radial-gradient(ellipse at 12% 110%, #ffd9e8 0, transparent 45%),
+			radial-gradient(ellipse at 30% 0%, #8fa2ff 0, transparent 55%),
+			radial-gradient(ellipse at 85% 85%, #6b6bff 0, transparent 55%),
+			radial-gradient(ellipse at 75% 10%, #f1dcff 0, transparent 50%),
+			#b8b4ff;
+		animation: drift 22s ease-in-out infinite alternate;
+
+		@media (prefers-reduced-motion: reduce) {
+			animation: none;
+		}
+	}
+}
+
+@keyframes drift {
+	to {
+		/* 0.6 / 1.6 of the layer: the same path the old background-position 0% to 100% took */
+		translate: -37.5% -37.5%;
+	}
+}
+
+/* Mielui's glow for a white button on color. Its light is white, which can't show on a white
+   fill, so the depth comes from elsewhere: bright white at the top easing to a warm grey at the
+   bottom, a crisp top edge, a soft warm shade inside the bottom, a warm drop shadow, and a faint
+   white halo on the color around it. */
+@utility glow-white {
+	--mielui-glow-color: #fff;
+	--mielui-glow-top: #ffffff;
+	--mielui-glow-bottom: #efe6df;
+	--mielui-glow-shadow:
+		inset 0 1px 0 #fff,
+		inset 0 -2px 4px rgb(150 70 20 / 0.14),
+		0 0 0 1px rgb(120 40 0 / 0.14),
+		0 1px 2px rgb(120 40 0 / 0.16),
+		0 10px 28px -6px rgb(120 30 0 / 0.38),
+		0 0 0 5px rgb(255 255 255 / 0.12);
+}
+
+/* ---- reveal ----
+   Each line of a section fades up out of a slight blur, staggered down the section and across
+   the columns, like the old site's editor lines. Big surfaces only rise: blurring a large bitmap
+   every frame is what stutters. Runs once on load, CSS only, so it needs no JavaScript. */
+@keyframes line-enter {
+	0% {
+		opacity: 0;
+		filter: blur(4px);
+		transform: translateY(0.4em);
+	}
+}
+
+@keyframes rise {
+	0% {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+}
+
+@utility stagger {
+	--stagger-delay: calc(80ms + var(--col, 0) * 70ms + var(--s, 0) * 90ms);
+
+	&:nth-of-type(2) {
+		--s: 1;
+	}
+	&:nth-of-type(3) {
+		--s: 2;
+	}
+
+	& > * {
+		animation: line-enter 520ms var(--ease-out) backwards;
+		animation-delay: calc(var(--stagger-delay) + var(--n, 0) * 50ms);
+	}
+	& > .shell,
+	& > ul,
+	& > img,
+	& > [data-rise] {
+		animation-name: rise;
+	}
+	& > :nth-child(2) {
+		--n: 1;
+	}
+	& > :nth-child(3) {
+		--n: 2;
+	}
+	& > :nth-child(4) {
+		--n: 3;
+	}
+	& > :nth-child(5) {
+		--n: 4;
+	}
+	& > :nth-child(6) {
+		--n: 5;
+	}
+	& > :nth-child(n + 7) {
+		--n: 6;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		& > * {
+			animation: none;
+		}
+	}
+}
+
+/* After the first navigation the reveal is done for the visit; pages just appear. */
+html.revealed :is(.stagger > *, .reveal-once) {
+	animation: none;
+}
+
+/* The theme switch dithers in from the toggle; the mask frames come from src/lib/dither.ts. */
+html.theming::view-transition-old(root),
+html.theming::view-transition-new(root) {
+	animation: none;
+	mix-blend-mode: normal;
+}
+
+html.theming::view-transition-new(root) {
+	mask-size: 100% 100%;
+	mask-repeat: no-repeat;
+}
+
+html.theming .brand {
+	view-transition-name: none;
+}
+
+/* Mielui's primary button turns near-white in dark mode, where its white light can't show.
+   Every primary button gets the white glow there instead: neutral, with dark shadows and a faint
+   halo for the dark page. Matched by the variant's own glow-color class, so it covers them all. */
+.dark [data-ui='button'][class*='--mielui-glow-color:var(--color-primary)'] {
+	--mielui-glow-top: #ffffff;
+	--mielui-glow-bottom: #d4d4d4;
+	--mielui-glow-shadow:
+		inset 0 1px 0 #fff,
+		inset 0 -2px 4px rgb(0 0 0 / 0.14),
+		0 0 0 1px rgb(0 0 0 / 0.6),
+		0 1px 2px rgb(0 0 0 / 0.5),
+		0 8px 22px -6px rgb(0 0 0 / 0.7),
+		0 0 18px rgb(255 255 255 / 0.07);
+}
+
+/* ---- mielwm ---- */
+
+/* The palette's scroll lock hides overflow on html and body. On body that makes it the container
+   sticky elements stick to, so the docs sidebar jumped away behind the palette. The lock on html
+   alone already stops the page scrolling. */
+html[style*='overflow: hidden'] body {
+	overflow: visible !important;
+}
+
+/* Screenshots exist in both themes; each shows only in its own. Important, so a frame that sets
+   its images to block can't bring the other theme's copy back. */
+.dark .only-light,
+html:not(.dark) .only-dark {
+	display: none !important;
+}
+
+/* A key cap, the same look as Mielui's Kbd but inline in running text and shown at every width. */
+@utility key {
+	display: inline-flex;
+	min-width: 1.6em;
+	align-items: center;
+	justify-content: center;
+	border: var(--border-size, 1px) solid var(--color-border-strong);
+	border-radius: 6px;
+	padding: 0.15em 0.4em;
+	background-color: var(--color-card);
+	box-shadow: var(--elevation-control-edge), 0 1px 0 var(--color-border-strong);
+	color: var(--color-strong);
+	font-family: var(--font-sans);
+	font-size: 0.86em;
+	font-weight: 500;
+	line-height: 1.25;
+	white-space: nowrap;
+	vertical-align: 0.06em;
+}
+
+/* Docs pages: markdown rendered at build time. Sizes come from the type scale above. */
+.prose {
+	color: var(--color-default);
+	font-size: var(--text-lg);
+	line-height: 1.7;
+
+	& > * + * {
+		margin-top: 1.1em;
+	}
+
+	& h2,
+	& h3 {
+		position: relative;
+		scroll-margin-top: 1.5rem;
+		letter-spacing: -0.015em;
+		line-height: 1.3;
+	}
+
+	& h2 {
+		margin-top: 2.6em;
+		font-size: var(--text-2xl);
+	}
+
+	& h3 {
+		margin-top: 2em;
+		font-size: var(--text-xl);
+	}
+
+	& h2 + *,
+	& h3 + * {
+		margin-top: 0.6em;
+	}
+
+	/* the # sits in the gutter and shows on hover */
+	& .anchor {
+		position: absolute;
+		inset-inline-end: 100%;
+		padding-inline-end: 0.4em;
+		color: var(--color-subtle);
+		font-weight: 400;
+		text-decoration: none;
+		opacity: 0;
+		transition: opacity var(--motion-duration-hover) ease;
+	}
+
+	& :is(h2, h3):hover .anchor,
+	& .anchor:focus-visible {
+		opacity: 1;
+	}
+
+	& a:not(.anchor) {
+		color: var(--color-strong);
+		text-decoration-line: underline;
+		text-decoration-thickness: 1px;
+		text-underline-offset: 3px;
+		text-decoration-color: var(--color-border-strong);
+		transition: text-decoration-color var(--motion-duration-hover) ease;
+
+		&:hover {
+			text-decoration-color: currentColor;
+		}
+	}
+
+	& strong {
+		color: var(--color-strong);
+		font-weight: 500;
+	}
+
+	& :not(pre) > code {
+		border-radius: 6px;
+		padding: 0.12em 0.36em;
+		background-color: color-mix(in oklab, var(--color-strong) 7%, transparent);
+		color: var(--color-strong);
+		font-family: var(--font-mono);
+		font-size: 0.84em;
+		overflow-wrap: anywhere;
+	}
+
+	& kbd {
+		@apply key;
+	}
+
+	& ul,
+	& ol {
+		padding-inline-start: 1.3em;
+	}
+
+	& ul {
+		list-style: disc;
+	}
+
+	& ol {
+		list-style: decimal;
+	}
+
+	& li + li {
+		margin-top: 0.4em;
+	}
+
+	& li::marker {
+		color: var(--color-subtle);
+	}
+
+	/* a note or warning: a warm tinted box, so it stands out from the running text */
+	& blockquote {
+		border-radius: 14px;
+		padding: 0.85em 1.1em;
+		background-color: color-mix(in oklab, #f59e0b 9%, transparent);
+		box-shadow: inset 0 0 0 1px color-mix(in oklab, #f59e0b 24%, transparent);
+		color: var(--color-strong);
+	}
+
+	/* screenshots sit on the page group's mesh with grain, framed the way the landing page frames its shots */
+	& .frame {
+		@apply grain;
+		display: block;
+		border-radius: 16px;
+		padding: 12px;
+		background: var(--mesh, var(--color-selected));
+
+		@media (width >= 40rem) {
+			padding: 28px;
+		}
+
+		& img {
+			display: block;
+			margin-inline: auto;
+			border-radius: 10px;
+			box-shadow:
+				0 0 0 1px rgb(0 0 0 / 0.12),
+				0 18px 40px -12px rgb(0 0 0 / 0.45);
+		}
+	}
+
+	& hr {
+		border: 0;
+		border-top: 1px solid var(--color-border);
+	}
+
+	& img {
+		width: 100%;
+		height: auto;
+		border-radius: 12px;
+	}
+
+	/* tables scroll sideways on their own when the column is narrow */
+	& .table-scroll {
+		overflow-x: auto;
+		border: 1px solid var(--color-border);
+		border-radius: 12px;
+		background-color: var(--color-plate);
+	}
+
+	& table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: var(--text-base);
+		line-height: 1.55;
+	}
+
+	& th {
+		color: var(--color-strong);
+		font-weight: 500;
+		text-align: start;
+		white-space: nowrap;
+	}
+
+	& :is(th, td) {
+		border-top: 1px solid var(--color-border);
+		padding: 0.6rem 0.9rem;
+		vertical-align: top;
+	}
+
+	& thead th {
+		border-top: 0;
+		background-color: color-mix(in oklab, var(--color-strong) 3%, transparent);
+	}
+
+	/* the first column is usually the keys; keep each cell on one line */
+	& td:first-child {
+		white-space: nowrap;
+	}
+}
+
+/* Docs: a panel of the page group's tint behind the title, rounded at both top corners and fading
+   straight down to nothing, so it has no bottom edge. A mask instead of a blur, so it paints once. */
+.mesh-glow {
+	border-radius: 24px 24px 0 0;
+	background: var(--tint);
+	opacity: 0.3;
+	mask-image: linear-gradient(to bottom, black, transparent);
+}
+
+.dark .mesh-glow {
+	opacity: 0.18;
+}
+
+/* A nav row: a faint ink wash on hover, a stronger one for the current page. Ink mixes work on
+   the page and on the panel in both themes, where a fixed grey would vanish in one of them. */
+@utility nav-item {
+	display: flex;
+	align-items: center;
+	border-radius: var(--radius-md);
+	color: var(--color-default);
+
+	&:hover {
+		background-color: color-mix(in oklab, var(--color-strong) 5%, transparent);
+		color: var(--color-strong);
+	}
+
+	&[aria-current='page'] {
+		background-color: color-mix(in oklab, var(--color-strong) 8%, transparent);
+		color: var(--color-strong);
+	}
+
+	&:focus-visible {
+		outline: none;
+		box-shadow: var(--focus-ring);
+	}
+}
