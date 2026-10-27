@@ -67,7 +67,7 @@ pnpm dev
 
 Releases are built by GitHub Actions. To make one:
 
-1. Add a section for the version to `CHANGELOG.md`, starting with `### <version>`.
+1. In `CHANGELOG.md`, rename `## Unreleased` to `## <version>`, add a `Released <date>.` line under it, and start a new `## Unreleased` above it.
 2. Tag the commit and push the tag: `git tag v0.2.0 && git push origin v0.2.0`.
 
 The release workflow runs the tests, signs the app with the "mielwm Dev" identity from the repository's secrets, builds the DMG, checks the signature on the app inside it, and publishes `mielwm-<version>.dmg`, `mielwm.dmg` (the name the website links to), a zip and `SHA256SUMS`, with that changelog section as the notes. A tag with a suffix, like `v0.2.0-rc.1`, becomes a pre-release, which the website's download link skips.
@@ -82,6 +82,7 @@ mielwm isn't notarized, because that needs an Apple Developer ID. The first open
 - New logic has a test. Most of it lives in `MielCore`, which is pure and easy to test.
 - The change does one thing. Refactors and fixes go in separate pull requests.
 - Docs in `docs/` say what changed for users, in plain words.
+- If users can notice the change in the app, `CHANGELOG.md` has a line for it under `## Unreleased`. Website, docs and CI changes don't go there.
 
 ## Licensing
 
