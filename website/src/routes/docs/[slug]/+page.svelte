@@ -15,7 +15,7 @@
 	const prev = $derived(at > 0 ? order[at - 1] : undefined);
 	const next = $derived(at >= 0 ? order[at + 1] : undefined);
 	const group = $derived(data.groups.find((g) => g.pages.some((p) => p.slug === doc.slug)));
-	const edit = $derived(`${site.editBase}${doc.slug}.md`);
+	const edit = $derived(doc.slug === 'changelog' ? `${site.repo}/edit/main/CHANGELOG.md` : `${site.editBase}${doc.slug}.md`);
 	const look = $derived(groupLook(group?.title));
 	const groupOf = (slug: string) => groupLook(data.groups.find((g) => g.pages.some((p) => p.slug === slug))?.title);
 </script>

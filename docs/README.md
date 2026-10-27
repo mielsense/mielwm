@@ -22,3 +22,4 @@
 
 - [Performance](performance.md)
 - [Troubleshooting](troubleshooting.md)
+- [Changelog](../CHANGELOG.md)
