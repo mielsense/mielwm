@@ -93,8 +93,9 @@ for ws in $(barik '" ".join(x["id"] for x in b["spaces"])'); do
     [ "$("$SHIM" list-workspaces --focused --json)" = "[{\"workspace\":\"$ws\"}]" ] || fail "workspace $ws did not become current"
 done
 
-step "other commands print nothing and succeed"
-[ -z "$("$SHIM" list-monitors --json)" ] || fail "an unknown command printed something"
+step "other commands print what an empty AeroSpace would and succeed"
+[ "$("$SHIM" list-monitors --json 2>/dev/null)" = "[]" ] || fail "an unknown list must print []"
+[ -z "$("$SHIM" move-node-to-workspace 1 2>/dev/null)" ] || fail "an unknown action printed something"
 
 step "quit mielwm: the helper quits too, and Barik gets empty lists"
 "$BIN" quit >/dev/null

@@ -15,6 +15,10 @@ extension AppDelegate {
     func setBarik(_ on: Bool, _ model: SettingsModel) {
         guard let barik else { return }
         NSApp.activate(ignoringOtherApps: true)
+        if on, barik.temporaryLocation {
+            _ = Self.barikMoveFirstAlert().runModal()
+            return
+        }
         if on, barik.config == nil {
             _ = Self.barikNoConfigAlert().runModal()
             return
@@ -55,6 +59,17 @@ extension AppDelegate {
         let alert = NSAlert.mielwm()
         alert.messageText = "Open Barik once first"
         alert.informativeText = "Barik makes its config the first time it runs, and mielwm needs it. Open Barik, then turn this on again."
+        alert.addButton(withTitle: "OK")
+        return alert
+    }
+
+    static func barikMoveFirstAlert() -> NSAlert {
+        let alert = NSAlert.mielwm()
+        alert.messageText = "Move mielwm to Applications first"
+        alert.informativeText = """
+            mielwm is running from a disk image or a temporary place macOS made for it, which goes away when \
+            it quits, and Barik would lose it. Move mielwm to Applications, open it from there, then turn this on.
+            """
         alert.addButton(withTitle: "OK")
         return alert
     }

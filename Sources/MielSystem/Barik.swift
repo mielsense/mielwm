@@ -23,6 +23,7 @@ public final class BarikLink {
     public enum Problem: Error, Equatable {
         case noConfig // Barik writes one the first time it runs
         case unsupported(String) // aerospace is set in a form mielwm doesn't edit
+        case temporaryLocation // mielwm runs from a place gone at quit; Barik would call a dead path
     }
 
     /// BarikEnhanced, then upstream Barik.
@@ -36,6 +37,9 @@ public final class BarikLink {
         (self.home, self.shim, self.helper, self.apps, self.defaults) = (home, shim, helper, apps, defaults)
     }
 
+    /// Translocated by macOS (run from Downloads) or on a mounted disk image.
+    public var temporaryLocation: Bool { shim.contains("/AppTranslocation/") || shim.hasPrefix("/Volumes/") }
+
     /// The file Barik reads, nil before Barik has made one.
     public var config: URL? {
         BarikConfig.candidates(home: home).first { FileManager.default.fileExists(atPath: $0.path) }
@@ -43,6 +47,7 @@ public final class BarikLink {
 
     /// Points Barik at mielwm, starts the helper and relaunches a running Barik.
     public func turnOn() throws {
+        guard !temporaryLocation else { throw Problem.temporaryLocation }
         guard let file = config else { throw Problem.noConfig }
         let text = try String(contentsOf: file, encoding: .utf8)
         guard let edited = BarikConfig.pointing(text, to: shim) else { throw Problem.unsupported(file.path) }
@@ -52,25 +57,40 @@ public final class BarikLink {
                 try Data(text.utf8).write(to: backup, options: .withoutOverwriting)
             }
             try write(edited.text, to: file)
-            defaults.set(edited.previous, forKey: Self.previousKey)
+            // Another copy's command: the user's own value is the one saved then.
+            if !edited.wasMielwm { defaults.set(edited.previous, forKey: Self.previousKey) }
         }
         apps.startHelper(helper) { [apps] _ in apps.relaunchBarik() }
     }
 
-    /// Puts Barik's old aerospace.path back, stops the helper and relaunches a running Barik.
+    /// Puts Barik's old aerospace.path back, stops the helper and relaunches a
+    /// running Barik. When the config can't be restored, throws and leaves the helper running.
     public func turnOff() throws {
+        if let file = config {
+            let text = try String(contentsOf: file, encoding: .utf8)
+            let restored = BarikConfig.restoring(text, from: shim, previous: defaults.string(forKey: Self.previousKey))
+            if restored != text { try write(restored, to: file) }
+            defaults.removeObject(forKey: Self.previousKey)
+        }
         apps.stopHelper()
-        defer { apps.relaunchBarik() }
-        guard let file = config else { return }
-        let text = try String(contentsOf: file, encoding: .utf8)
-        let restored = BarikConfig.restoring(text, from: shim, previous: defaults.string(forKey: Self.previousKey))
-        if restored != text { try write(restored, to: file) }
-        defaults.removeObject(forKey: Self.previousKey)
+        apps.relaunchBarik()
     }
 
-    /// mielwm started with the switch on: start the helper, and relaunch
-    /// Barik if it started first and so did not see it.
+    /// mielwm started with the switch on: point Barik at this copy of mielwm
+    /// if it names another, start the helper, and relaunch Barik if it
+    /// started first and so did not see either. A copy gone at quit leaves
+    /// the path alone: any copy's command reaches the running mielwm.
     public func resume() {
+        do {
+            if !temporaryLocation, let file = config {
+                let text = try String(contentsOf: file, encoding: .utf8)
+                if let edited = BarikConfig.pointing(text, to: shim), edited.wasMielwm, edited.text != text {
+                    try write(edited.text, to: file)
+                }
+            }
+        } catch {
+            log("Barik's config was not pointed at this mielwm: \(error)")
+        }
         apps.startHelper(helper) { [apps] started in
             if let started, let barik = apps.barikLaunched(), barik < started { apps.relaunchBarik() }
         }

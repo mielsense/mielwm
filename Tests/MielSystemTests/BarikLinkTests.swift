@@ -26,7 +26,7 @@ private let shim = "/Applications/mielwm.app/Contents/Helpers/aerospace"
 private let original = "theme = \"system\"\n\n[widgets]\ndisplayed = [\"default.spaces\"]\n"
 
 @MainActor
-private func link(_ apps: FakeApps) throws -> (BarikLink, home: URL) {
+private func link(_ apps: FakeApps, shim: String = shim) throws -> (BarikLink, home: URL) {
     let home = FileManager.default.temporaryDirectory.appendingPathComponent("mielwm-barik-\(UUID().uuidString)")
     try FileManager.default.createDirectory(at: home, withIntermediateDirectories: true)
     let defaults = try #require(UserDefaults(suiteName: "mielwm-barik-test-\(UUID().uuidString)"))
@@ -75,7 +75,7 @@ private func read(_ url: URL) throws -> String { try String(contentsOf: url, enc
     let apps = FakeApps()
     let (barik, home) = try link(apps)
     let file = home.appendingPathComponent(".barik-config.toml")
-    let before = "aerospace.path = '/opt/homebrew/bin/aerospace'\n" + original
+    let before = withBrew
     try before.write(to: file, atomically: false, encoding: .utf8)
     try barik.turnOn()
     #expect(try read(file).contains("aerospace.path = \"\(shim)\""))
@@ -113,4 +113,91 @@ private func read(_ url: URL) throws -> String { try String(contentsOf: url, enc
     apps.barik = apps.helperStart.addingTimeInterval(-60)
     barik.resume()
     #expect(apps.relaunched == 1)
+}
+
+// The same user and settings, another copy of mielwm.app: moved between
+// /Applications and ~/Applications, or run from Downloads or the disk image.
+private let shimB = "/Users/u/Applications/mielwm.app/Contents/Helpers/aerospace"
+private let brew = "'/opt/homebrew/bin/aerospace'"
+private let withBrew = "aerospace.path = \(brew)\n" + original
+
+@MainActor
+private func moved(_ barik: BarikLink, to shim: String) -> BarikLink {
+    BarikLink(home: barik.home, shim: shim, helper: barik.helper, apps: barik.apps, defaults: barik.defaults)
+}
+
+@MainActor
+private func barikConfig(_ text: String, in home: URL) throws -> URL {
+    let file = home.appendingPathComponent(".barik-config.toml")
+    try text.write(to: file, atomically: false, encoding: .utf8)
+    return file
+}
+
+@MainActor @Test func offFromAnotherCopyGivesBackTheFileAsItWas() throws {
+    for before in [original, withBrew] {
+        let (a, home) = try link(FakeApps())
+        let file = try barikConfig(before, in: home)
+        try a.turnOn()
+        try moved(a, to: shimB).turnOff()
+        #expect(try read(file) == before)
+        #expect(a.defaults.string(forKey: BarikLink.previousKey) == nil)
+    }
+}
+
+@MainActor @Test func onFromAnotherCopyKeepsTheUsersPath() throws {
+    let before = withBrew
+    let (a, home) = try link(FakeApps())
+    let file = try barikConfig(before, in: home)
+    try a.turnOn()
+    let b = moved(a, to: shimB)
+    try b.turnOn()
+    #expect(try read(file).contains("aerospace.path = \"\(shimB)\""))
+    #expect(a.defaults.string(forKey: BarikLink.previousKey) == brew)
+    try b.turnOff()
+    #expect(try read(file) == before)
+}
+
+@MainActor @Test func atLaunchAnotherCopyPointsBarikAtItself() throws {
+    let apps = FakeApps()
+    let before = withBrew
+    let (a, home) = try link(apps)
+    let file = try barikConfig(before, in: home)
+    try a.turnOn()
+    // A copy gone at quit leaves the path to one that stays.
+    moved(a, to: "/Volumes/mielwm/mielwm.app/Contents/Helpers/aerospace").resume()
+    #expect(try read(file).contains("aerospace.path = \"\(shim)\""))
+    let b = moved(a, to: shimB)
+    b.resume()
+    #expect(try read(file) == before.replacingOccurrences(of: brew, with: "\"\(shimB)\""))
+    #expect(apps.helperRunning && apps.relaunched == 0) // Barik isn't running
+    try b.turnOff()
+    #expect(try read(file) == before)
+
+    // A path the user set since is theirs.
+    b.resume()
+    #expect(try read(file) == before)
+}
+
+@MainActor @Test func aCopyThatMovesAwayAtQuitDoesNotTurnOn() throws {
+    for place in ["/private/var/folders/xy/T/AppTranslocation/1234/d/mielwm.app", "/Volumes/mielwm/mielwm.app"] {
+        let apps = FakeApps()
+        let (barik, home) = try link(apps, shim: place + "/Contents/Helpers/aerospace")
+        let file = try barikConfig(original, in: home)
+        #expect(barik.temporaryLocation)
+        #expect(throws: BarikLink.Problem.temporaryLocation) { try barik.turnOn() }
+        #expect(try read(file) == original && !apps.helperRunning)
+    }
+    let (installed, _) = try link(FakeApps())
+    #expect(!installed.temporaryLocation)
+}
+
+@MainActor @Test func offKeepsTheHelperWhenTheConfigCannotBeRead() throws {
+    let apps = FakeApps()
+    apps.barik = .distantPast
+    let (barik, home) = try link(apps)
+    let file = try barikConfig(original, in: home)
+    try barik.turnOn()
+    try Data([0xFF, 0xFE, 0x00]).write(to: file)
+    #expect(throws: (any Error).self) { try barik.turnOff() }
+    #expect(apps.helperRunning && apps.relaunched == 1)
 }

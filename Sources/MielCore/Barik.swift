@@ -70,15 +70,17 @@ public enum BarikConfig {
     }
 
     /// `text` with aerospace.path set to `path`, and the value it had, as
-    /// written in the file (nil: it had none). nil when aerospace is set in a
-    /// form this does not edit (an inline table).
-    public static func pointing(_ text: String, to path: String) -> (text: String, previous: String?)? {
+    /// written in the file (nil: it had none, or it was mielwm's command,
+    /// then `wasMielwm`). nil when aerospace is set in a form this does not
+    /// edit (an inline table).
+    public static func pointing(_ text: String, to path: String) -> (text: String, previous: String?, wasMielwm: Bool)? {
         let scan = Scan(text)
         guard !scan.inlineTable else { return nil }
         var lines = scan.lines
-        if let found = scan.path {
+        if let found = scan.path, let value = scan.pathValue {
             lines[found.line].replaceSubrange(found.value, with: quoted(path))
-            return (lines.joined(separator: "\n"), scan.pathValue)
+            let mielwm = isMielwm(value)
+            return (lines.joined(separator: "\n"), mielwm ? nil : value, mielwm)
         }
         if let table = scan.aerospaceTable {
             lines.insert("path = \(quoted(path))", at: table + 1)
@@ -87,14 +89,15 @@ public enum BarikConfig {
         } else {
             lines.insert("aerospace.path = \(quoted(path))", at: lines.last == "" ? lines.count - 1 : lines.count)
         }
-        return (lines.joined(separator: "\n"), nil)
+        return (lines.joined(separator: "\n"), nil, false)
     }
 
     /// Undoes `pointing`: puts `previous` back, or removes the line. Leaves
-    /// the text alone when aerospace.path no longer is `path`.
+    /// the text alone when aerospace.path no longer is `path` or another
+    /// copy's command.
     public static func restoring(_ text: String, from path: String, previous: String?) -> String {
         let scan = Scan(text)
-        guard let found = scan.path, scan.pathValue == quoted(path) else { return text } // as `pointing` wrote it
+        guard let found = scan.path, let value = scan.pathValue, value == quoted(path) || isMielwm(value) else { return text }
         var lines = scan.lines
         if let previous {
             lines[found.line].replaceSubrange(found.value, with: previous)
@@ -107,6 +110,12 @@ public enum BarikConfig {
             }
         }
         return lines.joined(separator: "\n")
+    }
+
+    /// A value, as written in the file, naming the `aerospace` command of
+    /// any copy of mielwm.app: the app's path changes when it moves.
+    static func isMielwm(_ value: String) -> Bool {
+        value.hasSuffix("/Contents/Helpers/aerospace\"") || value.hasSuffix("/Contents/Helpers/aerospace'")
     }
 
     static func quoted(_ s: String) -> String {

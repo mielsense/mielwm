@@ -32,12 +32,12 @@ The very first time mielwm starts, before any config exists, it imports the gaps
 Turn on Settings > Layout & workspaces > Work with Barik. Barik only looks for a running app called AeroSpace and asks the `aerospace` command for workspaces and windows. So when the switch is on, mielwm does two things:
 
 - It runs a tiny hidden helper named AeroSpace, which quits on its own when mielwm does.
-- It sets `aerospace.path` in Barik's config to the `aerospace` command inside mielwm.app (`mielwm.app/Contents/Helpers/aerospace`). mielwm edits the config file Barik already uses (`~/.barik-config.toml` or `~/.config/barik/config.toml`) in place, keeps a backup next to it (`.mielwm-backup` on the end of the name, made once and never overwritten), and asks you first. If Barik has never run and has no config yet, open Barik once, then turn the switch on.
+- It sets `aerospace.path` in Barik's config to the `aerospace` command inside mielwm.app (`mielwm.app/Contents/Helpers/aerospace`). mielwm edits the config file Barik already uses (`~/.barik-config.toml` or `~/.config/barik/config.toml`) in place, keeps a backup next to it (`.mielwm-backup` on the end of the name, made once and never overwritten), and asks you first. If Barik has never run and has no config yet, open Barik once, then turn the switch on. The switch stays off while mielwm runs from its disk image or straight from Downloads: that copy goes away when mielwm quits. Move mielwm to Applications first.
 
-Barik checks for AeroSpace only when it starts, so mielwm relaunches Barik when you turn the switch on or off. It asks before doing that too. When mielwm starts with the switch on, it relaunches Barik only if Barik started first. From then on Barik shows mielwm's workspaces and the windows on each, and clicking one switches to it. Floating windows belong to no workspace, so Barik doesn't list them.
+Barik checks for AeroSpace only when it starts, so mielwm relaunches Barik when you turn the switch on or off. It asks before doing that too. When mielwm starts with the switch on, it points `aerospace.path` at itself again if you moved mielwm.app, and relaunches Barik only if Barik started first. From then on Barik shows mielwm's workspaces and the windows on each, and clicking one switches to it. Floating windows belong to no workspace, so Barik doesn't list them.
 
 Barik runs the `aerospace` command four times for each update. Barik itself updates ten times a second, 40 calls a second; Barik Enhanced 1.8.7 updates every 5 seconds. mielwm's command is a small program built for that, which answers from mielwm's current state and exits. [Performance](performance.md#barik) has what it costs.
 
-Turning the switch off puts Barik's old `aerospace.path` back (or removes the line), quits the helper and relaunches Barik.
+Turning the switch off puts Barik's old `aerospace.path` back (or removes the line), from any copy of mielwm.app, then quits the helper and relaunches Barik.
 
 The real AeroSpace command in `/opt/homebrew/bin` isn't touched, so AeroSpace keeps working if you go back to it.

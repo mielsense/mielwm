@@ -10,8 +10,9 @@ import os
 //                                app called AeroSpace, until mielwm exits
 //
 // Barik runs the command four times every few seconds, so it starts fast and
-// never waits long: no mielwm, or no answer within 0.3 s, prints what an
-// AeroSpace with no windows would (`[]` for a list, nothing for an action).
+// never waits long: no mielwm, no answer within 0.3 s, or a command mielwm
+// doesn't know prints what an AeroSpace with no windows would (`[]` for a
+// list, nothing for an action).
 
 let args = Array(CommandLine.arguments.dropFirst())
 
@@ -24,11 +25,12 @@ if args.first == "--mielwm-pid" {
     dispatchMain()
 }
 
-let reply = try? IPCClient.send(["aerospace"] + args, timeout: 0.3)
-if let reply, reply.starts(with: Data(#"{"error""#.utf8)) {
+var reply = try? IPCClient.send(["aerospace"] + args, timeout: 0.3)
+if let error = reply, error.starts(with: Data(#"{"error""#.utf8)) {
     Logger(subsystem: "my.miel.mielwm", category: "aerospace")
         .error("aerospace: unknown command: \(args.joined(separator: " "), privacy: .public)")
-    exit(0)
+    FileHandle.standardError.write(error + Data("\n".utf8))
+    reply = nil
 }
 let fallback = args.first?.hasPrefix("list-") == true ? "[]\n" : ""
 FileHandle.standardOutput.write(reply.map { $0.isEmpty ? $0 : $0 + Data("\n".utf8) } ?? Data(fallback.utf8))

@@ -172,3 +172,27 @@ private func roundTrip(_ text: String, previous expected: String? = nil) throws 
     let home = URL(fileURLWithPath: "/Users/u")
     #expect(BarikConfig.candidates(home: home).map(\.path) == ["/Users/u/.barik-config.toml", "/Users/u/.config/barik/config.toml"])
 }
+
+// Another copy of mielwm.app: moved, translocated, or run from the disk image.
+private let otherShim = "/Users/u/Applications/mielwm.app/Contents/Helpers/aerospace"
+
+@Test func anyMielwmCommandIsMielwmsOwn() throws {
+    let text = "aerospace.path = \"/Users/u/Applications/mielwm.app/Contents/Helpers/aerospace\"\n" + barikDefaultConfig
+    #expect(BarikConfig.restoring(text, from: shim, previous: "'/opt/homebrew/bin/aerospace'")
+        == "aerospace.path = '/opt/homebrew/bin/aerospace'\n" + barikDefaultConfig)
+    let literal = "aerospace.path = '/Applications/mielwm 2.app/Contents/Helpers/aerospace'\n" + barikDefaultConfig
+    #expect(BarikConfig.restoring(literal, from: shim, previous: nil) == barikDefaultConfig)
+    // A path that only looks alike stays.
+    let brew = "aerospace.path = \"/opt/homebrew/Contents/Helpers/aerospace-x\"\n" + barikDefaultConfig
+    #expect(BarikConfig.restoring(brew, from: shim, previous: nil) == brew)
+}
+
+@Test func anotherCopysCommandIsNeverThePreviousPath() throws {
+    let a = try #require(BarikConfig.pointing(barikDefaultConfig, to: otherShim))
+    #expect(a.previous == nil && !a.wasMielwm)
+    let b = try #require(BarikConfig.pointing(a.text, to: shim))
+    #expect(b.previous == nil && b.wasMielwm)
+    #expect(try barikPath(b.text) == shim)
+    let mine = try #require(BarikConfig.pointing("aerospace.path = '/opt/homebrew/bin/aerospace'\n", to: shim))
+    #expect(mine.previous == "'/opt/homebrew/bin/aerospace'" && !mine.wasMielwm)
+}
