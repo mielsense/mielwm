@@ -277,12 +277,22 @@ private func tapState() -> TapState {
     #expect(!CaptureManager.sameRows(a, try buffer(64, 40), phase: 0)) // another size
 }
 
-@Test func stillsOfWindowsLongOutOfSightShrink() throws {
+@Test func stillsScaleToHalf() throws {
+    let context = try #require(CGContext(data: nil, width: 800, height: 400, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                                         bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue))
+    let image = try #require(context.makeImage())
+    let half = try #require(CaptureManager.scaled(image, by: 0.5))
+    #expect(half.width == 400 && half.height == 200)
+}
+
+// GitHub's macOS runners never run the utility-QoS shrink within 30 s, though
+// default-QoS work runs fine; stillsScaleToHalf checks the scaling there.
+@Test(.disabled(if: ProcessInfo.processInfo.environment["CI"] != nil, "utility QoS stalls on CI runners"))
+func stillsOfWindowsLongOutOfSightShrink() throws {
     func image(_ width: Int) throws -> CGImage {
         try #require(CGContext(data: nil, width: width, height: width / 2, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
                                bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue)?.makeImage())
     }
-    #expect(CaptureManager.scaled(try image(800), by: 0.5)?.width == 400) // the scaling itself, apart from the queue
     let capture = CaptureManager()
     let big = WindowID(pid: 1, number: 1), small = WindowID(pid: 1, number: 2)
     capture.store(.image(try image(800)), for: big)
