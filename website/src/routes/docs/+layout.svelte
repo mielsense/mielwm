@@ -109,11 +109,22 @@
 					<Icon icon={ChevronDownIcon} size={15} class="text-subtle transition-transform duration-200 {menuOpen ? 'rotate-180' : ''}" />
 				</button>
 			</div>
-			<div id="docs-menu" class="px-3 pb-4 sm:px-5" hidden={!menuOpen}>
-				<nav aria-label="Docs">{@render nav()}</nav>
-				<div class="flex items-center gap-1 px-1">
-					<div class="me-2 flex-1">{@render download()}</div>
-					{@render tools()}
+			<!-- Grows from zero height so it slides down and pushes the page; inert keeps it out of the tab order while closed. -->
+			<div
+				id="docs-menu"
+				inert={!menuOpen}
+				class="grid transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none {menuOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}"
+			>
+				<div class="min-h-0 overflow-hidden">
+					<div
+						class="px-3 pb-4 transition-[opacity,translate] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none sm:px-5 {menuOpen ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0'}"
+					>
+						<nav aria-label="Docs">{@render nav()}</nav>
+						<div class="flex items-center gap-1 px-1">
+							<div class="me-2 flex-1">{@render download()}</div>
+							{@render tools()}
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
