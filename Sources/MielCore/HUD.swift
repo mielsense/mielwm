@@ -1,8 +1,8 @@
 import CoreGraphics
 import Foundation
 
-// The HUDModel Render draws, built from the overview machine and the canvas
-// (Phantomat Hud.cpp: palette rows, footer, hints, help sheet). Text is
+// The HUDModel Render draws, built from the overview machine and the canvas:
+// palette rows, footer, hints, help sheet. Text is
 // sentence case as written; `{...}` in hints and toasts marks a key Render
 // draws as a keycap.
 

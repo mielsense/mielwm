@@ -21,7 +21,7 @@ public struct ManagedWindow: Hashable, Sendable {
     var pending: CGRect? // newest unconfirmed report while an expectation lives
 
     public var isShown: Bool { !isMinimized && !isHidden }
-    public var displayTitle: String { title.isEmpty ? appName : title }
+    var displayTitle: String { title.isEmpty ? appName : title }
 }
 
 /// A frame we asked for and are waiting to see reported.
@@ -49,12 +49,12 @@ struct Checkpoint: Hashable, Sendable {
 
 /// Everything Core knows. Change it only through `send` / `reduce`.
 public struct CanvasState: Sendable {
-    public static let expectationLifetime = 1.0 // seconds a setFrame has to show up
-    public static let frameTolerance: CGFloat = 2
-    public static let screenGracePeriod = 1.5
-    public static let maxReparks = 2
-    public static let toastDuration = 1.8
-    public static let undoDepth = 30
+    static let expectationLifetime = 1.0 // seconds a setFrame has to show up
+    static let frameTolerance: CGFloat = 2
+    static let screenGracePeriod = 1.5
+    static let maxReparks = 2
+    static let toastDuration = 1.8
+    static let undoDepth = 30
 
     public internal(set) var screens: [ScreenInfo]
     public var settings: Settings { didSet { settingsChanged(from: oldValue) } }

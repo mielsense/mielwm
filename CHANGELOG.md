@@ -2,7 +2,7 @@
 
 Notable changes to mielwm, newest first. Versions follow [semantic versioning](https://semver.org).
 
-## 1.0.0
+## 0.1.0
 
 The first release.
 

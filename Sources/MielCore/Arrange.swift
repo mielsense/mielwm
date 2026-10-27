@@ -1,8 +1,7 @@
 import CoreGraphics
 import Foundation
 
-// Port of Phantomat arrangeCanvasWindows: tidy every window up on the grid,
-// grouped by what it is for, with no overlaps.
+// Tidy every window up on the grid, grouped by what it is for, with no overlaps.
 
 public struct ArrangeItem: Hashable, Sendable {
     public var id: WindowID
@@ -21,7 +20,7 @@ public struct ArrangeItem: Hashable, Sendable {
 /// Words that say what a window is for: ASCII words of 4+ letters from its
 /// title and app name, minus words that say nothing (pass the user and host
 /// names in `extraStopwords`, every terminal title carries them).
-public func contextTokens(title: String, appName: String, extraStopwords: Set<String> = []) -> Set<String> {
+func contextTokens(title: String, appName: String, extraStopwords: Set<String> = []) -> Set<String> {
     let stopwords: Set<String> = [
         "about", "agent", "application", "browser", "chrome", "chromium", "claude", "codex", "default", "desktop",
         "file", "files", "firefox", "foot", "google", "home", "https", "inbox", "manager", "mozilla", "new", "notes",
@@ -38,9 +37,9 @@ public func contextTokens(title: String, appName: String, extraStopwords: Set<St
 
 public struct ArrangeOptions: Hashable, Sendable {
     public var grid: Double = 80
-    public var sizeSimilarity: Double = 0.12
-    public var resizeLimit: Double = 0.15
-    public var contextGrouping = true
+    var sizeSimilarity: Double = 0.12
+    var resizeLimit: Double = 0.15
+    var contextGrouping = true
 
     public init(grid: Double = 80, sizeSimilarity: Double = 0.12, resizeLimit: Double = 0.15, contextGrouping: Bool = true) {
         self.grid = grid

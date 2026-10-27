@@ -1,16 +1,16 @@
 import CoreGraphics
 import Foundation
 
-/// The nearest window that way, from where the windows are now (Phantomat
-/// moveSelection, the rules Android uses for arrow keys). A candidate has to
+/// The nearest window that way, from where the windows are now (the
+/// rules Android uses for arrow keys). A candidate has to
 /// reach further that way than the current window with both edges, and some
 /// of it has to lie within 45 degrees of that side. One in line with the
 /// current window (their spans across the arrow overlap) beats one that is
 /// not, unless, going up or down, that one is wholly nearer; otherwise the
 /// nearer wins, sideways offset counting less than distance along the arrow.
 /// With no current window, the first candidate.
-public func nearestWindow(from current: CGRect?, direction: Direction,
-                          candidates: [(id: WindowID, frame: CGRect)]) -> WindowID? {
+func nearestWindow(from current: CGRect?, direction: Direction,
+                   candidates: [(id: WindowID, frame: CGRect)]) -> WindowID? {
     guard let current else { return candidates.first?.id }
     let horizontal = direction == .left || direction == .right
     let forward = direction == .right || direction == .down
@@ -74,7 +74,7 @@ public struct MRU: Hashable, Codable, Sendable {
 }
 
 /// "on screen", or an arrow and a distance in screens, as the palette shows it.
-public func directionHint(for frame: CGRect, viewCenter: CGPoint, viewSize: CGSize) -> String {
+func directionHint(for frame: CGRect, viewCenter: CGPoint, viewSize: CGSize) -> String {
     guard viewSize.width > 0, viewSize.height > 0 else { return "" }
     let dx = (frame.midX - viewCenter.x) / viewSize.width
     let dy = (frame.midY - viewCenter.y) / viewSize.height

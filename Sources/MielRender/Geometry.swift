@@ -75,7 +75,7 @@ struct MinimapPixels {
         let workspaces = layout.workspaces.prefix(16)
         for (marker, w) in zip(layout.windows, model.windows) where count < markers.count - workspaces.count {
             markers[count] = SIMD4(Self.px(marker, scale))
-            // Fully receded windows stay as faint ghosts, as in Phantomat (alpha 0.22).
+            // Fully receded windows stay as faint ghosts (alpha 0.22).
             dims[count] = Float(min(max(w.dim, 0), 1) * 0.78)
             count += 1
         }

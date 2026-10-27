@@ -59,9 +59,9 @@ pnpm dev
 Releases are built by GitHub Actions. To make one:
 
 1. Add a section for the version to `CHANGELOG.md`, starting with `## <version>`.
-2. Tag the commit and push the tag: `git tag v1.1.0 && git push origin v1.1.0`.
+2. Tag the commit and push the tag: `git tag v0.2.0 && git push origin v0.2.0`.
 
-The release workflow runs the tests, signs the app with the "mielwm Dev" identity from the repository's secrets, builds the DMG, checks the signature on the app inside it, and publishes `mielwm-<version>.dmg`, `mielwm.dmg` (the name the website links to), a zip and `SHA256SUMS`, with that changelog section as the notes. A tag with a suffix, like `v1.1.0-rc.1`, becomes a pre-release, which the website's download link skips.
+The release workflow runs the tests, signs the app with the "mielwm Dev" identity from the repository's secrets, builds the DMG, checks the signature on the app inside it, and publishes `mielwm-<version>.dmg`, `mielwm.dmg` (the name the website links to), a zip and `SHA256SUMS`, with that changelog section as the notes. A tag with a suffix, like `v0.2.0-rc.1`, becomes a pre-release, which the website's download link skips.
 
 The workflow refuses to sign with any other identity, so every release keeps the same signature and users keep their permissions across updates. It reads three settings: the secrets `MIELWM_SIGNING_P12` (the identity, base64) and `MIELWM_SIGNING_P12_PASSWORD`, and the variable `MIELWM_CERT_SHA1` (the certificate's SHA-1, as shown by `codesign -dr - mielwm.app`).
 

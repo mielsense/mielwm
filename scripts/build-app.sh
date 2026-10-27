@@ -9,7 +9,7 @@
 # Open at login is a switch in Settings > General.
 #
 # For CI (see .github/workflows/release.yml):
-#   MIELWM_VERSION            the version, default 1.0.0
+#   MIELWM_VERSION            the version, default 0.1.0
 #   MIELWM_KEYCHAIN           a keychain that already holds the identity, and
 #   MIELWM_KEYCHAIN_PASSWORD  its password: no login keychain is touched
 #   MIELWM_REQUIRE_IDENTITY=1 never create an identity, never sign ad hoc
@@ -40,12 +40,18 @@ BUNDLE_ID=my.miel.mielwm
 IDENTITY="mielwm Dev"
 KEYCHAIN="${MIELWM_KEYCHAIN:-$HOME/Library/Keychains/mielwm-dev.keychain-db}"
 PASSWORD_SERVICE=my.miel.mielwm.signing-keychain
-VERSION=${MIELWM_VERSION:-1.0.0}
+VERSION=${MIELWM_VERSION:-0.1.0}
 BUILD=$(git rev-list --count HEAD 2>/dev/null || echo 1)
 APP=build/mielwm.app
 
 echo "== swift build -c release"
-swift build -c release --product mielwm 2>&1 | grep -E "error|Build complete" || true
+# Short output, but a failed build stops here: never sign and ship the last good binary.
+if ! build_log=$(swift build -c release --product mielwm 2>&1); then
+    echo "$build_log" | grep -E "error" || echo "$build_log" | tail -20
+    echo "build failed" >&2
+    exit 1
+fi
+echo "$build_log" | grep -E "error|Build complete" || true
 BIN=$(swift build -c release --product mielwm --show-bin-path)/mielwm
 [ -x "$BIN" ] || { echo "build failed" >&2; exit 1; }
 

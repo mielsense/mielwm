@@ -2,9 +2,7 @@ import CoreGraphics
 
 /// Where the minimap and its arrange button sit on one screen and how canvas
 /// points map into it. Screen-local points, top-left origin, not lensed (the
-/// minimap is composed after the lens). Same numbers as Phantomat
-/// renderCanvasMinimap / jumpCanvasMinimap / canvasArrangeButtonBox, in points
-/// instead of device pixels and without their pixel rounding.
+/// minimap is composed after the lens).
 public struct MinimapLayout: Hashable, Sendable {
     public var panel: CGRect
     public var arrangeButton: CGRect
@@ -21,7 +19,7 @@ public struct MinimapLayout: Hashable, Sendable {
         case jump(CGPoint) // canvas point to center the camera on
     }
 
-    public func toPanel(_ canvasPoint: CGPoint) -> CGPoint {
+    func toPanel(_ canvasPoint: CGPoint) -> CGPoint {
         CGPoint(x: origin.x + (canvasPoint.x - worldBounds.minX) * fit,
                 y: origin.y + (canvasPoint.y - worldBounds.minY) * fit)
     }

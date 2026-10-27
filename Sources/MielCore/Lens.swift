@@ -9,7 +9,7 @@ import Foundation
 //   c  = p / s * 2 - 1                (both axes in -1...1)
 //   c' = c * (1 + k * |c|^2) / e
 //   source = (c' * 0.5 + 0.5) * s
-// which is Phantomat getOverviewMousePosLocal and the shader's `warped`.
+// which is the shader's `warped`.
 
 /// How far the lens has eased in for an overview transition (0...1).
 public func lensProgress(look: Look, transition: Double) -> Double {
