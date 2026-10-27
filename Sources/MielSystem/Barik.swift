@@ -38,7 +38,14 @@ public final class BarikLink {
     }
 
     /// Translocated by macOS (run from Downloads) or on a mounted disk image.
-    public var temporaryLocation: Bool { shim.contains("/AppTranslocation/") || shim.hasPrefix("/Volumes/") }
+    /// Translocated, or on a read-only disk like the DMG. An Applications
+    /// folder on a writable external drive is fine.
+    public var temporaryLocation: Bool {
+        if shim.contains("/AppTranslocation/") { return true }
+        guard shim.hasPrefix("/Volumes/") else { return false }
+        let readOnly = try? URL(fileURLWithPath: shim).resourceValues(forKeys: [.volumeIsReadOnlyKey]).volumeIsReadOnly
+        return readOnly ?? true // can't tell: don't point Barik at it
+    }
 
     /// The file Barik reads, nil before Barik has made one.
     public var config: URL? {

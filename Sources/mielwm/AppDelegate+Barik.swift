@@ -67,7 +67,7 @@ extension AppDelegate {
         let alert = NSAlert.mielwm()
         alert.messageText = "Move mielwm to Applications first"
         alert.informativeText = """
-            mielwm is running from a disk image or a temporary place macOS made for it, which goes away when \
+            mielwm is running from a disk image or a temporary folder macOS made for it, which goes away when \
             it quits, and Barik would lose it. Move mielwm to Applications, open it from there, then turn this on.
             """
         alert.addButton(withTitle: "OK")
@@ -77,6 +77,7 @@ extension AppDelegate {
     private static func describe(_ error: Error) -> String {
         switch error {
         case let BarikLink.Problem.unsupported(path): "\(path) sets aerospace in a way mielwm can't edit. Set aerospace.path by hand."
+        case BarikLink.Problem.temporaryLocation: "Move mielwm to Applications, open it from there, then turn this on."
         default: error.localizedDescription
         }
     }

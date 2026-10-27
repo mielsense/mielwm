@@ -26,10 +26,9 @@ if args.first == "--mielwm-pid" {
 }
 
 var reply = try? IPCClient.send(["aerospace"] + args, timeout: 0.3)
-if let error = reply, error.starts(with: Data(#"{"error""#.utf8)) {
+if let answer = reply, answer.starts(with: Data(#"{"error""#.utf8)) {
     Logger(subsystem: "my.miel.mielwm", category: "aerospace")
         .error("aerospace: unknown command: \(args.joined(separator: " "), privacy: .public)")
-    FileHandle.standardError.write(error + Data("\n".utf8))
     reply = nil
 }
 let fallback = args.first?.hasPrefix("list-") == true ? "[]\n" : ""
