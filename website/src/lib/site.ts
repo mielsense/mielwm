@@ -1,6 +1,6 @@
 export const site = {
 	name: 'mielwm',
-	url: 'https://mielwm.vercel.app',
+	url: 'https://wm.miel.my',
 	description: 'A tiling window manager for macOS that keeps every window on one endless canvas.',
 	repo: 'https://github.com/mielsense/mielwm',
 	releases: 'https://github.com/mielsense/mielwm/releases',

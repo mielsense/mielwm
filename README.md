@@ -7,8 +7,9 @@
 <p align="center">A tiling window manager for macOS that keeps every window on one endless canvas.</p>
 
 <p align="center">
+  <a href="https://wm.miel.my">Website</a> ·
   <a href="https://github.com/mielsense/mielwm/releases/latest">Download</a> ·
-  <a href="docs/README.md">Documentation</a> ·
+  <a href="https://wm.miel.my/docs">Documentation</a> ·
   <a href="CHANGELOG.md">Changelog</a>
 </p>
 
@@ -37,6 +38,8 @@ Download `mielwm.dmg` from the [latest release](https://github.com/mielsense/mie
 They follow AeroSpace's defaults, and Settings changes any of them. [Keyboard](docs/keyboard.md) has the full list.
 
 ## Documentation
+
+The docs are also on [wm.miel.my](https://wm.miel.my/docs), with search.
 
 - [Getting started](docs/getting-started.md)
 - [Workspaces and layouts](docs/workspaces.md)
