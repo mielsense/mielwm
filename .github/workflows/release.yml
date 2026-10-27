@@ -11,8 +11,6 @@ jobs:
   release:
     name: Build and publish
     runs-on: macos-26
-    env:
-      KEYCHAIN: ${{ runner.temp }}/mielwm-signing.keychain-db
     steps:
       - uses: actions/checkout@v4
         with:
@@ -21,6 +19,7 @@ jobs:
       - name: Version
         id: version
         run: |
+          echo "KEYCHAIN=$RUNNER_TEMP/mielwm-signing.keychain-db" >> "$GITHUB_ENV" # job env cannot read runner.temp
           version="${GITHUB_REF_NAME#v}"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           case "$version" in *-*) echo "prerelease=true" >> "$GITHUB_OUTPUT" ;; *) echo "prerelease=false" >> "$GITHUB_OUTPUT" ;; esac
