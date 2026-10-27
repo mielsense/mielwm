@@ -14,10 +14,10 @@ Every shortcut mielwm has, and how to change them. The defaults are AeroSpace's 
 | `⌥,` | Stack the workspace, or go back to tiles. |
 | `⌥.` | Float the window, or tile it again. |
 | `⌥` arrows | Focus the nearest window that way. In a stack, the next or previous window. |
-| `⌥⇧` arrows | Swap tiles, or nudge a floating window a grid step (hold to keep going). |
+| `⌥⇧` arrows | Swap tiles, or nudge a floating window a grid step. Hold to keep going. |
 | `⌥Tab`, `⌥⇧Tab` | A tap goes back to the last window. Hold `⌥` for the list and let go to switch. In a stack, the next window. |
 | `⌥T` | Fill the screen, keeping the gaps. Again to put it back. |
-| `⌥F` | Fullscreen, no gaps (the menu bar stays). Again to put it back. |
+| `⌥F` | Fill the screen with no gaps, the menu bar still visible. Again to put it back. |
 | `⌥O` | Pin the window so it stays put while the canvas moves. |
 | `⌥-`, `⌥=` | Shrink, grow the window. |
 | `⌃⌥` + drag | Move a window with the left button, resize it with the right. |
@@ -48,7 +48,7 @@ Every shortcut mielwm has, and how to change them. The defaults are AeroSpace's 
 | `⌘,` | Open Settings at Appearance. |
 | `⌘/` | Show every key on screen. |
 
-The `⌃` versions (`⌃0`, `⌃Z` and so on) and `F1` work too, and `⌃U`, `⌃W`, `⌃N` and `⌃P` work in the search field the way they do in any Mac text field.
+The `⌃` versions, like `⌃0` and `⌃Z`, work too, and so does `F1` for the key list. In the search field, `⌃U`, `⌃W`, `⌃N` and `⌃P` work the way they do in any Mac text field.
 
 ## Changing shortcuts
 
@@ -56,7 +56,7 @@ Open Settings > Keyboard. Click a shortcut and press the new keys. `Esc` cancels
 
 ![The Keyboard pane in Settings](images/settings-keyboard-dark.png)
 
-The families of keys take one row each: going to a workspace ("⌥1–9"), moving to one ("⌥⇧1–9"), focus and move ("⌥←→↑↓"). Click the row, hold the new modifiers and press one of its keys, and all nine or four change together. If you changed some of them one by one in the config file, the row says Custom and opens to each key.
+Keys that come in families take one row each. One row goes to a workspace, shown as "⌥1–9", one moves a window there, "⌥⇧1–9", and one covers focus and move, "⌥←→↑↓". Click the row, hold the new modifiers and press any one of its keys, and the whole family changes together. If you changed some of them one by one in the config file, the row says Custom and opens up to show each key.
 
 If the keys you press already belong to another action, the row says which one and offers to take them. It also warns when macOS uses the same keys, such as screenshots or switching input sources. mielwm refuses `⌘Q`, `⌘W`, `⌘C`, `⌘V` and the other keys every app relies on, because a global shortcut on them would break them everywhere.
 

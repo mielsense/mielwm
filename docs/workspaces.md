@@ -6,7 +6,9 @@ Windows live on one endless canvas, grouped into numbered workspaces that tile t
 
 ## The canvas
 
-Every window has a place on the canvas, a surface much larger than your screens. At 100% the camera sits on one part of it, and mielwm puts the real windows wherever the canvas says. Windows the camera doesn't show wait in a bottom corner of a display, with one point still on screen, the same trick AeroSpace uses. They are ordinary macOS windows the whole time.
+Every window has a place on the canvas, a surface much larger than your screens. Normally you look at one screen-sized part of it, and mielwm puts the real windows wherever the canvas says.
+
+Windows outside that part wait in a bottom corner of a display, tucked away with one point still on screen. AeroSpace hides windows the same way, because macOS doesn't let an app truly hide another app's window. They stay ordinary macOS windows the whole time, and mielwm puts them all back on screen when it quits or pauses.
 
 ## Workspaces
 
@@ -35,17 +37,17 @@ A tiled window can't be dragged smaller than its tile. Drag the edge between two
 
 ### Stack
 
-A stack shows one window at a time at full size, like AeroSpace's accordion. `⌥,` stacks the workspace and `⌥,` again goes back to tiles. In a stack, `⌥←` and `⌥→` (or `⌥Tab`) step through its windows. Zoomed out, a stack looks like a fanned deck of cards.
+A stack shows one window at a time at full size, like AeroSpace's accordion. `⌥,` stacks the workspace and `⌥,` again goes back to tiles. In a stack, `⌥←` and `⌥→` step through its windows, and so does `⌥Tab`. Zoomed out, a stack looks like a fanned deck of cards.
 
 ### Floating
 
-`⌥.` floats the focused window: it keeps whatever size and place you give it. `⌥.` again tiles it back into the workspace it sits on. A floating window belongs to the workspace it's on, so it's still there when you come back.
+`⌥.` floats the focused window. A floating window keeps whatever size and place you give it. `⌥.` again tiles it back into the workspace it sits on. A floating window belongs to the workspace it's on, so it's still there when you come back.
 
 Some apps always float, because their windows don't make sense as tiles: System Settings, Activity Monitor, Calculator and Archive Utility by default. Windows that can't be resized float too.
 
 ## New windows
 
-A new window joins the workspace you're on, next to the focused window, in the layout from Settings > Layout & workspaces (tiles unless you change it).
+A new window joins the workspace you're on, next to the focused window. It takes the workspace's layout, which is tiles unless you change it in Settings > Layout & workspaces.
 
 Workspace rules send an app's windows to a fixed workspace, so Spotify can always open on 2 and Discord on 1. Add them in Settings, or import your AeroSpace `on-window-detected` rules ([AeroSpace and Barik](aerospace.md)).
 
@@ -53,7 +55,7 @@ When mielwm starts, every window that's already open gets a workspace of its own
 
 ## Fill, fullscreen and pin
 
-`⌥T` fills the screen with the focused window, keeping the gaps, and `⌥T` again puts it back. `⌥F` does the same without gaps (the menu bar stays). `⌥O` pins a floating window to the screen, so it stays put while the canvas moves under it.
+`⌥T` fills the screen with the focused window, keeping the gaps, and `⌥T` again puts it back. `⌥F` does the same without gaps. The menu bar stays visible either way. `⌥O` pins a floating window to the screen, so it stays put while the canvas moves under it.
 
 ## More than one display
 

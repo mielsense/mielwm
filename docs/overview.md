@@ -6,11 +6,15 @@ Zoom out to see every window at once as a live picture, then search or point to 
 
 ## Opening it
 
-`⌃⌥G` zooms out, and `⌃⌥G` again comes back. The view pulls back through a curved lens so the edges of the canvas bend away, and the workspace you were on sits in the middle with room to spare. `Esc` goes back to exactly where you started. You can rebind the key in Settings > Keyboard (plenty of people use `⌥Space`).
+`⌃⌥G` zooms out, and `⌃⌥G` again comes back. The view pulls back through a curved lens so the edges of the canvas bend away, and the workspace you were on sits in the middle with room to spare. `Esc` goes back to exactly where you started.
+
+`⌃⌥G` stays clear of AeroSpace's keys, but it's a stretch to press. `⌥Space` is easier, if no launcher already has it. Change it in Settings > Keyboard.
 
 ## Search
 
-Start typing as soon as it opens. mielwm searches window titles and app names. Every word you type has to appear, with its letters together, so `fas` finds `fastfetch` and `term git` finds a Terminal window titled with git. Case and accents don't matter, and dead keys and input methods work.
+Start typing as soon as it opens. mielwm searches window titles and app names, and the results narrow with each letter.
+
+Every word you type has to appear somewhere, with its letters together. So `fas` finds `fastfetch`, and `term git` finds a Terminal window with git in its title. Case and accents don't matter, and dead keys and input methods work as usual.
 
 | Keys | What it does |
 | --- | --- |
@@ -36,18 +40,24 @@ Start typing as soon as it opens. mielwm searches window titles and app names. E
 | `⌘,` | Open Settings at Appearance. |
 | `⌘/` | Show every key. |
 
-The `⌃` versions of these keys (`⌃0`, `⌃Z` and so on) and `F1` work too.
+The `⌃` versions of these keys, like `⌃0` and `⌃Z`, work too, and so does `F1` for the key list.
 
-With a trackpad or mouse, click a window to go to it and drag one to move it, including onto another workspace. Scroll with two fingers or drag the empty canvas to pan, and pinch or `⌘`-scroll to zoom. Hovering a window selects it and shows its name. If you'd rather keep the pointer out of it, turn off "Use the pointer" in Settings > General.
+## With the pointer
+
+Click a window to go to it, or drag it somewhere else, onto another workspace too. Scroll with two fingers or drag the empty canvas to pan, and pinch or `⌘`-scroll to zoom. Hovering a window selects it and shows its name.
+
+If you'd rather drive the overview by keyboard only, turn off "Use the pointer" in Settings > General.
 
 ## The minimap
 
-The minimap in the corner shows the whole canvas, your workspaces and the part you're looking at. Click it to jump, and use the button next to it to tidy up. Settings > Appearance turns it off.
+The minimap in the corner shows the whole canvas, your workspaces and the part you're looking at. Click it to jump there. The button next to it tidies your floating windows. Settings > Appearance turns the minimap off.
 
 ## The lens
 
-The bend at the edges is the lens. Settings > Appearance turns it off, and sets its strength and how far the canvas extends under it. The lens follows Reduce Motion: with it on, mielwm cuts instead of flying.
+The bend at the edges is the lens. It's there so the windows around the edge stay in view without shrinking everything else. Settings > Appearance sets its strength and how far the canvas extends under it, or turns it off.
 
-## How the pictures work
+With Reduce Motion on in System Settings > Accessibility, mielwm cuts between views instead of flying.
 
-The overview draws live pictures of your windows with ScreenCaptureKit and Metal. Windows that are still cost almost nothing to show, and windows playing video update up to 60 times a second. When the overview closes, the live pictures turn into small stills and the memory goes back. [Performance](performance.md) has the numbers.
+## Window pictures
+
+The pictures are live while the overview is open, and need the Screen Recording permission. Without it, windows show as plain cards. A window that sits still costs almost nothing to show, and one playing video updates up to 60 times a second. [Performance](performance.md) has the numbers.

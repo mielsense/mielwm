@@ -4,7 +4,7 @@ The `mielwm` command controls the running app from a terminal, a script or anoth
 
 ## Installing the command
 
-Settings > Advanced > Command-line tool links it into `~/.local/bin` (add that folder to your `PATH` if it isn't). Or link it yourself:
+Settings > Advanced > Command-line tool links it into `~/.local/bin`. If that folder isn't on your `PATH` yet, add it. Or make the link yourself:
 
 ```sh
 ln -s /Applications/mielwm.app/Contents/MacOS/mielwm ~/.local/bin/mielwm
@@ -46,11 +46,19 @@ Every action you can bind to a key also works here:
 
 | Command | What it does |
 | --- | --- |
-| `mielwm` | Run the app (what opening mielwm.app does). |
+| `mielwm` | Run the app, the same as opening mielwm.app. |
 | `mielwm state` | The canvas as JSON: windows, frames, the camera. |
 | `mielwm quit` | Quit, with every window back on a screen. |
 | `mielwm --unpark` | Put every window from the last layout back on a screen, for after a crash. |
 | `mielwm --list-windows [--json]` | The windows mielwm can see and move. |
-| `mielwm --help` | Everything, including the development tools. |
+| `mielwm --help` | Every command and option. |
 
-The app answers over a socket in `~/Library/Application Support/mielwm/`. When mielwm isn't running, a command says so and exits with an error.
+When mielwm isn't running, a command says so and exits with an error, so scripts can tell.
+
+## From other tools
+
+Anything that can run a shell command can drive mielwm: Raycast script commands, Shortcuts, skhd, Hammerspoon, a key in BetterTouchTool. Point it at the full path, `~/.local/bin/mielwm`, because those tools often don't read your shell's `PATH`.
+
+```sh
+~/.local/bin/mielwm search slack   # open the overview, already searching for Slack
+```

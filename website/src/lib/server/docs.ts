@@ -11,8 +11,15 @@ const imageUrls = import.meta.glob('../../../../docs/images/*.{png,jpg,jpeg,webp
 	eager: true
 }) as Record<string, string>;
 
+// The changelog lives at the repo root, where the release workflow reads it, and shows here as one more page.
+const changelog = import.meta.glob('../../../../CHANGELOG.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+
 const fileName = (path: string) => path.slice(path.lastIndexOf('/') + 1);
-const markdown = new Map(Object.entries(sources).map(([path, text]) => [fileName(path).replace(/\.md$/, ''), text]));
+const markdown = new Map(
+	Object.entries({ ...sources, ...changelog }).map(([path, text]) => [fileName(path).replace(/\.md$/, '').replace('CHANGELOG', 'changelog'), text])
+);
+/** The page a `name.md` or `../NAME.md` link points at, if the site has it. */
+const pageFor = (name: string) => (markdown.has(name) ? name : markdown.has(name.toLowerCase()) ? name.toLowerCase() : undefined);
 const images = new Map(Object.entries(imageUrls).map(([path, url]) => [fileName(path), url]));
 
 export type NavPage = { slug: string; title: string; lead: string };
@@ -73,10 +80,11 @@ export function navigation(): NavGroup[] {
 		for (const line of index.split('\n')) {
 			const group = /^##\s+(.+)/.exec(line);
 			if (group) groups.push({ title: group[1].trim(), pages: [] });
-			const item = /^\s*[-*]\s+\[([^\]]+)\]\(([\w-]+)\.md\)/.exec(line);
-			if (item && markdown.has(item[2])) {
+			const item = /^\s*[-*]\s+\[([^\]]+)\]\((?:\.\.\/)?([\w-]+)\.md\)/.exec(line);
+			const slug = item && pageFor(item[2]);
+			if (item && slug) {
 				if (!groups.length) groups.push({ title: 'Docs', pages: [] });
-				groups.at(-1)!.pages.push({ slug: item[2], title: item[1], lead: page(item[2])!.lead });
+				groups.at(-1)!.pages.push({ slug, title: item[1], lead: page(slug)!.lead });
 			}
 		}
 	} else {
@@ -104,12 +112,12 @@ function renderer(toc: TocEntry[]) {
 			},
 			link({ href, tokens }) {
 				const text = this.parser.parseInline(tokens);
-				const doc = /^(?:\.\/)?([\w-]+)\.md(#[\w-]*)?$/.exec(href);
-				if (doc) {
-					// a page the lead hasn't written yet reads as plain text instead of a broken link
-					if (!markdown.has(doc[1])) return `<span>${text}</span>`;
-					return `<a href="/docs/${doc[1] === 'README' ? '' : doc[1]}${doc[2] ?? ''}">${text}</a>`;
-				}
+				const doc = /^(\.\.\/|\.\/)?([\w-]+)\.md(#[\w-]*)?$/.exec(href);
+				// ../README.md is the repo's front page, not the docs index
+				const slug = doc && !(doc[1] === '../' && doc[2] === 'README') ? pageFor(doc[2]) : undefined;
+				if (doc && slug) return `<a href="/docs/${slug === 'README' ? '' : slug}${doc[3] ?? ''}">${text}</a>`;
+				// a page the lead hasn't written yet reads as plain text instead of a broken link
+				if (doc && doc[1] !== '../') return `<span>${text}</span>`;
 				if (/^https?:/.test(href)) return `<a href="${escape(href)}" target="_blank" rel="noreferrer">${text}</a>`;
 				if (/^\.\.\//.test(href)) return `<a href="${site.repo}/blob/main/${escape(href.slice(3))}" target="_blank" rel="noreferrer">${text}</a>`;
 				return false;

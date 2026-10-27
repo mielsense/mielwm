@@ -52,7 +52,6 @@ The docs are also on [wm.miel.my](https://wm.miel.my/docs), with search.
 - [AeroSpace and Barik](docs/aerospace.md)
 - [Performance](docs/performance.md)
 - [Troubleshooting](docs/troubleshooting.md)
-- [Development](docs/development.md)
 
 ## Contributing
 
