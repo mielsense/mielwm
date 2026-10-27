@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { CodeBlock } from '@mielui/svelte/components/code-block';
 	import Icon from '@/components/Icon.svelte';
+	import Sticker from '@/components/Sticker.svelte';
 	import Toc from '@/components/Toc.svelte';
-	import { ChevronLeftIcon, ChevronRightIcon } from '@/icons';
+	import { groupLook, pageIcon } from '@/docs-look';
+	import { ChevronLeftIcon, ChevronRightIcon, type IconData } from '@/icons';
 	import { site } from '@/site';
 
 	let { data } = $props();
@@ -14,6 +16,8 @@
 	const next = $derived(at >= 0 ? order[at + 1] : undefined);
 	const group = $derived(data.groups.find((g) => g.pages.some((p) => p.slug === doc.slug)));
 	const edit = $derived(`${site.editBase}${doc.slug}.md`);
+	const look = $derived(groupLook(group?.title));
+	const groupOf = (slug: string) => groupLook(data.groups.find((g) => g.pages.some((p) => p.slug === slug))?.title);
 </script>
 
 <svelte:head>
@@ -23,12 +27,55 @@
 	<meta property="og:description" content={doc.lead || site.description} />
 </svelte:head>
 
-<div class="flex justify-center gap-12 px-4 py-8 sm:px-8 sm:py-12 xl:px-12">
-	<article class="w-full max-w-[44rem] min-w-0">
-		<header class="mb-10 flex flex-col gap-3">
-			{#if group}<p class="text-sm text-subtle">{group.title}</p>{/if}
-			<h1 class="display text-4xl">{doc.title}</h1>
-			{#if doc.lead}<p class="text-xl leading-normal text-subtle">{doc.lead}</p>{/if}
+{#snippet arrow(item: { slug: string; title: string } | undefined, label: string, icon: IconData)}
+	{@const box = 'grid size-8 place-items-center rounded-[9px] border border-border bg-plate'}
+	{#if item}
+		<a href="/docs/{item.slug}" class="press {box} text-subtle hover:text-strong" aria-label="{label}: {item.title}" title="{label}: {item.title}">
+			<Icon {icon} size={15} />
+		</a>
+	{:else}
+		<span class="{box} text-subtle opacity-40" aria-hidden="true"><Icon {icon} size={15} /></span>
+	{/if}
+{/snippet}
+
+{#snippet step(item: { slug: string; title: string }, label: 'Previous' | 'Next')}
+	{@const target = groupOf(item.slug)}
+	<a
+		href="/docs/{item.slug}"
+		class="tile group group/section press-soft flex items-center gap-3.5 p-4 hover:shadow-[0_0_0_1px_var(--color-border-strong),0_6px_20px_-10px_rgb(0_0_0/0.2)] {label === 'Next' ? 'flex-row-reverse text-end' : ''}"
+	>
+		<Sticker icon={pageIcon(item.slug)} bg={target.mesh} size={32} />
+		<span class="flex min-w-0 flex-1 flex-col gap-0.5">
+			<span class="flex items-center gap-1 text-xs text-subtle {label === 'Next' ? 'justify-end' : ''}">
+				{#if label === 'Previous'}<Icon icon={ChevronLeftIcon} size={12} />{/if}{label}{#if label === 'Next'}<Icon icon={ChevronRightIcon} size={12} />{/if}
+			</span>
+			<span class="truncate text-base text-strong">{item.title}</span>
+		</span>
+	</a>
+{/snippet}
+
+<!-- the article and the TOC are one group, centred right of the sidebar, with a fixed gap between them:
+     about 56px clear of the title panel, which reaches past the article -->
+<div class="flex justify-center gap-24 px-4 py-8 sm:px-8 sm:py-12 xl:px-10">
+	<!-- the group's tint sits behind the title (.mesh-glow), its mesh frames the screenshots (.prose .frame) -->
+	<article class="w-full max-w-[50rem] min-w-0" style:--mesh={look.mesh} style:--tint={look.tint}>
+		<header class="group/section relative isolate mb-10 flex flex-col gap-3 pt-2">
+			<div class="mesh-glow pointer-events-none absolute -inset-x-4 -top-8 -bottom-6 -z-10 sm:-inset-x-8" aria-hidden="true"></div>
+			{#if group}
+				<p class="flex items-center gap-2 text-sm font-medium text-strong">
+					<Sticker icon={look.icon} bg={look.mesh} />
+					{group.title}
+				</p>
+			{/if}
+			<div class="flex items-start justify-between gap-4">
+				<h1 class="display text-4xl">{doc.title}</h1>
+				<!-- the same steps as the cards at the bottom, within reach at the top -->
+				<nav aria-label="Previous and next page, at the top" class="mt-1 flex shrink-0 gap-1.5">
+					{@render arrow(prev, 'Previous', ChevronLeftIcon)}
+					{@render arrow(next, 'Next', ChevronRightIcon)}
+				</nav>
+			</div>
+			{#if doc.lead}<p class="text-xl leading-normal text-default">{doc.lead}</p>{/if}
 		</header>
 
 		<!-- the table of contents folds into the top of the page below xl -->
@@ -60,24 +107,16 @@
 			<a href={edit} target="_blank" rel="noreferrer" class="self-start text-sm text-subtle hover:text-strong xl:hidden">Edit this page on GitHub</a>
 			<nav aria-label="Previous and next page" class="grid gap-3 sm:grid-cols-2">
 				{#if prev}
-					<a href="/docs/{prev.slug}" class="group press-soft flex flex-col gap-1 rounded-[12px] border border-border bg-plate px-4 py-3.5 hover:border-border-strong">
-						<span class="flex items-center gap-1 text-xs text-subtle"><Icon icon={ChevronLeftIcon} size={12} />Previous</span>
-						<span class="text-base text-strong">{prev.title}</span>
-					</a>
+					{@render step(prev, 'Previous')}
 				{:else}
 					<span class="hidden sm:block"></span>
 				{/if}
-				{#if next}
-					<a href="/docs/{next.slug}" class="group press-soft flex flex-col items-end gap-1 rounded-[12px] border border-border bg-plate px-4 py-3.5 text-end hover:border-border-strong">
-						<span class="flex items-center gap-1 text-xs text-subtle">Next<Icon icon={ChevronRightIcon} size={12} /></span>
-						<span class="text-base text-strong">{next.title}</span>
-					</a>
-				{/if}
+				{#if next}{@render step(next, 'Next')}{/if}
 			</nav>
 		</footer>
 	</article>
 
-	<aside class="hidden w-52 shrink-0 xl:block">
+	<aside class="hidden w-48 shrink-0 pt-11 xl:block">
 		<div class="sticky top-8 max-h-[calc(100dvh-4rem)] overflow-y-auto [scrollbar-width:none]">
 			<Toc toc={doc.toc} {edit} />
 		</div>

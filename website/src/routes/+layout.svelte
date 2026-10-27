@@ -8,8 +8,7 @@
 	import Icon from '@/components/Icon.svelte';
 	import Search from '@/components/Search.svelte';
 	import ThemeToggle from '@/components/ThemeToggle.svelte';
-	import { DownloadIcon, GithubIcon, SearchIcon } from '@/icons';
-	import { search } from '@/search.svelte';
+	import { DownloadIcon, GithubIcon } from '@/icons';
 	import { site } from '@/site';
 	import { theme } from '@/theme.svelte';
 
@@ -19,7 +18,10 @@
 
 	const path = $derived(page.url.pathname);
 	const canonical = $derived(site.url + (path === '/' ? '' : path));
-	const inDocs = $derived(path === '/docs' || path.startsWith('/docs/'));
+	// an error page under /docs has no docs sidebar, so it keeps the site nav
+	const inDocs = $derived(!page.error && (path === '/docs' || path.startsWith('/docs/')));
+	// the landing page sits in a centred column; the docs run edge to edge
+	const gutter = $derived(inDocs ? 'px-4 sm:px-5' : 'wrap');
 
 	// The browser's own chrome follows the theme the visitor picked, not only their system setting.
 	$effect(() => {
@@ -46,8 +48,11 @@
 
 	onNavigate((navigation) => {
 		if (!document.startViewTransition || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-		// moving between docs pages swaps only the article; a cross-fade of the whole page would flash the sidebar
-		if (navigation.from?.url.pathname.startsWith('/docs') && navigation.to?.url.pathname.startsWith('/docs')) return;
+		// only the move between the landing page and the docs animates; between docs pages only the article
+		// changes, and animating the whole page would flash the sidebar
+		const docs = (url?: URL) => url?.pathname === '/docs' || !!url?.pathname.startsWith('/docs/');
+		const from = navigation.from?.url, to = navigation.to?.url;
+		if (!((from?.pathname === '/' && docs(to)) || (docs(from) && to?.pathname === '/'))) return;
 		return new Promise((resolve) => {
 			document.startViewTransition(async () => {
 				resolve();
@@ -87,60 +92,45 @@
 	{@html `<script type="application/ld+json">${software}</script>`}
 </svelte:head>
 
-<!-- the whole site is one rounded panel on the page, like a window: header, content and footer inside it -->
-<div class="min-h-dvh w-full p-1.5 sm:p-3">
-	<div class="flex min-h-[calc(100dvh-0.75rem)] flex-col overflow-clip rounded-[20px] border border-border bg-plate shadow-[0_1px_3px_rgb(0_0_0/0.04)] sm:min-h-[calc(100dvh-1.5rem)]">
-		<header class="flex h-14 items-center gap-2 border-b border-border px-4 sm:px-5" style:view-transition-name="topbar">
-			<a href="/" class="me-auto flex shrink-0 items-center gap-2.5 rounded-[9px]" aria-label="mielwm, home">
-				<img src="/icon-128.png" alt="" width="28" height="28" class="size-7 rounded-[7px] outline-none" />
-				<span class="text-base font-medium tracking-[-0.01em] text-strong">mielwm</span>
-			</a>
-			<nav aria-label="Site" class="flex items-center gap-1.5">
-				<a
-					href="/docs"
-					aria-current={inDocs ? 'page' : undefined}
-					class="nav-item press h-8 rounded-[9px] px-3 text-sm"
-				>
-					Docs
+<!-- the page itself is the background: no frame. The landing page sits in a centred column with a bare nav;
+     the docs have no header at all, their sidebar holds the logo, search and tools -->
+<div class="flex min-h-dvh flex-col">
+	{#if !inDocs}
+		<header>
+			<div class="wrap flex h-16 items-center gap-2">
+				<a href="/" class="brand me-auto flex shrink-0 items-center gap-2.5 rounded-[9px]" aria-label="mielwm, home">
+					<img src="/icon-128.png" alt="" width="28" height="28" class="size-7 rounded-[7px] outline-none" />
+					<span class="text-base font-medium tracking-[-0.01em] text-strong">mielwm</span>
 				</a>
-				<button
-					type="button"
-					onclick={() => (search.open = true)}
-					class="press hidden h-8 w-56 items-center gap-2 rounded-[10px] border border-border bg-page/60 ps-2.5 pe-1.5 text-sm text-subtle hover:text-strong focus-visible:shadow-[var(--focus-ring)] focus-visible:outline-none md:flex"
-				>
-					<Icon icon={SearchIcon} size={13} />
-					<span class="me-auto">Search</span>
-					<kbd class="key text-xs">⌘K</kbd>
-				</button>
-				<Button variant="ghost" size="icon" class="size-8 text-subtle hover:text-strong md:hidden" aria-label="Search the docs" onclick={() => (search.open = true)}>
-					<Icon icon={SearchIcon} size={15} />
-				</Button>
-				<Button variant="ghost" size="icon" href={site.repo} target="_blank" rel="noreferrer" class="size-8 text-subtle hover:text-strong" aria-label="mielwm on GitHub">
-					<Icon icon={GithubIcon} size={16} />
-				</Button>
-				<ThemeToggle />
-				<Button href={site.download} size="sm" class="ms-1.5 hidden ps-2.5 sm:inline-flex">
-					<Icon icon={DownloadIcon} size={14} />
-					Download
-				</Button>
-			</nav>
-		</header>
-
-		<div class="flex flex-1 flex-col">
-			{@render children()}
-		</div>
-
-		<footer class="border-t border-border" style:view-transition-name="footer">
-			<div class="flex h-14 items-center justify-between gap-6 px-4 text-xs text-subtle sm:px-5">
-				<span>MIT licensed. Made by <a class="link" href="https://miel.my" target="_blank" rel="noreferrer">mielsense</a>.</span>
-				<nav aria-label="Elsewhere" class="flex items-center gap-4">
-					<a href="/docs" class="hover:text-strong">Docs</a>
-					<a href={site.releases} target="_blank" rel="noreferrer" class="hover:text-strong">Releases</a>
-					<a href={site.repo} target="_blank" rel="noreferrer" class="hover:text-strong">GitHub</a>
+				<nav aria-label="Site" class="flex items-center gap-1.5">
+					<a href="/docs" class="nav-item press h-8 rounded-[9px] px-3 text-sm">Docs</a>
+					<Button variant="ghost" size="icon" href={site.repo} target="_blank" rel="noreferrer" class="size-8 text-subtle hover:text-strong" aria-label="mielwm on GitHub">
+						<Icon icon={GithubIcon} size={16} />
+					</Button>
+					<ThemeToggle />
+					<Button href={site.download} size="sm" class="ms-1.5 hidden ps-2.5 sm:inline-flex">
+						<Icon icon={DownloadIcon} size={14} />
+						Download
+					</Button>
 				</nav>
 			</div>
-		</footer>
+		</header>
+	{/if}
+
+	<div class="flex flex-1 flex-col">
+		{@render children()}
 	</div>
+
+	<footer>
+		<div class="flex h-16 items-center justify-between gap-6 text-xs text-subtle {gutter}">
+			<span>MIT licensed. Made by <a class="link" href="https://miel.my" target="_blank" rel="noreferrer">mielsense</a>.</span>
+			<nav aria-label="Elsewhere" class="flex items-center gap-4">
+				<a href="/docs" class="hover:text-strong">Docs</a>
+				<a href={site.releases} target="_blank" rel="noreferrer" class="hover:text-strong">Releases</a>
+				<a href={site.repo} target="_blank" rel="noreferrer" class="hover:text-strong">GitHub</a>
+			</nav>
+		</div>
+	</footer>
 </div>
 
 <Search />

@@ -45,7 +45,7 @@ scripts/barik-test.sh          # Barik's own AeroSpace code against a test copy
 - `mielwm --settings-preview --out <dir>` saves every Settings pane, the onboarding and the menu as PNGs in light and dark, on a copy of your config. `--selftest` drives the Settings window through its controls instead.
 - `mielwm --manage-only <pid>` manages one app's windows only, with no shortcuts and no focus changes. Point it at `mielwm-testwindows` to try something live. `MIELWM_SOCKET`, `MIELWM_CONFIG_DIR` and `MIELWM_TEST_OVERLAY=1` give the test copy its own socket and settings and turn on its overlay. Always set `MIELWM_SOCKET` on commands you send to it, or they reach the mielwm you use.
 
-Never run a development build in normal mode while your own mielwm runs: two copies would fight over your windows.
+> Never run a development build in normal mode while your own mielwm runs: two copies would fight over your windows.
 
 ## The website
 

@@ -196,16 +196,37 @@
 	}
 }
 
-/* Pages cross-fade; the top bar and footer stay put. */
-::view-transition-old(root),
+/* Between the landing page and the docs: the old page fades and sinks back a little, the new one
+   fades up from just below, and the logo glides from the nav to the sidebar and back. */
+.brand {
+	view-transition-name: brand;
+}
+
+::view-transition-old(root) {
+	animation: page-out 260ms var(--ease-out) both;
+}
+
 ::view-transition-new(root) {
-	animation-duration: 180ms;
+	animation: page-in 300ms var(--ease-out) both;
+}
+
+::view-transition-group(brand) {
+	animation-duration: 300ms;
 	animation-timing-function: var(--ease-out);
 }
 
-::view-transition-group(topbar),
-::view-transition-group(footer) {
-	animation: none;
+@keyframes page-out {
+	to {
+		opacity: 0;
+		transform: scale(0.98);
+	}
+}
+
+@keyframes page-in {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
 }
 
 /* The italic serif word inside a sans headline. */
@@ -222,6 +243,21 @@
 	font-weight: 500;
 	letter-spacing: -0.035em;
 	line-height: 1.02;
+}
+
+/* The landing page column: about 1330px of content at most, with gutters that grow with the screen. */
+@utility wrap {
+	@apply mx-auto w-full max-w-[88rem] px-5 sm:px-8 lg:px-10;
+}
+
+/* A quiet card on the page: the plate color and a hairline. Media inside sits 8px in with
+   radius 16, so the corners stay concentric. */
+@utility tile {
+	border-radius: 24px;
+	background-color: var(--color-plate);
+	box-shadow:
+		0 0 0 1px var(--color-border),
+		0 1px 2px rgb(0 0 0 / 0.03);
 }
 
 /* The double-bordered card, from madebyhex.com: a faint rim holding a white sheet.
@@ -481,8 +517,8 @@ html.theming::view-transition-new(root) {
 	mask-repeat: no-repeat;
 }
 
-html.theming :is(header, footer) {
-	view-transition-name: none !important;
+html.theming .brand {
+	view-transition-name: none;
 }
 
 /* Mielui's primary button turns near-white in dark mode, where its white light can't show.
@@ -509,10 +545,11 @@ html[style*='overflow: hidden'] body {
 	overflow: visible !important;
 }
 
-/* Screenshots exist in both themes; each shows only in its own. */
+/* Screenshots exist in both themes; each shows only in its own. Important, so a frame that sets
+   its images to block can't bring the other theme's copy back. */
 .dark .only-light,
 html:not(.dark) .only-dark {
-	display: none;
+	display: none !important;
 }
 
 /* A key cap, the same look as Mielui's Kbd but inline in running text and shown at every width. */
@@ -638,10 +675,35 @@ html:not(.dark) .only-dark {
 		color: var(--color-subtle);
 	}
 
+	/* a note or warning: a warm tinted box, so it stands out from the running text */
 	& blockquote {
-		border-inline-start: 2px solid var(--color-frame);
-		padding-inline-start: 1em;
-		color: var(--color-subtle);
+		border-radius: 14px;
+		padding: 0.85em 1.1em;
+		background-color: color-mix(in oklab, #f59e0b 9%, transparent);
+		box-shadow: inset 0 0 0 1px color-mix(in oklab, #f59e0b 24%, transparent);
+		color: var(--color-strong);
+	}
+
+	/* screenshots sit on the page group's mesh with grain, framed the way the landing page frames its shots */
+	& .frame {
+		@apply grain;
+		display: block;
+		border-radius: 16px;
+		padding: 12px;
+		background: var(--mesh, var(--color-selected));
+
+		@media (width >= 40rem) {
+			padding: 28px;
+		}
+
+		& img {
+			display: block;
+			margin-inline: auto;
+			border-radius: 10px;
+			box-shadow:
+				0 0 0 1px rgb(0 0 0 / 0.12),
+				0 18px 40px -12px rgb(0 0 0 / 0.45);
+		}
 	}
 
 	& hr {
@@ -692,6 +754,19 @@ html:not(.dark) .only-dark {
 	& td:first-child {
 		white-space: nowrap;
 	}
+}
+
+/* Docs: a panel of the page group's tint behind the title, rounded at both top corners and fading
+   straight down to nothing, so it has no bottom edge. A mask instead of a blur, so it paints once. */
+.mesh-glow {
+	border-radius: 24px 24px 0 0;
+	background: var(--tint);
+	opacity: 0.3;
+	mask-image: linear-gradient(to bottom, black, transparent);
+}
+
+.dark .mesh-glow {
+	opacity: 0.18;
 }
 
 /* A nav row: a faint ink wash on hover, a stronger one for the current page. Ink mixes work on

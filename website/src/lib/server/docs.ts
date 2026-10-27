@@ -125,8 +125,8 @@ function renderer(toc: TocEntry[]) {
 				};
 				// a -dark image with a -light sibling follows the site's theme
 				const light = name.replace('-dark.', '-light.');
-				if (light !== name && images.has(light)) return `${img(name, ' class="only-dark"')}${img(light, ' class="only-light"')}`;
-				return img(name);
+				const pictures = light !== name && images.has(light) ? `${img(name, ' class="only-dark"')}${img(light, ' class="only-light"')}` : img(name);
+				return `<span class="frame">${pictures}</span>`;
 			},
 			codespan({ text }) {
 				return KEYS.test(text) ? `<kbd>${escape(text)}</kbd>` : false;

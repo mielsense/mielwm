@@ -1,7 +1,8 @@
 <script lang="ts">
 	// A screenshot from static/shots in both themes, as AVIF with a WebP fallback. Each theme's copy
 	// is hidden in the other one; lazy images that are hidden don't download. With `stage`, the shot
-	// sits on that color mesh with film grain, the way miel.my sets its banners.
+	// sits on that color mesh with film grain, the way miel.my sets its banners;
+	// its radius fits inside a card's 8px inset, and it can stretch with the shot kept centred.
 	let {
 		name,
 		widths,
@@ -38,7 +39,7 @@
 				{alt}
 				{width}
 				{height}
-				loading="lazy"
+				loading={priority ? 'eager' : 'lazy'}
 				decoding="async"
 				fetchpriority={priority ? 'high' : 'auto'}
 				class="block h-auto w-full"
@@ -48,8 +49,8 @@
 {/snippet}
 
 {#if stage}
-	<div class="grain rounded-[18px] p-3 sm:p-6 lg:p-8 {className}" style:background={stage}>
-		<div class="overflow-hidden rounded-[11px] shadow-[0_0_0_1px_rgb(0_0_0/0.12),0_18px_40px_-12px_rgb(0_0_0/0.45)]">
+	<div class="grain flex flex-col justify-center rounded-[16px] p-3 sm:p-6 lg:p-8 {className}" style:background={stage}>
+		<div class="overflow-hidden rounded-[10px] shadow-[0_0_0_1px_rgb(0_0_0/0.12),0_18px_40px_-12px_rgb(0_0_0/0.45)]">
 			{@render pictures()}
 		</div>
 	</div>
