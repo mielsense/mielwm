@@ -165,6 +165,9 @@ public final class WindowRegistry {
         case .windowMinimized(let id, let minimized):
             guard windows[id] != nil else { return }
             windows[id]?.isMinimized = minimized
+        case .windowFullScreen(let id, let on):
+            guard windows[id] != nil else { return }
+            windows[id]?.isFullScreen = on
         case .windowFocused(let id):
             guard id.pid == activePid, id != lastFocused, windows[id] != nil else { return }
             lastFocused = id
@@ -198,6 +201,9 @@ private let windowNotifications = [kAXUIElementDestroyedNotification, kAXMovedNo
                                    kAXTitleChangedNotification, kAXWindowMiniaturizedNotification,
                                    kAXWindowDeminiaturizedNotification]
 
+/// Not in the AX headers; AppKit windows report it, and so do most others.
+private let kAXFullScreen = "AXFullScreen"
+
 private let axCallback: AXObserverCallback = { _, element, notification, refcon in
     guard let refcon else { return }
     let tracker = Unmanaged<AppTracker>.fromOpaque(refcon).takeUnretainedValue()
@@ -220,6 +226,7 @@ final class AppTracker {
     private var stopped = false
     private var elements: [WindowID: AXUIElement] = [:]
     private var ids: [AXUIElement: WindowID] = [:]
+    private var fullScreen: Set<WindowID> = []
 
     init(pid: pid_t, bundleID: String?, appName: String, observerThread: RunLoopThread,
          post: @escaping (SystemEvent) -> Void) {
@@ -290,9 +297,21 @@ final class AppTracker {
         case kAXUIElementDestroyedNotification:
             guard let id = ids.removeValue(forKey: element) else { return }
             elements[id] = nil
+            fullScreen.remove(id)
             post(.windowClosed(id))
         case kAXMovedNotification, kAXResizedNotification:
-            if let id = ids[element], let frame = frame(of: element) { post(.windowFrameChanged(id, frame)) }
+            guard let id = ids[element], let frame = frame(of: element) else { return }
+            let on = element.value(kAXFullScreen) as? Bool == true
+            let changed = on != fullScreen.contains(id)
+            if changed, on { // before the screen-sized frame, so Core does not take it for a resize
+                fullScreen.insert(id)
+                post(.windowFullScreen(id, true))
+            }
+            post(.windowFrameChanged(id, frame))
+            if changed, !on { // after, so Core knows where macOS put it back
+                fullScreen.remove(id)
+                post(.windowFullScreen(id, false))
+            }
         case kAXTitleChangedNotification:
             if let id = ids[element], let title = element.value(kAXTitleAttribute) as? String {
                 post(.windowTitleChanged(id, title))
@@ -313,6 +332,7 @@ final class AppTracker {
         for (id, element) in elements where !live.contains(id) {
             elements[id] = nil
             ids[element] = nil
+            fullScreen.remove(id)
             post(.windowClosed(id))
         }
     }
@@ -376,6 +396,7 @@ final class AppTracker {
         guard let snapshot = snapshot(element, id) else { return nil }
         elements[id] = element
         ids[element] = id
+        if snapshot.isFullScreen { fullScreen.insert(id) }
         if let observer, let refcon {
             for name in windowNotifications {
                 AXObserverAddNotification(observer, element, name as CFString, refcon.toOpaque())
@@ -389,13 +410,13 @@ final class AppTracker {
     /// an app turns out to report AXUnknown first, re-read them on a later event.
     private func snapshot(_ element: AXUIElement, _ id: WindowID) -> WindowSnapshot? {
         let v = element.values([kAXRoleAttribute, kAXSubroleAttribute, kAXTitleAttribute,
-                                kAXPositionAttribute, kAXSizeAttribute, kAXMinimizedAttribute])
+                                kAXPositionAttribute, kAXSizeAttribute, kAXMinimizedAttribute, kAXFullScreen])
         guard let origin = cgPoint(v[3]), let size = cgSize(v[4]) else { return nil }
         return WindowSnapshot(id: id, bundleID: bundleID, appName: appName, title: v[2] as? String ?? "",
                               frame: CGRect(origin: origin, size: size), isMinimized: v[5] as? Bool ?? false,
                               isStandard: v[0] as? String == kAXWindowRole && v[1] as? String == kAXStandardWindowSubrole,
                               isResizable: element.isSettable(kAXSizeAttribute),
-                              isMovable: element.isSettable(kAXPositionAttribute))
+                              isMovable: element.isSettable(kAXPositionAttribute), isFullScreen: v[6] as? Bool ?? false)
     }
 
     private func frame(of element: AXUIElement) -> CGRect? {

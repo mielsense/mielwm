@@ -10,6 +10,7 @@ public struct ManagedWindow: Hashable, Sendable {
     public var frame: CGRect // canvas frame
     public var isMinimized = false
     public var isHidden = false // its app is hidden
+    public var isFullScreen = false // in macOS full screen: it keeps its tile, but nobody moves it
     public var isResizable = true
     public var pinned: CGRect? // desk frame while pinned
     public var parked = false // sits in a park slot
@@ -360,6 +361,7 @@ public struct CanvasState: Sendable {
     }
 
     mutating func setFrame(_ i: Int, _ frame: CGRect) {
+        guard !windows[i].isFullScreen else { return } // moving it mid-transition makes macOS replay the Space slide
         windows[i].expected = Expectation(frame: frame, deadline: now + Self.expectationLifetime)
         windows[i].pending = nil
         outbox.append(.setFrame(windows[i].id, frame))
