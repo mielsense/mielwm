@@ -308,8 +308,8 @@ final class AppTracker {
                 fullScreen.insert(id)
                 post(.windowFullScreen(id, true))
             }
-            let sinceMouseUp = CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: .leftMouseUp)
-            post(.windowFrameChanged(id, frame, dragging: isUserDrag(buttonDown: NSEvent.pressedMouseButtons & 1 != 0, sinceMouseUp: sinceMouseUp)))
+            let sinceDrag = CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: .leftMouseDragged)
+            post(.windowFrameChanged(id, frame, dragging: isUserDrag(buttonDown: NSEvent.pressedMouseButtons & 1 != 0, sinceDrag: sinceDrag)))
             if changed, !on { // after, so Core knows where macOS put it back
                 fullScreen.remove(id)
                 post(.windowFullScreen(id, false))
