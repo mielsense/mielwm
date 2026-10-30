@@ -43,16 +43,18 @@ private func link(_ apps: FakeApps, shim: String = shim) throws -> (BarikLink, h
 
 private func read(_ url: URL) throws -> String { try String(contentsOf: url, encoding: .utf8) }
 
-/// Apps that run the aerospace command need no config of Barik's: the helper starts, and no file is written.
+/// Apps that run the aerospace command need no config of Barik's: the helper starts, no file is written,
+/// and a running Barik is left alone.
 @MainActor @Test func withoutAConfigOnlyTheHelperStarts() throws {
     let apps = FakeApps()
+    apps.barik = .distantPast
     let (barik, home) = try link(apps)
     #expect(barik.config == nil)
     try barik.turnOn()
     #expect(try FileManager.default.contentsOfDirectory(atPath: home.path).isEmpty)
     #expect(apps.helperRunning && apps.relaunched == 0)
     try barik.turnOff()
-    #expect(!apps.helperRunning)
+    #expect(!apps.helperRunning && apps.relaunched == 0)
     #expect(try FileManager.default.contentsOfDirectory(atPath: home.path).isEmpty)
 }
 

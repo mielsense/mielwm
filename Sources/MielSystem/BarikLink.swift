@@ -55,7 +55,8 @@ public final class BarikLink {
     /// When Barik has a config, points it at mielwm and relaunches a running Barik.
     public func turnOn() throws {
         guard !temporaryLocation else { throw Problem.temporaryLocation }
-        if let file = config {
+        let file = config
+        if let file {
             let text = try String(contentsOf: file, encoding: .utf8)
             guard let edited = BarikConfig.pointing(text, to: shim) else { throw Problem.unsupported(file.path) }
             if edited.text != text {
@@ -68,20 +69,22 @@ public final class BarikLink {
                 if !edited.wasMielwm { defaults.set(edited.previous, forKey: Self.previousKey) }
             }
         }
-        apps.startHelper(helper) { [apps] _ in apps.relaunchBarik() }
+        apps.startHelper(helper) { [apps] _ in if file != nil { apps.relaunchBarik() } }
     }
 
     /// Puts Barik's old aerospace.path back, stops the helper and relaunches a
     /// running Barik. When the config can't be restored, throws and leaves the helper running.
+    /// Without a config there is nothing to put back, and Barik is left alone.
     public func turnOff() throws {
-        if let file = config {
+        let file = config
+        if let file {
             let text = try String(contentsOf: file, encoding: .utf8)
             let restored = BarikConfig.restoring(text, from: shim, previous: defaults.string(forKey: Self.previousKey))
             if restored != text { try write(restored, to: file) }
             defaults.removeObject(forKey: Self.previousKey)
         }
         apps.stopHelper()
-        apps.relaunchBarik()
+        if file != nil { apps.relaunchBarik() }
     }
 
     /// mielwm started with the switch on: point Barik at this copy of mielwm
