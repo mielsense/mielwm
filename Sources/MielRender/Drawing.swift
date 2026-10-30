@@ -206,7 +206,12 @@ final class Typesetter {
     func font(_ style: TextStyle) -> CTFont {
         let key = FontKey(size: (style.size * 4).rounded() / 4, weight: style.weight)
         if let f = fonts[key] { return f }
-        let font = NSFont.monospacedDigitSystemFont(ofSize: max(key.size, 1), weight: [.regular: .regular, .medium: .medium, .semibold: .semibold][style.weight]!) as CTFont
+        let weight: NSFont.Weight = switch style.weight {
+        case .regular: .regular
+        case .medium: .medium
+        case .semibold: .semibold
+        }
+        let font = NSFont.monospacedDigitSystemFont(ofSize: max(key.size, 1), weight: weight) as CTFont
         fonts[key] = font
         return font
     }

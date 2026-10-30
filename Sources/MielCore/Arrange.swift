@@ -94,10 +94,9 @@ public func arrange(_ items: [ArrangeItem], options o: ArrangeOptions, center: C
 
     var grouped: [String: [Int]] = [:]
     for i in items.indices { grouped[groupKey[i], default: []].append(i) }
-    let keys = grouped.keys.sorted()
+    let byKey = grouped.sorted { $0.key < $1.key }
 
-    for key in keys {
-        let indices = grouped[key]!
+    for (_, indices) in byKey {
         var matched = Set<Int>()
         for seed in indices where !matched.contains(seed) {
             var cluster = [seed]
@@ -124,8 +123,7 @@ public func arrange(_ items: [ArrangeItem], options o: ArrangeOptions, center: C
     // Each group is a small grid of its own.
     struct Group { var indices: [Int]; var local: [CGPoint]; var size: CGSize; var packed = CGPoint.zero }
     var groups: [Group] = []
-    for key in keys {
-        let indices = grouped[key]!
+    for (_, indices) in byKey {
         let count = indices.count
         let aspect = indices.reduce(0.0) { $0 + sizes[$1].width / max(1, sizes[$1].height) } / Double(count)
         var columns = count <= 1 ? 1 : Int(Double(count).squareRoot().rounded(.up))

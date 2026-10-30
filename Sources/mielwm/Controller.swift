@@ -220,7 +220,7 @@ final class Controller {
             onSettings?(nil)
             return
         }
-        if gate != nil { gate!.queue.append(input); return }
+        if gate != nil { gate?.queue.append(input); return }
         if renderer != nil, !overlayShown, !streamsLive, mayOpenOverlay(input) {
             var probe = state
             _ = probe.send(input)
@@ -298,8 +298,8 @@ final class Controller {
         if case .action = input, timing?.firstMove == nil { timing = (now, nil, nil, 0, axCalls.withLock { $0 }) }
         let moves = commands.filter { if case .setFrame = $0 { true } else { false } }.count
         guard moves > 0, timing != nil else { return }
-        timing!.moves += moves
-        if timing!.firstMove == nil { timing!.firstMove = now }
+        timing?.moves += moves
+        if timing?.firstMove == nil { timing?.firstMove = now }
     }
 
     /// What follows every input: overlays, keyboard, tap, files, ticking.
