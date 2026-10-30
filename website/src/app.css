@@ -76,16 +76,16 @@
 .dark {
 	--color-strong: #ededed;
 	--color-default: #b4b4b4;
-	--color-subtle: #858585;
-	--color-selected: #1d1d1d;
-	--color-page: #0e0e0e;
-	--color-plate: #161616;
-	--color-frame: #2a2a2a;
+	--color-subtle: #8f8f8f;
+	--color-selected: #282828;
+	--color-page: #1a1a1a;
+	--color-plate: #212121;
+	--color-frame: #353535;
 
 	/* Mielui's own .dark block re-sets these, so they are repeated here */
 	--color-background: var(--color-page);
 	--color-card: var(--color-plate);
-	--color-panel: #1a1a1a;
+	--color-panel: #242424;
 	--color-secondary: var(--color-selected);
 	--color-foreground: var(--color-strong);
 	--color-foreground-muted: var(--color-subtle);
@@ -93,9 +93,9 @@
 	--color-field: var(--color-plate);
 	--color-primary: var(--color-strong);
 	--color-primary-stroke: transparent;
-	--color-border: #232323;
-	--color-border-strong: #2e2e2e;
-	--color-input: #2a2a2a;
+	--color-border: #2d2d2d;
+	--color-border-strong: #393939;
+	--color-input: #353535;
 	--color-primary-hover: color-mix(in srgb, var(--color-strong) 88%, black);
 	--color-on-primary: #141414;
 }

@@ -25,7 +25,7 @@
 
 	// The browser's own chrome follows the theme the visitor picked, not only their system setting.
 	$effect(() => {
-		const color = theme.dark ? '#0e0e0e' : '#f5f5f5';
+		const color = theme.dark ? '#1a1a1a' : '#f5f5f5';
 		for (const meta of document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')) meta.content = color;
 	});
 
