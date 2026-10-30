@@ -383,9 +383,35 @@ private struct AppIcon: View {
     }
 }
 
-/// The search field's caret, blinked by Core Animation like the system's, so an
-/// idle field costs no frames; it starts again, solid, whenever the text changes.
-private struct Caret: NSViewRepresentable {
+private struct ChromeStillKey: EnvironmentKey { static let defaultValue = false }
+
+extension EnvironmentValues {
+    /// The chrome is drawn once into an image (`mielwm snapshot`), where AppKit views don't draw.
+    var chromeStill: Bool {
+        get { self[ChromeStillKey.self] }
+        set { self[ChromeStillKey.self] = newValue }
+    }
+}
+
+/// The search field's caret: blinking on screen, a steady bar in an image.
+private struct Caret: View {
+    let height: CGFloat
+    let color: RGB
+    let moves: String
+    @Environment(\.chromeStill) private var still
+
+    var body: some View {
+        if still {
+            Rectangle().fill(Color(color)).frame(width: 2, height: height)
+        } else {
+            BlinkingCaret(height: height, color: color, moves: moves)
+        }
+    }
+}
+
+/// Blinked by Core Animation like the system's caret, so an idle field costs
+/// no frames; it starts again, solid, whenever the text changes.
+private struct BlinkingCaret: NSViewRepresentable {
     let height: CGFloat
     let color: RGB
     let moves: String
@@ -411,7 +437,7 @@ private struct Caret: NSViewRepresentable {
 
     final class Coordinator { var moves = "" }
 
-    /// On, a quick fade out, off, a fade back in, as the overlay's caret did.
+    /// On, a quick fade out, off, a fade back in.
     private static let blink: CAKeyframeAnimation = {
         let a = CAKeyframeAnimation(keyPath: "opacity")
         a.values = [1, 1, 0, 0, 1]

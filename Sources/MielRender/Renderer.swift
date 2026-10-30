@@ -169,7 +169,7 @@ public final class Renderer {
         try Renderer.writePNG(image, to: url)
     }
 
-    static func writePNG(_ image: CGImage, to url: URL) throws {
+    public static func writePNG(_ image: CGImage, to url: URL) throws {
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         guard let dest = CGImageDestinationCreateWithURL(url as CFURL, "public.png" as CFString, 1, nil) else {
             throw RenderError.setup("cannot write \(url.path)")

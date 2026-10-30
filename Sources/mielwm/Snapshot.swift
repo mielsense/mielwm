@@ -2,6 +2,7 @@ import AppKit
 import MielCore
 import MielRender
 import MielSystem
+import SwiftUI
 
 /// Renders one state of one display to a PNG through the real Core and
 /// Render, with synthetic windows or (`--real`) the user's own, captured as
@@ -82,11 +83,36 @@ func snapshot(_ args: [String]) {
         MielSystem.Wallpaper.image(for: screen) { wallpaper = $0; done = true }
         spin(5) { done }
         renderer.setWallpaper(wallpaper, screenID: screen.id)
-        try renderer.renderPNG(scene, frames: frames, to: URL(fileURLWithPath: out))
+        var chrome = ChromeContent(taking: &scene, worldShown: state.isOverview)
+        chrome.look.reduceTransparency = true // Liquid glass and the frosted material don't draw offscreen
+        guard let canvas = renderer.renderImage(scene, frames: frames),
+              let image = withChrome(canvas, chrome, transition: scene.transition, scale: screen.scale)
+        else { fail("snapshot failed: nothing rendered") }
+        try Renderer.writePNG(image, to: URL(fileURLWithPath: out))
         print(out)
     } catch {
         fail("snapshot failed: \(error)")
     }
+}
+
+/// `canvas` with the overview's native chrome drawn over it, as the overlay stacks them.
+@MainActor
+private func withChrome(_ canvas: CGImage, _ content: ChromeContent, transition: Double, scale: CGFloat) -> CGImage? {
+    let (eased, steady) = OverlayChrome.split(content)
+    let renderer = ImageRenderer(content: ZStack {
+        EasedChrome(model: ChromeModel(eased)).opacity(OverlayChrome.easedAlpha(transition))
+        SteadyChrome(model: ChromeModel(steady))
+    }.environment(\.chromeStill, true))
+    renderer.scale = scale
+    guard let chrome = renderer.cgImage,
+          let ctx = CGContext(data: nil, width: canvas.width, height: canvas.height, bitsPerComponent: 8, bytesPerRow: 0,
+                              space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                              bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue)
+    else { return nil }
+    let all = CGRect(x: 0, y: 0, width: canvas.width, height: canvas.height)
+    ctx.draw(canvas, in: all)
+    ctx.draw(chrome, in: all)
+    return ctx.makeImage()
 }
 
 /// Three workspace frames for `--workspaces`: the screen's own (current),
