@@ -21,9 +21,10 @@ public enum Displays {
     }
 
     /// Other apps' windows outside the normal layer and the menu bar: where a
-    /// status bar would be. Global y-down points.
+    /// status bar would be. Global y-down points. Desktop windows stay in:
+    /// Barik's is one, and the others are too tall to pass for a bar.
     static func barWindows() -> [(owner: String, frame: CGRect)] {
-        guard let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else { return [] }
+        guard let list = CGWindowListCopyWindowInfo(.optionOnScreenOnly, kCGNullWindowID) as? [[String: Any]] else { return [] }
         let own = getpid(), menuBar = Int(CGWindowLevelForKey(.mainMenuWindow))
         let barik = Set(NSWorkspace.shared.runningApplications.filter { BarikLink.bundleIDs.contains($0.bundleIdentifier ?? "") }.map(\.processIdentifier))
         var barikHeight: Double?
