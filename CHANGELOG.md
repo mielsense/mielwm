@@ -15,6 +15,7 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 - A window whose app refuses its tile size settles at the size it wants, instead of being resized again each time the app reports a move.
 - Switching workspaces with many windows open no longer leaves some of them behind when their apps are slow to answer.
 - A window whose app misses a move, because it was busy at the time, gets the move once more a second later.
+- After restarting mielwm, windows whose title changed meanwhile, like a browser tab, come back to their places and workspaces.
 
 ## 0.1.0
 

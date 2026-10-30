@@ -215,7 +215,7 @@ extension CanvasState {
                               isMinimized: s.isMinimized, isFullScreen: s.isFullScreen, isResizable: s.isResizable, real: s.frame)
         let ordinal = windows.filter { $0.bundleID == s.bundleID && $0.displayTitle == w.displayTitle }.count
         var restored: SavedWindow?
-        if now < restoreUntil, let saved, let k = saved.match(bundleID: s.bundleID, title: w.displayTitle, ordinal: ordinal, excluding: claimed) {
+        if now < restoreUntil, let saved, let k = saved.match(id: s.id, bundleID: s.bundleID, title: w.displayTitle, ordinal: ordinal, excluding: claimed) {
             claimed.insert(k)
             w.frame = saved.windows[k].frame
             if saved.version >= 2 { restored = saved.windows[k] } // older layouts knew no workspaces

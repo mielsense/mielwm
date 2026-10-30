@@ -173,3 +173,22 @@ func builtInAloneOnWorkspace3() -> CanvasState {
     #expect(moves(s.advance(1.5))[wid(1)] == asked) // no report at all: the app missed it
     #expect(s.advance(1.5).isEmpty) // only once
 }
+
+// MARK: Restoring the layout
+
+@Test func restoreFindsAWindowByItsIdWhenItsTitleChanged() {
+    let far = CGRect(x: 6000, y: 300, width: 700, height: 500), other = CGRect(x: 6800, y: 300, width: 700, height: 500)
+    let desk = CGPoint(x: 1716, y: 540)
+    let saved = LayoutSnapshot(camera: Camera(center: desk), deskCenter: desk, windows: [
+        SavedWindow(id: safari, bundleID: "com.apple.Safari", appName: "Safari", title: "Inbox (3)", ordinal: 0,
+                    frame: far, deskFrame: far, parked: true),
+        SavedWindow(id: wid(1), bundleID: "com.apple.Safari", appName: "Safari", title: "notes", ordinal: 0,
+                    frame: other, deskFrame: other, parked: true),
+    ])
+    let s = makeState([
+        snapshot(2, onBuiltIn, title: "Inbox (4)", app: "Safari", bundle: "com.apple.Safari", pid: 200), // its title moved on
+        snapshot(1, onBuiltIn, title: "notes"), // the same id, but Ghostty now: a pid used again
+    ], saved: saved)
+    #expect(s.window(safari)?.frame == far)
+    #expect(s.canvasFrame(1) == onBuiltIn)
+}
