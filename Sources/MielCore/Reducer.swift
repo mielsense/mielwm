@@ -230,7 +230,7 @@ extension CanvasState {
     /// camera without overlap; anything else stays where it is. Then it joins
     /// a workspace or floats (see `placement`).
     mutating func appeared(_ s: WindowSnapshot) {
-        guard s.isStandard, s.isMovable else { return }
+        guard s.isManageable else { return }
         if let i = index(s.id) {
             windows[i].title = s.title
             windows[i].appName = s.appName

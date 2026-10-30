@@ -414,7 +414,7 @@ final class AppTracker {
         let live = Set(current.compactMap(adopt))
         for (id, element) in elements where !live.contains(id) && element.isGone { forget(id, element) }
         for id in ignored.intersection(live) {
-            guard let element = elements[id], let snapshot = snapshot(element, id), !isIgnored(snapshot) else { continue }
+            guard let element = elements[id], let snapshot = snapshot(element, id), snapshot.isManageable else { continue }
             ignored.remove(id)
             if snapshot.isFullScreen { fullScreen.insert(id) }
             post(.windowAppeared(snapshot))
@@ -511,7 +511,7 @@ final class AppTracker {
         elements[id] = element
         ids[element] = id
         if snapshot.isFullScreen { fullScreen.insert(id) }
-        if isIgnored(snapshot) { ignored.insert(id) }
+        if !snapshot.isManageable { ignored.insert(id) }
         sizes[id] = snapshot.frame.size
         if let observer, let refcon {
             for name in windowNotifications {
@@ -521,8 +521,6 @@ final class AppTracker {
         post(.windowAppeared(snapshot))
         return id
     }
-
-    private func isIgnored(_ s: WindowSnapshot) -> Bool { !s.isStandard || !s.isMovable }
 
     private func snapshot(_ element: AXUIElement, _ id: WindowID) -> WindowSnapshot? {
         let v = element.values([kAXRoleAttribute, kAXSubroleAttribute, kAXTitleAttribute,

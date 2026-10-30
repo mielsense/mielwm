@@ -65,6 +65,8 @@ public struct WindowSnapshot: Hashable, Codable, Sendable {
     public var isMovable: Bool
     /// In macOS full screen, in a Space of its own.
     public var isFullScreen: Bool
+    /// What mielwm moves: standard windows that can move.
+    public var isManageable: Bool { isStandard && isMovable }
 
     public init(id: WindowID, bundleID: String?, appName: String, title: String, frame: CGRect,
                 isMinimized: Bool = false, isStandard: Bool = true,
