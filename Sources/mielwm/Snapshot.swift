@@ -60,13 +60,10 @@ func snapshot(_ args: [String]) {
         if let first = windows.first { _ = state.send(.system(.windowFocused(first.id))) }
         frames = SyntheticFrames(windows: [], scale: screen.scale)
     }
-    state.systemAccent = Controller.systemAccent()
-    state.systemDark = args.contains("--light") ? false : args.contains("--dark") ? true : Controller.systemDark()
     var access = Controller.accessibility()
     if args.contains("--reduce-transparency") { access.reduceTransparency = true }
     if args.contains("--increase-contrast") { access.increaseContrast = true }
-    state.accessibility = access
-    state.liquidGlassAvailable = Controller.liquidGlassAvailable
+    Controller.applySystemLook(to: &state, dark: args.contains("--light") ? false : args.contains("--dark") ? true : nil, accessibility: access)
     state.activeScreenID = screen.id
     if let action { _ = state.send(.action(action)) }
     if let then { _ = state.send(.action(then)) }

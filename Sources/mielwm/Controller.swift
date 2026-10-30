@@ -106,10 +106,7 @@ final class Controller {
         let saved = mode == .normal ? LayoutSnapshot.load(from: layoutURL) : nil
         state = CanvasState(screens: Displays.screens(), settings: loaded.settings, ownPID: getpid(),
                             now: CACurrentMediaTime(), savedLayout: saved)
-        state.systemAccent = Self.systemAccent()
-        state.systemDark = Self.systemDark()
-        state.accessibility = Self.accessibility()
-        state.liquidGlassAvailable = Self.liquidGlassAvailable
+        Self.applySystemLook(to: &state)
         state.stopwords = Self.stopwords()
         savedLayoutRevision = state.layoutRevision
         configStamp = paths.configModified

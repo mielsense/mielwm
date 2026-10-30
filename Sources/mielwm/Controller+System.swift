@@ -26,6 +26,15 @@ extension Controller {
         return characters.isEmpty ? nil : .character(characters.lowercased())
     }
 
+    /// The system's accent, appearance, accessibility options and glass, as Core needs them;
+    /// previews pass their own appearance and options.
+    static func applySystemLook(to state: inout CanvasState, dark: Bool? = nil, accessibility: AccessibilityOptions? = nil) {
+        state.systemAccent = systemAccent()
+        state.systemDark = dark ?? systemDark()
+        state.accessibility = accessibility ?? Self.accessibility()
+        state.liquidGlassAvailable = liquidGlassAvailable
+    }
+
     static func systemAccent() -> RGB? {
         NSColor.controlAccentColor.usingColorSpace(.sRGB).map { RGB(Double($0.redComponent), Double($0.greenComponent), Double($0.blueComponent)) }
     }
