@@ -85,15 +85,15 @@ extension AppDelegate {
         }
     }
 
-    /// Workspaces 1-9 that have windows, with their apps in tile order.
+    /// The workspaces the menu bar numbers, those with windows, with their apps in tile order.
     private var menuWorkspaces: [(number: Int, apps: [NSRunningApplication])] {
-        guard let state = controller?.state else { return [] }
-        return state.workspaces.compactMap { ws in
-            guard let n = ws.number, !ws.members.isEmpty else { return nil }
+        guard let controller else { return [] }
+        return controller.workspaceStatus.numbers.compactMap { n in
+            guard let ws = controller.state.workspaces.first(where: { $0.number == n }), !ws.members.isEmpty else { return nil }
             var pids: [pid_t] = []
             for id in ws.members where !pids.contains(id.pid) { pids.append(id.pid) }
             return (n, pids.compactMap { NSRunningApplication(processIdentifier: $0) })
-        }.sorted { $0.number < $1.number }
+        }
     }
 
     /// The title, then small app icons after it.
