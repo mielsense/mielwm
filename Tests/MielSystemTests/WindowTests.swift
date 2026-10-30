@@ -300,9 +300,10 @@ struct WindowTests {
         let id = try #require(try await s.start(count: 1).first).id
         #expect(s.registry.windows[id]?.isStandard == false)
         kill(s.pid, SIGUSR2) // gives it a title bar
-        try await Task.sleep(for: .milliseconds(300))
-        s.registry.refresh()
-        #expect(await s.until { s.registry.windows[id]?.isStandard == true })
+        #expect(await s.until {
+            s.registry.refresh()
+            return s.registry.windows[id]?.isStandard == true
+        })
     }
 
     /// A close whose notification never arrives (the observer thread is blocked) is caught by a rescan.
