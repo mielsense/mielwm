@@ -193,8 +193,8 @@ final class OverlayView: NSView, NSTextInputClient {
 
     /// Where input method windows appear: the search field near the top.
     func firstRect(forCharacterRange range: NSRange, actualRange: NSRangePointer?) -> NSRect {
-        guard let window, let look = controller?.state.look else { return .zero }
-        let field = NSRect(x: bounds.midX - 200, y: bounds.height * look.paletteTop, width: 400, height: look.searchHeight * look.hudScale)
+        guard let window, let controller, let screen = controller.screen(id: screenID) else { return .zero }
+        let field = PaletteMetrics.fieldFrame(controller.state.look, screenSize: bounds.size, topInset: screen.topInset)
         return window.convertToScreen(convert(field, to: nil))
     }
 

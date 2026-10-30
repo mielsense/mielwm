@@ -302,3 +302,13 @@ func threeWindows() -> CanvasState {
     _ = s.send(.action(.search("")))
     #expect(!s.scene(for: builtIn).searching)
 }
+
+@Test func theSearchFieldsFrameIsTheCapsuleBelowTheNotch() {
+    var look = Look()
+    look.hudScale = 1
+    let f = PaletteMetrics.fieldFrame(look, screenSize: CGSize(width: 1512, height: 982), topInset: 38)
+    #expect(f.height == look.searchHeight && f.width == look.paletteWidth && f.midX == 756)
+    #expect(abs(f.minY - PaletteMetrics.top(look, screenHeight: 982, topInset: 38)) < 1e-9)
+    let tall = PaletteMetrics.fieldFrame(look, screenSize: CGSize(width: 600, height: 400), topInset: 120) // a narrow display, a deep notch
+    #expect(abs(tall.width - 600 * 0.94) < 1e-9 && abs(tall.minY - (120 + 12)) < 1e-9)
+}

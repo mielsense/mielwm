@@ -33,6 +33,13 @@ public enum PaletteMetrics {
         max(screenHeight * look.paletteTop, topInset + 12 * look.hudScale)
     }
 
+    /// The search field, the capsule at the top, in points from the screen's top-left.
+    public static func fieldFrame(_ look: Look, screenSize: CGSize, topInset: Double) -> CGRect {
+        let width = min(look.paletteWidth * look.hudScale, screenSize.width * 0.94)
+        return CGRect(x: (screenSize.width - width) / 2, y: top(look, screenHeight: screenSize.height, topInset: topInset),
+                      width: width, height: look.searchHeight * look.hudScale)
+    }
+
     /// The bottom key-hint pill: its height, and its distance from the screen's bottom (`bottomInset`: the Dock).
     public static func hintsHeight(_ look: Look) -> Double { (look.cornerSize * 2.5 * look.hudScale).rounded() }
 
