@@ -53,26 +53,26 @@
 			{@render label('Install', BookIcon, mesh.violet)}
 			<h2 id="install" class="display text-3xl">Open it the first time</h2>
 			<ol class="flex flex-col gap-3.5 text-base leading-relaxed">
-				<li class="flex gap-3">
+				<li class="flex items-start gap-3">
 					<span class="key mt-0.5 shrink-0 text-xs">1</span>
 					<span>Open <strong class="font-medium text-strong">{file}</strong> and drag mielwm into Applications.</span>
 				</li>
-				<li class="flex gap-3">
+				<li class="flex items-start gap-3">
 					<span class="key mt-0.5 shrink-0 text-xs">2</span>
 					<span>Open mielwm from Applications. mielwm is signed with its own certificate but not notarized by Apple, so macOS says it can't check the developer. Click Done.</span>
 				</li>
-				<li class="flex gap-3">
+				<li class="flex items-start gap-3">
 					<span class="key mt-0.5 shrink-0 text-xs">3</span>
 					<span>
 						Go to System Settings &gt; Privacy &amp; Security, scroll down and click <strong class="font-medium text-strong">Open Anyway</strong>. Every release is signed
 						with the same certificate, so macOS keeps your permissions when you update.
 					</span>
 				</li>
-				<li class="flex gap-3">
+				<li class="flex items-start gap-3">
 					<span class="key mt-0.5 shrink-0 text-xs">4</span>
 					<span>Allow <strong class="font-medium text-strong">Accessibility</strong>, so mielwm can move and focus windows and hear its shortcuts.</span>
 				</li>
-				<li class="flex gap-3">
+				<li class="flex items-start gap-3">
 					<span class="key mt-0.5 shrink-0 text-xs">5</span>
 					<span>
 						Allow <strong class="font-medium text-strong">Screen Recording</strong> for the live window pictures in the overview. Without it the overview shows
