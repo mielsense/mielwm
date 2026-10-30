@@ -1,9 +1,12 @@
 // mielwm-testwindows: opens throwaway windows for system tests, so tests
 // never touch real ones.
 //
-//   mielwm-testwindows [--count N] [--frames "x,y,w,h;x,y,w,h"] [--still]
+//   mielwm-testwindows [--count N] [--frames "x,y,w,h;x,y,w,h"] [--still] [--hidden] [--untitled]
 //
-// They repaint 60 times a second (like a video), unless --still.
+// They repaint 60 times a second (like a video), unless --still. --hidden
+// hides the app once it runs. --untitled opens PT-1 without a title bar, so
+// it is not a standard window until SIGUSR2 gives it one. SIGINFO orders PT-1
+// out: hidden, not closed, as apps that close to the menu bar do.
 //
 // Frames are global points, y-down from the primary display's top-left, like
 // everything in mielwm. Windows are titled PT-1 ... PT-N. Prints its pid,
@@ -40,6 +43,7 @@ let frames: [CGRect] = (argument("--frames") ?? "").split(separator: ";").compac
 }
 let count = Int(argument("--count") ?? "") ?? max(frames.count, 1)
 
+let standardStyle: NSWindow.StyleMask = [.titled, .closable, .miniaturizable, .resizable]
 let app = NSApplication.shared
 app.setActivationPolicy(.accessory)
 let primaryHeight = NSScreen.screens.first?.frame.height ?? 0
@@ -47,7 +51,8 @@ var views: [PulseView] = []
 var windows: [NSWindow] = []
 for i in 0..<count {
     let f = i < frames.count ? frames[i] : CGRect(x: 120 + 40 * i, y: 120 + 40 * i, width: 480, height: 320)
-    let window = NSWindow(contentRect: .zero, styleMask: [.titled, .closable, .miniaturizable, .resizable],
+    let untitled = i == 0 && CommandLine.arguments.contains("--untitled")
+    let window = NSWindow(contentRect: .zero, styleMask: untitled ? [.borderless] : standardStyle,
                           backing: .buffered, defer: false)
     window.title = "PT-\(i + 1)"
     window.isReleasedWhenClosed = false
@@ -66,6 +71,15 @@ moveSignal.setEventHandler {
     w.setFrameOrigin(NSPoint(x: w.frame.minX + 100, y: w.frame.minY - 60)) // AppKit's y grows upward
 }
 moveSignal.resume()
+signal(SIGUSR2, SIG_IGN)
+let styleSignal = DispatchSource.makeSignalSource(signal: SIGUSR2, queue: .main)
+styleSignal.setEventHandler { windows.first?.styleMask = standardStyle }
+styleSignal.resume()
+signal(SIGINFO, SIG_IGN)
+let orderOutSignal = DispatchSource.makeSignalSource(signal: SIGINFO, queue: .main)
+orderOutSignal.setEventHandler { windows.first?.orderOut(nil) }
+orderOutSignal.resume()
+if CommandLine.arguments.contains("--hidden") { DispatchQueue.main.async { app.hide(nil) } }
 
 print(ProcessInfo.processInfo.processIdentifier)
 fflush(stdout)

@@ -425,3 +425,21 @@ private func socketPath(_ name: String) -> String { "/tmp/mielwm-\(getpid())-\(n
     _ = r.feed(Array(fingers(0.5)) + [CGPoint(x: 0.9, y: 0.9)]) // four fingers: Mission Control's
     #expect(r.feed(Array(fingers(0.2)) + [CGPoint(x: 0.9, y: 0.9)]) == nil)
 }
+
+// MARK: - Screens
+
+@Test func screensReportedOnWakeKeepTheCacheCurrent() {
+    var seen: [[ScreenInfo]] = []
+    let registry = WindowRegistry { if case .screensChanged(let s) = $0 { seen.append(s) } }
+    func screen(_ id: UInt32, _ width: CGFloat) -> [ScreenInfo] {
+        let frame = CGRect(x: 0, y: 0, width: width, height: 900)
+        return [ScreenInfo(id: id, name: "S\(id)", frame: frame, visibleFrame: frame, scale: 2)]
+    }
+    let a = screen(1, 1440), b = screen(2, 1920)
+    registry.report(a)
+    registry.report(b, always: true) // waking, with an external display gone
+    registry.report(b, always: true) // the second wake notification
+    registry.report(a) // the display is back
+    registry.report(a)
+    #expect(seen == [a, b, b, a])
+}

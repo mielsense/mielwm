@@ -44,6 +44,14 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 - A window whose app misses a move, because it was busy at the time, gets the move once more a second later.
 - After restarting mielwm, windows whose title changed meanwhile, like a browser tab, come back to their places and workspaces.
 - Switching workspaces no longer flashes the old windows over the new workspace.
+- Windows that open while an app is busy no longer get lost. mielwm reads every app's window list again every 10 seconds and when you switch to an app.
+- A closed window no longer leaves an empty tile behind when mielwm misses that it closed.
+- Apps that take a long time to start, or that turn into regular apps after they start, get their windows managed.
+- Windows that open as a dialog and then become normal windows get tiled.
+- Apps that were already hidden when mielwm started no longer hold empty tiles.
+- After the Mac wakes from sleep, windows go back to their tiles on their own.
+- `mielwm refresh` also reads every app's window list again.
+- Windows of an app that is busy when you quit no longer stay in a screen corner. The watcher brings them back after mielwm exits.
 
 ### Performance
 

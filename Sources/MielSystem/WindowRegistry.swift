@@ -61,6 +61,7 @@ public final class WindowRegistry {
             self?.deliver(.appHidden(pid: app.processIdentifier, false))
         }
         observe(workspace, NSWorkspace.didActivateApplicationNotification) { [weak self] app in
+            self?.track(app) // it may have become regular since launch
             self?.activated(app.processIdentifier)
         }
         let token = NotificationCenter.default.addObserver(
@@ -80,10 +81,7 @@ public final class WindowRegistry {
     }
 
     private func checkScreens() {
-        let now = Displays.screens(keeping: screens)
-        guard now != screens else { return }
-        screens = now
-        onEvent(.screensChanged(now))
+        report(Displays.screens(keeping: screens))
     }
 
     /// Once things settle: a status bar app shows its window a moment after it starts.
@@ -104,34 +102,52 @@ public final class WindowRegistry {
         group.notify(queue: .global()) { [thread = observerThread] in thread.stop() }
     }
 
-    /// Re-reads every app's window list, catching windows whose notifications
-    /// were missed, and picks up apps that became regular after launch.
+    /// `rescan`, after picking up apps that became regular after launch.
+    /// Costs a few milliseconds on the main thread with many apps running.
     public func refresh() {
         if pidFilter == nil { NSWorkspace.shared.runningApplications.forEach(track) }
-        for tracker in trackers.values { tracker.queue.async { tracker.scan() } }
+        rescan()
     }
 
-    /// Fire and forget. Commands for one app run in order on its queue. The
-    /// group finishes once every app has applied them; wait on it from any
-    /// thread (quit and unpark, where the process may exit next).
+    /// Re-reads the window list of every tracked app, catching windows whose
+    /// notifications were missed. The reading happens on each app's queue;
+    /// only the differences are reported.
+    public func rescan() {
+        trackers.values.forEach { $0.rescan() }
+    }
+
+    /// After waking: macOS has moved windows while displays went and came.
+    /// Reports the screens even when they look the same, so Core waits out its
+    /// grace period and then puts every window back, and rereads every window list.
+    public func woke() {
+        report(Displays.screens(keeping: screens), always: true)
+        rescan()
+    }
+
+    /// Through the cache, so a change and the change back are both reported.
+    func report(_ now: [ScreenInfo], always: Bool = false) {
+        guard always || now != screens else { return }
+        screens = now
+        onEvent(.screensChanged(now))
+    }
+
+    /// Fire and forget. Commands for one app run in order on its queue. Wait
+    /// on the result from any thread (quit and unpark, where the process may exit next).
     @discardableResult
-    public func perform(_ commands: [WindowCommand]) -> DispatchGroup {
-        let group = DispatchGroup()
+    public func perform(_ commands: [WindowCommand]) -> Applied {
+        let applied = Applied()
         for (tracker, batch) in batches(commands) {
-            group.enter()
-            tracker.queue.async {
-                tracker.run(batch)
-                group.leave()
-            }
+            applied.group.enter()
+            tracker.queue.async { applied.finish(answered: tracker.run(batch)) }
         }
-        return group
+        return applied
     }
 
     /// `perform`, then blocks until every app has applied the commands, at
-    /// most `timeout` seconds. Returns false if some app did not finish in time.
+    /// most `timeout` seconds. See `Applied.wait` for when it returns false.
     @discardableResult
     public func performAndWait(_ commands: [WindowCommand], timeout: TimeInterval = 2) -> Bool {
-        perform(commands).wait(timeout: .now() + timeout) == .success
+        perform(commands).wait(timeout: timeout)
     }
 
     // MARK: - Private
@@ -166,7 +182,12 @@ public final class WindowRegistry {
     private func activated(_ pid: pid_t) {
         activePid = pid
         lastFocused = nil
-        if let tracker = trackers[pid] { tracker.reportFocus() } else { deliver(.unmanagedFocus(pid: pid)) }
+        if let tracker = trackers[pid] {
+            tracker.reportFocus() // first: it adopts the focused window on its own
+            tracker.rescan()
+        } else {
+            deliver(.unmanagedFocus(pid: pid))
+        }
     }
 
     /// Keeps `windows` current and drops what Core must never see: events
@@ -208,6 +229,25 @@ public final class WindowRegistry {
     /// Per app, in the order given; apps run concurrently, so their order does not matter.
     private func batches(_ commands: [WindowCommand]) -> [(AppTracker, [WindowCommand])] {
         Dictionary(grouping: commands, by: \.window.pid).compactMap { pid, batch in trackers[pid].map { ($0, batch) } }
+    }
+}
+
+/// What `perform` sent. Thread-safe.
+public final class Applied: @unchecked Sendable {
+    fileprivate let group = DispatchGroup()
+    private let lock = NSLock()
+    private var unanswered = false
+
+    fileprivate func finish(answered: Bool) {
+        lock.withLock { if !answered { unanswered = true } }
+        group.leave()
+    }
+
+    /// Blocks until every app has run its commands, at most `timeout` seconds.
+    /// False if some app did not finish in time or did not answer a write: a
+    /// hung app times each one out quickly, without moving anything.
+    public func wait(timeout: TimeInterval) -> Bool {
+        group.wait(timeout: .now() + timeout) == .success && lock.withLock { !unanswered }
     }
 }
 
@@ -253,6 +293,9 @@ final class AppTracker {
     private var elements: [WindowID: AXUIElement] = [:]
     private var ids: [AXUIElement: WindowID] = [:]
     private var fullScreen: Set<WindowID> = []
+    /// Not standard or not movable when last read, so Core skips them. Rescans
+    /// read them again: some apps report AXUnknown or AXDialog at first.
+    private var ignored: Set<WindowID> = []
     private var sizes: [WindowID: CGSize] = [:] // last size read or written, so a move that keeps it sets only the position
 
     init(pid: pid_t, bundleID: String?, appName: String, observerThread: RunLoopThread,
@@ -292,8 +335,10 @@ final class AppTracker {
         }
     }
 
+    private static let attempts = 20
+
     private func setUp(attempt: Int) {
-        guard !stopped else { return }
+        guard !stopped, observer == nil else { return }
         AXUIElementSetMessagingTimeout(app, axTimeout)
         var created: AXObserver?
         guard AXObserverCreate(pid, axCallback, &created) == .success, let observer = created else { return }
@@ -303,7 +348,7 @@ final class AppTracker {
             refcon.release()
             // Apps that are still launching refuse for a while; apps without
             // AX support or a missing permission never stop refusing.
-            if attempt < 20, result != .apiDisabled, result != .notImplemented {
+            if attempt < Self.attempts, result != .apiDisabled, result != .notImplemented {
                 queue.asyncAfter(deadline: .now() + 0.25) { self.setUp(attempt: attempt + 1) }
             }
             return
@@ -315,6 +360,8 @@ final class AppTracker {
         self.refcon = refcon
         CFRunLoopAddSource(observerThread.runLoop, AXObserverGetRunLoopSource(observer), .defaultMode)
         scan()
+        // After its windows, so Core has them to hide. Later changes come from NSWorkspace.
+        if app.value(kAXHiddenAttribute) as? Bool == true { post(.appHidden(pid: pid, true)) }
     }
 
     func handle(_ name: String, _ element: AXUIElement) {
@@ -322,11 +369,7 @@ final class AppTracker {
         case kAXWindowCreatedNotification:
             adopt(element)
         case kAXUIElementDestroyedNotification:
-            guard let id = ids.removeValue(forKey: element) else { return }
-            elements[id] = nil
-            fullScreen.remove(id)
-            sizes[id] = nil
-            post(.windowClosed(id))
+            if let id = ids[element] { forget(id, element) }
         case kAXMovedNotification, kAXResizedNotification:
             guard let id = ids[element], let (frame, isFullScreen) = frame(of: element) else { return }
             sizes[id] = frame.size
@@ -358,17 +401,33 @@ final class AppTracker {
         }
     }
 
-    /// Re-reads the window list: announces new windows, closes vanished ones.
+    /// Any thread. `scan`, or one more try for an app that refused to be watched.
+    func rescan() {
+        queue.async { self.observer == nil ? self.setUp(attempt: Self.attempts) : self.scan() } // a last attempt, no retries
+    }
+
+    /// Re-reads the window list: announces new windows and ignored ones that
+    /// became standard, closes destroyed ones. A window missing from the list
+    /// but still alive (on another Space, say) stays.
     func scan() {
         guard observer != nil, let current = app.value(kAXWindowsAttribute) as? [AXUIElement] else { return }
         let live = Set(current.compactMap(adopt))
-        for (id, element) in elements where !live.contains(id) {
-            elements[id] = nil
-            ids[element] = nil
-            fullScreen.remove(id)
-            sizes[id] = nil
-            post(.windowClosed(id))
+        for (id, element) in elements where !live.contains(id) && element.isGone { forget(id, element) }
+        for id in ignored.intersection(live) {
+            guard let element = elements[id], let snapshot = snapshot(element, id), !isIgnored(snapshot) else { continue }
+            ignored.remove(id)
+            if snapshot.isFullScreen { fullScreen.insert(id) }
+            post(.windowAppeared(snapshot))
         }
+    }
+
+    private func forget(_ id: WindowID, _ element: AXUIElement) {
+        elements[id] = nil
+        ids[element] = nil
+        fullScreen.remove(id)
+        ignored.remove(id)
+        sizes[id] = nil
+        post(.windowClosed(id))
     }
 
     /// Any thread.
@@ -376,35 +435,38 @@ final class AppTracker {
         queue.async { self.postFocus() }
     }
 
-    func run(_ batch: [WindowCommand]) {
+    /// False if the app did not answer some frame write in time.
+    func run(_ batch: [WindowCommand]) -> Bool {
         // With it on (VoiceOver, some automation tools), apps animate and
         // fight programmatic frame changes. It is per app: once per batch.
         let moves = batch.contains { if case .setFrame = $0 { true } else { false } }
         let enhanced = moves && app.value("AXEnhancedUserInterface") as? Bool == true
         if enhanced { app.set("AXEnhancedUserInterface", kCFBooleanFalse) }
-        batch.forEach(run)
+        let answered = batch.map(run).allSatisfy { $0 }
         if enhanced { app.set("AXEnhancedUserInterface", kCFBooleanTrue) }
+        return answered
     }
 
-    private func run(_ command: WindowCommand) {
+    private func run(_ command: WindowCommand) -> Bool {
         switch command {
         case .setFrame(let id, let frame):
             // Core may have sent it before hearing the window went full screen.
-            guard !fullScreen.contains(id), let window = element(id) else { return }
+            guard !fullScreen.contains(id), let window = element(id) else { return true }
             // shortcut: an app that resizes a window without kAXResizedNotification keeps that size on
             // the next same-size move; set the size every time if such an app turns up.
             guard sizes[id] != frame.size else { // the same size: a move alone (parking, workspace switches)
-                window.set(kAXPositionAttribute, axValue(frame.origin))
-                return
+                return window.set(kAXPositionAttribute, axValue(frame.origin)) != .cannotComplete
             }
             // Size first so a move onto a smaller display is not clamped,
             // size again in case the old position limited the first one.
-            window.set(kAXSizeAttribute, axValue(frame.size))
-            window.set(kAXPositionAttribute, axValue(frame.origin))
+            let first = window.set(kAXSizeAttribute, axValue(frame.size))
+            let moved = window.set(kAXPositionAttribute, axValue(frame.origin))
+            let last = window.set(kAXSizeAttribute, axValue(frame.size))
             // A write that failed (a busy app timing out) leaves the size unknown, so the next move sets it again.
-            sizes[id] = window.set(kAXSizeAttribute, axValue(frame.size)) == .success ? frame.size : nil
+            sizes[id] = last == .success ? frame.size : nil
+            return ![first, moved, last].contains(.cannotComplete) // what a timeout returns; a refused size is an answer
         case .focus(let id):
-            guard let window = element(id) else { return }
+            guard let window = element(id) else { return true }
             if window.value(kAXMinimizedAttribute) as? Bool == true { window.set(kAXMinimizedAttribute, kCFBooleanFalse) }
             AXUIElementPerformAction(window, kAXRaiseAction as CFString)
             window.set(kAXMainAttribute, kCFBooleanTrue)
@@ -412,13 +474,16 @@ final class AppTracker {
             app.set(kAXFrontmostAttribute, kCFBooleanTrue)
             let pid = pid
             DispatchQueue.main.async { NSRunningApplication(processIdentifier: pid)?.activate() }
+            return true // nobody waits on focus
         case .close(let id):
             // The close button, as a click: the app may still ask to save first.
             guard let window = element(id), let button = window.value(kAXCloseButtonAttribute),
-                  CFGetTypeID(button) == AXUIElementGetTypeID() else { return }
+                  CFGetTypeID(button) == AXUIElementGetTypeID() else { return true }
             AXUIElementPerformAction(button as! AXUIElement, kAXPressAction as CFString)
+            return true
         case .minimize(let id):
             element(id)?.set(kAXMinimizedAttribute, kCFBooleanTrue)
+            return true
         }
     }
 
@@ -446,6 +511,7 @@ final class AppTracker {
         elements[id] = element
         ids[element] = id
         if snapshot.isFullScreen { fullScreen.insert(id) }
+        if isIgnored(snapshot) { ignored.insert(id) }
         sizes[id] = snapshot.frame.size
         if let observer, let refcon {
             for name in windowNotifications {
@@ -456,8 +522,8 @@ final class AppTracker {
         return id
     }
 
-    /// shortcut: role and subrole are read once, when the window appears. If
-    /// an app turns out to report AXUnknown first, re-read them on a later event.
+    private func isIgnored(_ s: WindowSnapshot) -> Bool { !s.isStandard || !s.isMovable }
+
     private func snapshot(_ element: AXUIElement, _ id: WindowID) -> WindowSnapshot? {
         let v = element.values([kAXRoleAttribute, kAXSubroleAttribute, kAXTitleAttribute,
                                 kAXPositionAttribute, kAXSizeAttribute, kAXMinimizedAttribute, kAXFullScreen])
