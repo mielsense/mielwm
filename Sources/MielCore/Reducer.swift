@@ -294,7 +294,7 @@ extension CanvasState {
             if n <= Self.maxReparks {
                 sync([id], force: true)
             } else if windows[i].retryAt == nil, n <= Self.maxReparks + Self.maxRetries {
-                windows[i].retryAt = now + min(16, pow(2, Double(n - Self.maxReparks - 1)))
+                windows[i].retryAt = now + pow(2, Double(n - Self.maxReparks - 1))
             }
             return
         }
@@ -310,12 +310,11 @@ extension CanvasState {
         }
         // (b) The user dragged it, or the app moved or resized itself: adopt.
         // A tiled window keeps its tile, or the user drags the edge it shares with a neighbour.
-        // Dragged by its title bar, it goes back once the reports stop, without counting as a try.
-        if windows[i].workspace != nil, dragging, sameSize {
-            windows[i].retryAt = now + dragGrace
-            return
-        }
         if windows[i].workspace != nil {
+            if dragging, sameSize { // by its title bar: back once the reports stop, without counting as a try
+                windows[i].retryAt = now + dragGrace
+                return
+            }
             return userChangedTile(i, to: deskCamera.toCanvas(frame, deskCenter: deskCenter), resizing: dragging)
         }
         windows[i].frame = deskCamera.toCanvas(frame, deskCenter: deskCenter)
