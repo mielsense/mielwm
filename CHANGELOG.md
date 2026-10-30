@@ -14,6 +14,7 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 - A tiled window snaps back to its tile each time you drag it away, not only the first two times.
 - A window whose app refuses its tile size settles at the size it wants, instead of being resized again each time the app reports a move.
 - Switching workspaces with many windows open no longer leaves some of them behind when their apps are slow to answer.
+- A window whose app misses a move, because it was busy at the time, gets the move once more a second later.
 
 ## 0.1.0
 

@@ -165,3 +165,11 @@ func builtInAloneOnWorkspace3() -> CanvasState {
     #expect(n <= Int(CanvasState.maxReparks))
     #expect(s.canvasFrame(1)?.size == refused.size)
 }
+
+@Test func aMoveThatNeverShowsUpIsSentOnceMore() {
+    var s = focusedState()
+    let asked = moves(s.send(.action(.nudge(.right))))[wid(1)]
+    #expect(asked != nil)
+    #expect(moves(s.advance(1.5))[wid(1)] == asked) // no report at all: the app missed it
+    #expect(s.advance(1.5).isEmpty) // only once
+}

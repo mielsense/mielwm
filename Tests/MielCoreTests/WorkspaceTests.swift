@@ -390,9 +390,9 @@ extension CanvasState {
     var s = twoTiles()
     let refused = CGRect(x: 12, y: 50, width: 740, height: 700) // a maximum height, say
     #expect(moves(s.send(.system(.windowFrameChanged(wid(1), refused)))) == [wid(1): left])
-    _ = s.advance(1.5) // our move never shows up
+    _ = s.advance(2.5) // our move never shows up, nor does sending it again
     #expect(moves(s.send(.system(.windowFrameChanged(wid(1), refused)))) == [wid(1): left])
-    _ = s.advance(1.5)
+    _ = s.advance(2.5)
     #expect(s.send(.system(.windowFrameChanged(wid(1), refused))).isEmpty) // given up
     #expect(s.canvasFrame(1)?.size == refused.size)
 }

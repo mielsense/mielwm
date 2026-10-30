@@ -32,6 +32,7 @@ public struct ManagedWindow: Hashable, Sendable {
 struct Expectation: Hashable, Sendable {
     var frame: CGRect
     var deadline: Double
+    var resent = false
 }
 
 struct FullscreenEntry: Hashable, Sendable {

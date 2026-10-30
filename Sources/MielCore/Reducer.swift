@@ -99,6 +99,9 @@ extension CanvasState {
             if let report = windows[i].pending {
                 windows[i].pending = nil
                 judge(i, report, answering: true)
+            } else if !e.resent, !windows[i].real.isClose(to: e.frame, tolerance: Self.frameTolerance) {
+                setFrame(i, e.frame) // no report at all: the app may have dropped it, so once more
+                windows[i].expected?.resent = true
             }
         }
         for i in windows.indices {
