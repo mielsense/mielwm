@@ -23,7 +23,8 @@ struct WindowsPane: View {
                 ForEach(parseWorkspaceRules(s.workspaceRules).sorted { ($0.value, AppInfo(bundleID: $0.key).name) < ($1.value, AppInfo(bundleID: $1.key).name) }, id: \.key) { id, number in
                     AppRow(bundleID: id, remove: { setRule(id, nil) }) {
                         Picker("Workspace", selection: Binding(get: { number }, set: { setRule(id, $0) })) {
-                            ForEach(1 ... 9, id: \.self) { Text("Workspace \($0)").tag($0) }
+                            // A rule from the config file may name a workspace past 9: it stays a choice.
+                            ForEach(1 ... max(9, number), id: \.self) { Text("Workspace \($0)").tag($0) }
                         }
                         .labelsHidden()
                         .fixedSize()

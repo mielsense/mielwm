@@ -122,12 +122,7 @@ extension Settings {
 
     /// layout:workspace_rules as bundle id (lowercased) to workspace number.
     var workspaceRuleTable: [String: Int] {
-        var table: [String: Int] = [:]
-        for pair in workspaceRules.split(separator: ",") {
-            let parts = pair.split(separator: "=").map { $0.trimmingCharacters(in: .whitespaces) }
-            if parts.count == 2, let n = Int(parts[1]), n >= 1 { table[parts[0].lowercased()] = n }
-        }
-        return table
+        Dictionary(parseWorkspaceRules(workspaceRules).map { ($0.key.lowercased(), $0.value) }) { _, last in last }
     }
 }
 

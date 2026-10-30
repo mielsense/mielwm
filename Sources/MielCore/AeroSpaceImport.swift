@@ -189,12 +189,12 @@ public func parseAppList(_ text: String) -> [String] {
     text.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
 }
 
-/// "com.a=1,com.b=2" as a dictionary; malformed pairs are dropped.
+/// "com.a=1,com.b=12" as a dictionary; malformed pairs and numbers below 1 are dropped.
 public func parseWorkspaceRules(_ text: String) -> [String: Int] {
     var rules: [String: Int] = [:]
     for pair in parseAppList(text) {
         let parts = pair.split(separator: "=", maxSplits: 1).map { $0.trimmingCharacters(in: .whitespaces) }
-        if parts.count == 2, let n = Int(parts[1]), (1 ... 9).contains(n) { rules[parts[0]] = n }
+        if parts.count == 2, let n = Int(parts[1]), n >= 1 { rules[parts[0]] = n }
     }
     return rules
 }

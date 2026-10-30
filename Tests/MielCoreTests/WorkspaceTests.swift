@@ -556,3 +556,15 @@ extension CanvasState {
     _ = s.send(.system(.windowFocused(wid(2))))
     #expect(s.deskCamera == home && s.canvasFrame(2) == frame)
 }
+
+/// A rule may name any workspace, as the config does, so Settings shows and keeps one past 9.
+@Test func workspaceRulesPastNineSurviveAnEdit() {
+    let rules = parseWorkspaceRules("com.x=12, com.y=3, com.z=0, junk")
+    #expect(rules == ["com.x": 12, "com.y": 3])
+    var edited = rules
+    edited["com.new"] = 1
+    #expect(formatWorkspaceRules(edited) == "com.new=1,com.x=12,com.y=3")
+    var settings = Settings()
+    settings.workspaceRules = "Com.X=12"
+    #expect(settings.workspaceRuleTable == ["com.x": 12])
+}

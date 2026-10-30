@@ -45,6 +45,7 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 
 ### Fixes
 
+- Settings > Windows shows a workspace rule for a workspace past 9, like `com.x=12` from the config file, and keeps it when you edit another rule. Before, it was hidden and dropped.
 - The menu keeps warning that keyboard shortcuts need the Accessibility permission after the config file changes. Before, any reload dropped the warning.
 - Closing the welcome window no longer leaves the menu stuck on Waiting for permissions. Without Accessibility, mielwm stays paused, and Resume mielwm opens the window again.
 - A window that its app keeps pulling back is parked again on time, even while a message or a display change is still settling.
