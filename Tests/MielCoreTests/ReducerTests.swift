@@ -105,7 +105,7 @@ func panDesk(_ s: inout CanvasState, dx: CGFloat) -> [WindowCommand] {
     #expect(s.send(.system(.windowFrameChanged(wid(1), pulled))).isEmpty)
     #expect(s.window(wid(1))?.parked == true)
     #expect(s.canvasFrame(1) == onBuiltIn)
-    #expect(s.needsTicks)
+    #expect(s.nextWake != nil)
     #expect(moves(s.advance(1.1))[wid(1)] == slot)
     // Each try the app undoes waits twice as long as the last.
     _ = s.run(.system(.windowFrameChanged(wid(1), slot)), .system(.windowFrameChanged(wid(1), pulled)))

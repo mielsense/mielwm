@@ -73,7 +73,7 @@ public extension CanvasState {
     /// Ticks are needed while this is true: animations, moves awaiting
     /// confirmation, the screen grace period, toasts, the switcher's delay.
     var needsTicks: Bool {
-        !animator.isSettled || windows.contains { $0.expected != nil || $0.reparkRetry != nil } || graceUntil != nil || toast != nil
+        !animator.isSettled || windows.contains { $0.expected != nil } || graceUntil != nil || toast != nil
             || expectedFocus != nil || (overview.switcherRevealAt.map { $0 > now } ?? false)
     }
 
@@ -82,6 +82,9 @@ public extension CanvasState {
     var needsOverlay: Bool {
         isOverview || isPanning || !animator.isSettled || overview.switcherRevealed(now: now)
     }
+
+    /// When a tick is next due while `needsTicks` is false: a window waits to be parked again.
+    var nextWake: Double? { windows.compactMap(\.reparkRetry).min() }
 
     /// Some setFrame we sent is not confirmed yet (the landing fade waits for it).
     var movesInFlight: Bool { windows.contains { $0.expected != nil } }
