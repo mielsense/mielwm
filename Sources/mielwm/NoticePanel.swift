@@ -159,6 +159,9 @@ final class NoticeBoard {
     private var spokenSwitcher: String?
 
     func update(_ state: CanvasState) {
+        defer { speak(state) }
+        // The overview has its own toasts, and its overlay would cover these anyway; hidden, they don't tick under it.
+        guard !state.isOverview else { return hideAll() }
         let n = state.notices
         place(toast, n.toastInOverview ? nil : n.toast, NoticeContent.toast, state) { _, f, _, s in
             (f.midX, f.minY + f.height * 0.22 + s.height / 2) // where the overview draws its toasts
@@ -170,7 +173,6 @@ final class NoticeBoard {
             let top = Displays.toYDown(strip.area, primaryHeight: NSScreen.screens.first?.frame.height ?? 0).maxY
             return (strip.area.midX, top - 10) // just inside the stack's top edge
         }
-        speak(state)
     }
 
     func hideAll() {
