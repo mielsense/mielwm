@@ -222,7 +222,7 @@ final class Controller {
     }
 
     private func perform(_ commands: [WindowCommand], before: CanvasState) {
-        var now: [WindowCommand] = [], later: [(WindowID, WindowCommand, Int)] = [], parksNow = false
+        var now: [WindowCommand] = [], later: [(WindowID, WindowCommand, Int)] = [], refresh: [WindowID] = [], parksNow = false
         for c in commands {
             switch c {
             case .focus:
@@ -231,17 +231,22 @@ final class Controller {
             case let .setFrame(id, _):
                 commandSerial[id, default: 0] += 1
                 let parking = state.window(id)?.parked == true && before.window(id)?.parked == false
-                // Going to a park slot with no live stream: take a still first, so the overview has a picture.
+                // Going to a park slot with no live stream: the overview needs a picture. One it already has
+                // will do, so the window leaves with the others and a fresh still follows; with none, take one first.
                 if renderer != nil, !streamsLive, parking {
-                    later.append((id, c, commandSerial[id]!))
-                } else {
-                    parksNow = parksNow || parking
-                    now.append(c)
+                    if capture.latestFrame(for: id) == nil {
+                        later.append((id, c, commandSerial[id]!))
+                        continue
+                    }
+                    refresh.append(id)
                 }
+                parksNow = parksNow || parking
+                now.append(c)
             }
         }
         if !now.isEmpty { registry.perform(now) }
         if parksNow { timing?.lastPark = CACurrentMediaTime() }
+        if !refresh.isEmpty { capture.captureStills(refresh, scale: stillScale) }
         guard !later.isEmpty else { return }
         var done = false
         let finish = { [weak self] in

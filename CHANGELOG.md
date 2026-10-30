@@ -7,6 +7,7 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 ### Fixes
 
 - Leaving macOS full screen, like a full screen video, no longer flashes two desktops side by side. mielwm leaves a full screen window alone and keeps its tile for when it comes back.
+- Switching workspaces no longer flashes the old windows over the new workspace.
 
 ## 0.1.0
 
