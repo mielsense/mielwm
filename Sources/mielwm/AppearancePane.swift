@@ -49,7 +49,6 @@ struct AppearancePane: View {
     }
 }
 
-/// The canvas grid: dots or lines over the dark canvas.
 /// A pill in `style` over a bright, busy backdrop, so the glass shows what it does to what is behind it.
 struct GlassThumbnail: View {
     let style: GlassStyle
@@ -65,6 +64,7 @@ struct GlassThumbnail: View {
     }
 }
 
+/// The canvas grid: dots or lines over the dark canvas.
 struct GridThumbnail: View {
     let dots: Bool
 

@@ -91,8 +91,8 @@ final class HUDPainter {
         max(measure(key, style) + style.size * 0.84, (style.size * 1.6).rounded())
     }
 
-    /// One key after the app's `Design.KeyCap` recipe (this module can't import it, so it copies it):
-    /// a continuous radius of 6 and a 5% fill at 13 pt, scaled to `style`. Returns its width.
+    /// One key, taking the radius (6, continuous) and fill from the app's `Design.KeyCap` recipe,
+    /// scaled to `style` (this module can't import it). Its size is this module's own. Returns its width.
     @discardableResult
     private func keycap(_ b: Bitmap, _ key: String, _ style: TextStyle, x: CGFloat, cy: CGFloat, onAccent: Bool, _ theme: Theme) -> CGFloat {
         let w = keycapWidth(key, style), h = (style.size * 1.6).rounded()

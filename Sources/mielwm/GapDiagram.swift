@@ -44,7 +44,8 @@ struct GapDiagram: View {
                     MiniWindow().frame(width: tile.width, height: tile.height).offset(x: tile.minX, y: tile.minY)
                 }
                 ForEach(markers, id: \.keys) { marker in
-                    MarkerView(marker: marker, focused: focus.key.map(marker.keys.contains) ?? false)
+                    MarkerView(marker: marker, focused: focus.key.map(marker.keys.contains) ?? false,
+                               glass: Controller.liquidGlassAvailable ? s.look.glass : .frosted)
                 }
             }
             .frame(width: size.width, height: size.height, alignment: .topLeading)
@@ -67,6 +68,7 @@ struct GapDiagram: View {
     private struct MarkerView: View {
         let marker: Marker
         let focused: Bool
+        let glass: GlassStyle
 
         var body: some View {
             let horizontal = marker.from.y == marker.to.y
@@ -89,7 +91,7 @@ struct GapDiagram: View {
                             .monospacedDigit()
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .glassSurface(in: Capsule())
+                            .glassSurface(glass, in: Capsule())
                             .position(x: (marker.from.x + marker.to.x) / 2 + (horizontal ? 0 : 22), y: (marker.from.y + marker.to.y) / 2 + (horizontal ? -10 : 0))
                     }
                 }
