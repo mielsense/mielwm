@@ -159,7 +159,7 @@ public final class Renderer {
     }
 
     /// Renders offscreen and writes a PNG.
-    public func renderPNG(_ scene: Scene, frames: WindowFrameSource, to url: URL, pixelSize: CGSize? = nil) throws {
+    func renderPNG(_ scene: Scene, frames: WindowFrameSource, to url: URL, pixelSize: CGSize? = nil) throws {
         guard let image = renderImage(scene, frames: frames, pixelSize: pixelSize) else { throw RenderError.setup("render failed") }
         try Renderer.writePNG(image, to: url)
     }

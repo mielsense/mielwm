@@ -45,13 +45,13 @@ public struct Settings: Hashable, Codable, Sendable {
     /// "bundle.id=N" pairs, comma separated: windows of that app open on workspace N.
     public var workspaceRules = ""
     /// layout:stack_peek: points each window behind a stack's front one shows of its edge (AeroSpace's accordion padding).
-    public var stackPeek = 0.0
+    var stackPeek = 0.0
     /// `rules:<name>:<field>` entries: windows matched by app name or title (WindowRules.swift).
-    public var windowRules: [String: WindowRule] = [:]
+    var windowRules: [String: WindowRule] = [:]
     /// Going to the workspace you are on goes back to the one before (AeroSpace's --auto-back-and-forth).
-    public var autoBackAndForth = false
+    var autoBackAndForth = false
     /// Focus and move keys go on into the next workspace at its edge, instead of stopping there.
-    public var crossWorkspaces = false
+    var crossWorkspaces = false
 
     // animation:*
     public var animationEnabled = true
@@ -66,7 +66,7 @@ public struct Settings: Hashable, Codable, Sendable {
     public var menuBarStyle = MenuBarStyle.all
 
     /// notices:workspace: switching workspaces shows their numbers at the bottom of the display for a moment.
-    public var workspaceNotice = true
+    var workspaceNotice = true
 
     /// integrations:barik: Barik's menu bar shows mielwm's workspaces (docs/aerospace.md).
     public var barik = false

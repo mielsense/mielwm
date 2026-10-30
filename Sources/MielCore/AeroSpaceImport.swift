@@ -9,8 +9,8 @@ public struct AeroSpaceImport: Hashable, Sendable {
     public var orientation: TileOrientation?
     public var workspaceRules: [String: Int] = [:] // bundle id → workspace
     public var floatingApps: [String] = []
-    public var windowRules: [String: WindowRule] = [:] // by app name or title, named by their block
-    public var autoBackAndForth = false // a workspace key used --auto-back-and-forth
+    var windowRules: [String: WindowRule] = [:] // by app name or title, named by their block
+    var autoBackAndForth = false // a workspace key used --auto-back-and-forth
     public var bindings: [String: String] = [:] // mielwm chord → command
 
     public var isEmpty: Bool { self == AeroSpaceImport() }

@@ -112,7 +112,7 @@ public enum SystemEvent: Sendable, Equatable {
 
 /// Seconds after the left button comes up that frame reports still belong to
 /// the user's drag: slow apps report its last steps late, some resize only on release.
-public let dragGrace = 0.5
+let dragGrace = 0.5
 
 /// Whether a frame report is part of a user drag (`windowFrameChanged`'s
 /// `dragging`): the button is down, or it came up recently after a press that
@@ -344,8 +344,8 @@ public struct Look: Hashable, Codable, Sendable {
     public var accent = RGB.mielOrange
     var monoFont = "" // no longer drawn; kept so old configs load
     public var hudScale = 1.0
-    public var paletteWidth = 680.0
-    public var paletteTop = 0.1 // fraction of the screen height
+    var paletteWidth = 680.0
+    var paletteTop = 0.1 // fraction of the screen height
     public var paletteRows = 6
     public var rowHeight = 44.0
     var rounding = 8.0 // no longer drawn; kept so old configs load
