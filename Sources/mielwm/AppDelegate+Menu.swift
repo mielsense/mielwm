@@ -53,6 +53,7 @@ extension AppDelegate {
                 item.attributedTitle = Self.workspaceTitle(item.title, icons: apps.prefix(4).compactMap(\.icon))
                 item.toolTip = apps.compactMap(\.localizedName).joined(separator: ", ")
             }
+            menu.addItem(.separator())
         }
         if waitingForAeroSpace {
             add(swipeAeroSpace() == nil ? "Quit AeroSpace" : "Quit AeroSpace and SwipeAeroSpace", "xmark.circle", #selector(quitAeroSpace))
