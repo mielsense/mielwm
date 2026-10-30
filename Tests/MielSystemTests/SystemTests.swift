@@ -489,3 +489,16 @@ private func aerospace(_ args: [String], socket path: String) async throws -> St
 @Test func aThreadThatNeverStartedStopsQuietly() {
     RunLoopThread(name: "mielwm.test").stop()
 }
+
+// MARK: - Window registry
+
+/// The app reads the screens for Core before the registry starts: a change in between still arrives.
+@MainActor @Test func screensThatChangedBeforeTheRegistryStartedAreReported() {
+    var events: [SystemEvent] = []
+    let registry = WindowRegistry(pidFilter: -1) { events.append($0) } // no such app: nothing is tracked
+    let frame = CGRect(x: 0, y: 0, width: 800, height: 600)
+    let gone = ScreenInfo(id: 9999, name: "Gone", frame: frame, visibleFrame: frame, scale: 1)
+    registry.start(screens: [gone])
+    defer { registry.stop() }
+    #expect(events.contains { if case let .screensChanged(now) = $0 { !now.contains(gone) } else { false } })
+}

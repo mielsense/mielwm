@@ -32,13 +32,14 @@ public final class WindowRegistry {
     }
 
     /// Announces every existing window (`windowAppeared`), then the focused
-    /// one, then reports changes as they happen. Screens are not announced:
-    /// read `Displays.screens()`; later changes arrive as `screensChanged`.
+    /// one, then reports changes as they happen. `screens` are the ones the
+    /// caller read from `Displays.screens()`: if they changed since, a
+    /// `screensChanged` comes at once, and later changes as they happen.
     /// Call once; `stop()` ends the registry for good.
-    public func start() {
+    public func start(screens known: [ScreenInfo]? = nil) {
         AXUIElementSetMessagingTimeout(AXUIElementCreateSystemWide(), axTimeout)
         observerThread.startAndWait()
-        screens = Displays.screens()
+        screens = known ?? Displays.screens()
 
         let workspace = NSWorkspace.shared.notificationCenter
         observe(workspace, NSWorkspace.didLaunchApplicationNotification) { [weak self] app in
@@ -71,6 +72,7 @@ public final class WindowRegistry {
             self?.checkScreensSoon() // a status bar moves its window after the change
         }
         tokens.append((NotificationCenter.default, token))
+        if known != nil { checkScreens() }
 
         if let pid = pidFilter {
             NSRunningApplication(processIdentifier: pid).map(track)

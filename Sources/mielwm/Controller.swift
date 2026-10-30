@@ -156,7 +156,7 @@ final class Controller {
         } catch {
             log("socket: \(error); `mielwm <action>` will not reach this instance")
         }
-        registry.start()
+        registry.start(screens: state.screens)
         startRescans()
     }
 
