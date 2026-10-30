@@ -32,6 +32,11 @@ public extension CanvasState {
         case "focus" where args.count == 3 && args[1] == "--window-id":
             guard let n = UInt32(args[2]) else { return .unknown }
             return .input(windows.first { $0.id.number == n }.map { .landOn($0.id) })
+        case "workspace-back-and-forth", "close", "macos-native-minimize", "resize", "focus":
+            // The commands that do here what they do in AeroSpace, by the same words. Not through
+            // aeroSpaceCommand: the import maps ±50 to ⌥= and ⌥-, and its move and layout aren't AeroSpace's.
+            let command = args == ["macos-native-minimize"] ? "minimize" : args.joined(separator: " ")
+            return Action(command: command).map { .input(.action($0)) } ?? .unknown
         default:
             return .unknown
         }

@@ -59,8 +59,21 @@ private let windowsAll = ["list-windows", "--all", "--json", "--format", "%{wind
 
 @Test func otherCommandsAreUnknown() {
     let s = twoTiles()
+    // Not here, or not the same as in AeroSpace (mielwm's move takes the camera along, its layout keys toggle).
     for args in [[], ["list-monitors"], ["list-windows", "--json"], ["list-workspaces", "--all"], ["workspace", "next"],
-                 ["focus", "left"], ["focus", "--window-id", "x"], ["move-node-to-workspace", "2"]] {
+                 ["focus", "--window-id", "x"], ["move-node-to-workspace", "2"], ["layout", "floating"], ["move-workspace-to-monitor", "next"]] {
+        #expect(s.aerospace(args) == .unknown, "\(args)")
+    }
+}
+
+@Test func theAerospaceCommandTakesCommandsThatMapOneToOne() {
+    let s = twoTiles()
+    #expect(s.aerospace(["workspace-back-and-forth"]) == .input(.action(.workspaceBackAndForth)))
+    #expect(s.aerospace(["resize", "smart", "+50"]) == .input(.action(.resize(.smart, 50)))) // not ⌥='s grid step
+    #expect(s.aerospace(["close"]) == .input(.action(.close)))
+    #expect(s.aerospace(["macos-native-minimize"]) == .input(.action(.minimize)))
+    #expect(s.aerospace(["focus", "left"]) == .input(.action(.focus(.left))))
+    for args in [["close", "--quit-if-last-window"], ["minimize"], ["resize", "width", "800"], ["focus", "--boundaries", "workspace", "left"]] {
         #expect(s.aerospace(args) == .unknown, "\(args)")
     }
 }

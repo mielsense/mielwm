@@ -12,6 +12,7 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 - Window rules can match an app's name or a window's title, so a Picture-in-Picture or splash window can float or open on a fixed workspace. They live in the config file.
 - `resize` takes an amount and a side, like AeroSpace's `resize smart +100` or `resize width -50`.
 - Close and minimize the focused window from a shortcut or the command line. Neither has a key by default.
+- Import from AeroSpace also brings over rules by app name or title, `workspace-back-and-forth`, `close`, `macos-native-minimize`, `resize` with any amount, and `--auto-back-and-forth`. `⌥Tab` stays the window switcher.
 
 ### Fixes
 

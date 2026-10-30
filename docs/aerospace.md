@@ -26,7 +26,8 @@ Settings > Layout & workspaces > Import from AeroSpace reads `~/.config/aerospac
 - `[gaps]`, including the per-monitor form. `monitor."built-in"` becomes the built-in display's top gap, and the plain value the other displays'.
 - `default-root-container-layout`, with `accordion` becoming a stack, and `default-root-container-orientation`.
 - `[[on-window-detected]]` blocks with `if.app-id`. `run = "move-node-to-workspace N"` becomes a workspace rule, and `run = "layout floating"` a floating app.
-- `[mode.main.binding]` keys whose command mielwm has: `focus`, `move`, `workspace N|next|prev`, `move-node-to-workspace N`, also as the first of several commands, `layout tiles|accordion|floating`, `fullscreen` and `resize smart ±N`.
+- `[[on-window-detected]]` blocks with `if.app-name-regex-substring` or `if.window-title-regex-substring` become [window rules](configuration.md#window-rules) with the same `run`. Importing again replaces the rules an earlier import added.
+- `[mode.main.binding]` keys whose command mielwm has: `focus`, `move`, `workspace N|next|prev`, `workspace-back-and-forth`, `move-node-to-workspace N`, also as the first of several commands, `layout tiles|accordion|floating`, `fullscreen`, `resize smart|width|height ±N`, `close` and `macos-native-minimize`. A key using `--auto-back-and-forth` turns on `layout:auto_back_and_forth`. `alt-tab` keeps mielwm's window switcher.
 
 The very first time mielwm starts, before any config exists, it imports the gaps, layout and rules on its own and tells you. It leaves the keys alone, since the defaults already match AeroSpace's.
 
