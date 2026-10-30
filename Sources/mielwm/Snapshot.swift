@@ -120,9 +120,9 @@ private func withChrome(_ canvas: CGImage, _ content: ChromeContent, transition:
 func syntheticWorkspaces(_ screen: ScreenInfo) -> [SceneWorkspace] {
     let v = screen.visibleFrame.insetBy(dx: 8, dy: 8)
     return [
-        SceneWorkspace(number: 1, canvasFrame: v, mode: .tiles, isCurrent: true, windowCount: 2),
-        SceneWorkspace(number: 2, canvasFrame: v.offsetBy(dx: v.width + 160, dy: 0), mode: .stack, windowCount: 3),
-        SceneWorkspace(number: 3, canvasFrame: v.offsetBy(dx: 0, dy: v.height + 160), mode: .tiles, windowCount: 1),
+        SceneWorkspace(number: 1, canvasFrame: v, mode: .tiles, isCurrent: true),
+        SceneWorkspace(number: 2, canvasFrame: v.offsetBy(dx: v.width + 160, dy: 0), mode: .stack),
+        SceneWorkspace(number: 3, canvasFrame: v.offsetBy(dx: 0, dy: v.height + 160), mode: .tiles),
     ]
 }
 

@@ -400,11 +400,10 @@ public struct SceneWindow: Hashable, Sendable {
     public var isSelected: Bool
     public var isFocused: Bool
     public var isPinned: Bool // pinned windows ignore the camera: canvasFrame is a desk frame
-    public var alpha: Double
 
     public init(id: WindowID, canvasFrame: CGRect, title: String, appName: String,
                 bundleID: String? = nil, dim: Double = 0, isSelected: Bool = false,
-                isFocused: Bool = false, isPinned: Bool = false, alpha: Double = 1) {
+                isFocused: Bool = false, isPinned: Bool = false) {
         self.id = id
         self.canvasFrame = canvasFrame
         self.title = title
@@ -414,7 +413,6 @@ public struct SceneWindow: Hashable, Sendable {
         self.isSelected = isSelected
         self.isFocused = isFocused
         self.isPinned = isPinned
-        self.alpha = alpha
     }
 }
 
@@ -424,16 +422,14 @@ public struct SceneWorkspace: Hashable, Sendable {
     public var canvasFrame: CGRect
     public var mode: LayoutMode // .tiles or .stack
     public var isCurrent: Bool // the one the camera rests on (or last rested on)
-    public var windowCount: Int
     /// Shown in an empty workspace, `{...}` as keycaps ("Workspace 4 is empty  {⌥⇧4} Move a window here").
     public var emptyMessage = ""
 
-    public init(number: Int?, canvasFrame: CGRect, mode: LayoutMode, isCurrent: Bool = false, windowCount: Int = 0) {
+    public init(number: Int?, canvasFrame: CGRect, mode: LayoutMode, isCurrent: Bool = false) {
         self.number = number
         self.canvasFrame = canvasFrame
         self.mode = mode
         self.isCurrent = isCurrent
-        self.windowCount = windowCount
     }
 }
 

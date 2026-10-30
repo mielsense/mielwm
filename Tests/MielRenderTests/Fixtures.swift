@@ -52,8 +52,8 @@ enum Fixture {
 
     /// Two workspace frames around the Retina panel's windows and one stack.
     static let workspaces = [
-        SceneWorkspace(number: 1, canvasFrame: CGRect(x: -2200, y: -620, width: 2420, height: 1960), mode: .tiles, isCurrent: true, windowCount: 5),
-        SceneWorkspace(number: 2, canvasFrame: CGRect(x: 380, y: -640, width: 1960, height: 2140), mode: .stack, windowCount: 3),
+        SceneWorkspace(number: 1, canvasFrame: CGRect(x: -2200, y: -620, width: 2420, height: 1960), mode: .tiles, isCurrent: true),
+        SceneWorkspace(number: 2, canvasFrame: CGRect(x: 380, y: -640, width: 1960, height: 2140), mode: .stack),
     ]
 
     static func overview(_ screen: ScreenInfo, look: Look = Look(), windows: [SceneWindow] = canvasWindows,

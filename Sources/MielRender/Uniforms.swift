@@ -33,14 +33,11 @@ struct WindowUniforms {
     var dimColor = SIMD4<Float>()
     var placeholder = SIMD4<Float>()
     var radius: Float = 0
-    var alpha: Float = 1
     var shadow: Float = 0
     var shadowSigma: Float = 1
     var shadowDrop: Float = 0
     var ringGap: Float = 0
     var ringWidth: Float = 0
-    var glow: Float = 0
-    var glowRadius: Float = 1
     var outline: Float = 0
     var outlineWidth: Float = 0
     var hasTexture: Float = 0

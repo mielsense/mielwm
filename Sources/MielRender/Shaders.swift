@@ -111,7 +111,7 @@ fragment float4 backdrop_fragment(VOut in [[stage_in]], constant Backdrop& b [[b
     return float4(color, 1.0);
 }
 
-// ---- windows: rounded live image, soft shadow, dim, outlines, accent ring + glow
+// ---- windows: rounded live image, soft shadow, dim, outlines, accent ring
 
 struct Window {
     float4 rect;        // content px
@@ -119,14 +119,11 @@ struct Window {
     float4 dimColor;    // rgb, dim alpha
     float4 placeholder; // premultiplied color without an image
     float radius;
-    float alpha;
     float shadow;
     float shadowSigma;
     float shadowDrop;
     float ringGap;
     float ringWidth;
-    float glow;
-    float glowRadius;
     float outline;
     float outlineWidth;
     float hasTexture;
@@ -171,11 +168,6 @@ fragment float4 window_fragment(VOut in [[stage_in]], constant Window& w [[buffe
     float ringRadius = w.radius + w.ringGap;
     float4 ringRect = float4(w.rect.xy - w.ringGap, w.rect.zw + 2.0 * w.ringGap);
     float dr = rounded_distance(p, ringRect, ringRadius);
-    if (w.glow > 0.0) {
-        float g = w.glow * exp(-max(dr, 0.0) / max(w.glowRadius, 0.5)) * smoothstep(-0.5, 0.5, d);
-        result = float4(w.accent.rgb * g, g) + result * (1.0 - g);
-    }
-
     float inside = 1.0 - smoothstep(-0.5, 0.5, d);
     if (inside > 0.0) {
         float4 c = w.hasTexture > 0.5 ? sample_window(tex, uv, dx, dy) : w.placeholder;
@@ -195,7 +187,7 @@ fragment float4 window_fragment(VOut in [[stage_in]], constant Window& w [[buffe
         float a = w.accent.a * band;
         result = float4(w.accent.rgb * a, a) + result * (1.0 - a);
     }
-    return result * w.alpha;
+    return result;
 }
 
 // ---- flat pieces: drop indicator, workspace frames

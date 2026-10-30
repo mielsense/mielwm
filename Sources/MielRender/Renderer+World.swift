@@ -83,14 +83,13 @@ extension Renderer {
         let accent = theme.accentRGBA
         let fade = labelFades(scene, s)
         for pass in 0..<2 { // pinned windows last, on top
-            for w in scene.windows where w.isPinned == (pass == 1) && w.alpha > 0.001 {
+            for w in scene.windows where w.isPinned == (pass == 1) {
                 let desk = w.isPinned ? w.canvasFrame : camera.toDesk(w.canvasFrame, deskCenter: deskCenter)
                 let r = px(desk)
                 let effectZoom = w.isPinned ? 1 : zoom
                 var u = WindowUniforms()
                 u.rect = SIMD4(r)
                 u.radius = Float(look.windowRounding * scale * effectZoom)
-                u.alpha = Float(w.alpha)
                 u.dimColor = SIMD4(0.01, 0.015, 0.02, Float(look.dimUnmatched * w.dim * t))
                 u.placeholder = SIMD4(0.11, 0.11, 0.12, 1)
                 var margin: CGFloat = 0
@@ -172,7 +171,7 @@ extension Renderer {
         var y = bottom.y + gap
         if y + size.height > pxSize.height - gap { y = bottom.y - size.height - gap }
         s.tags.append((texture, CGRect(x: (bottom.x - size.width / 2).rounded(), y: y.rounded(), width: size.width, height: size.height),
-                       t * alpha * w.alpha))
+                       t * alpha))
     }
 
     /// Each workspace's frame, a quiet rounded rect behind its windows, with
