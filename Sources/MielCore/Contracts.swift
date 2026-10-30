@@ -57,10 +57,12 @@ public struct WindowSnapshot: Hashable, Codable, Sendable {
     public var isStandard: Bool
     public var isResizable: Bool
     public var isMovable: Bool
+    /// In macOS full screen, in a Space of its own.
+    public var isFullScreen: Bool
 
     public init(id: WindowID, bundleID: String?, appName: String, title: String, frame: CGRect,
                 isMinimized: Bool = false, isStandard: Bool = true,
-                isResizable: Bool = true, isMovable: Bool = true) {
+                isResizable: Bool = true, isMovable: Bool = true, isFullScreen: Bool = false) {
         self.id = id
         self.bundleID = bundleID
         self.appName = appName
@@ -70,6 +72,7 @@ public struct WindowSnapshot: Hashable, Codable, Sendable {
         self.isStandard = isStandard
         self.isResizable = isResizable
         self.isMovable = isMovable
+        self.isFullScreen = isFullScreen
     }
 }
 
@@ -82,6 +85,9 @@ public enum SystemEvent: Sendable, Equatable {
     case windowFrameChanged(WindowID, CGRect)
     case windowTitleChanged(WindowID, String)
     case windowMinimized(WindowID, Bool)
+    /// Entered or left macOS full screen. Entering arrives before the
+    /// screen-sized frame, leaving after the frame macOS put it back at.
+    case windowFullScreen(WindowID, Bool)
     /// Focus from any source: our own commands, Cmd-Tab, the Dock, a click,
     /// an app raising itself.
     case windowFocused(WindowID)

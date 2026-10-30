@@ -126,6 +126,32 @@ extension CanvasState {
     #expect(moves(s.send(.system(.windowMinimized(wid(2), false)))) == [wid(1): left]) // 2 comes back where it was
 }
 
+@Test func fullScreenWindowsKeepTheirTileAndAreNeverMoved() {
+    var s = twoTiles()
+    // macOS full screen: the window fills the display in a Space of its own. Nothing moves.
+    #expect(s.run(.system(.windowFullScreen(wid(2), true)), .system(.windowFrameChanged(wid(2), builtIn.frame))).isEmpty)
+    #expect(s.advance(1).isEmpty)
+    #expect(s.members(1) == [1, 2])
+    // macOS puts it back where it was: still nothing moves.
+    #expect(s.run(.system(.windowFrameChanged(wid(2), right)), .system(.windowFullScreen(wid(2), false))).isEmpty)
+    #expect(s.advance(1).isEmpty)
+}
+
+@Test func fullScreenWindowsGoToTheirNewTileOnceBack() {
+    var s = twoTiles()
+    _ = s.run(.system(.windowFullScreen(wid(2), true)), .system(.windowFrameChanged(wid(2), builtIn.frame)))
+    #expect(moves(s.send(.system(.windowClosed(wid(1))))).isEmpty) // its tile grows, but it stays put for now
+    #expect(moves(s.run(.system(.windowFrameChanged(wid(2), right)), .system(.windowFullScreen(wid(2), false)))) == [wid(2): area])
+}
+
+@Test func aFloatingWindowFirstSeenInFullScreenKeepsTheFrameItComesBackAt() {
+    var s = makeState([WindowSnapshot(id: wid(1), bundleID: nil, appName: "Safari", title: "Video", frame: builtIn.frame, isFullScreen: true)])
+    let restored = CGRect(x: 200, y: 150, width: 900, height: 600)
+    #expect(s.run(.system(.windowFrameChanged(wid(1), restored)), .system(.windowFullScreen(wid(1), false))).isEmpty)
+    #expect(s.advance(1).isEmpty)
+    #expect(s.deskFrame(s.window(wid(1))!) == restored)
+}
+
 // MARK: Landing
 
 @Test func landingOnATiledWindowBringsItsWorkspaceToTheActiveScreen() {

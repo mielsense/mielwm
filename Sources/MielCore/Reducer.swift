@@ -135,6 +135,15 @@ extension CanvasState {
             windows[i].isMinimized = minimized
             retile(windows[i].workspace) // a minimized window gives up its tile
             if !minimized { sync([id]) }
+        case let .windowFullScreen(id, on):
+            guard let i = index(id) else { return }
+            windows[i].isFullScreen = on
+            windows[i].expected = nil
+            windows[i].pending = nil
+            guard !on else { return }
+            // A tiled one goes to its tile, should it have changed meanwhile. A floating one stays
+            // where macOS put it back: mielwm may never have known its size out of full screen.
+            if windows[i].workspace == nil { judge(i, windows[i].real, answering: false) } else { sync([id]) }
         case let .windowFocused(id): focusedFromOutside(id)
         case let .appHidden(pid, hidden):
             for i in windows.indices where windows[i].id.pid == pid { windows[i].isHidden = hidden }
@@ -172,12 +181,13 @@ extension CanvasState {
             windows[i].appName = s.appName
             windows[i].bundleID = s.bundleID
             windows[i].isMinimized = s.isMinimized
+            windows[i].isFullScreen = s.isFullScreen
             windows[i].isResizable = s.isResizable
             windows[i].real = s.frame
             return
         }
         var w = ManagedWindow(id: s.id, bundleID: s.bundleID, appName: s.appName, title: s.title, frame: s.frame,
-                              isMinimized: s.isMinimized, isResizable: s.isResizable, real: s.frame)
+                              isMinimized: s.isMinimized, isFullScreen: s.isFullScreen, isResizable: s.isResizable, real: s.frame)
         let ordinal = windows.filter { $0.bundleID == s.bundleID && $0.displayTitle == w.displayTitle }.count
         var restored: SavedWindow?
         if now < restoreUntil, let saved, let k = saved.match(bundleID: s.bundleID, title: w.displayTitle, ordinal: ordinal, excluding: claimed) {
@@ -214,6 +224,7 @@ extension CanvasState {
     mutating func frameChanged(_ id: WindowID, _ frame: CGRect) {
         guard let i = index(id) else { return }
         windows[i].real = frame
+        if windows[i].isFullScreen { return } // the screen-sized frame is not a resize to adopt
         if graceUntil != nil { return } // (h) macOS shuffles windows while screens change
         if let e = windows[i].expected, now <= e.deadline {
             if frame.isClose(to: e.frame, tolerance: Self.frameTolerance) {
