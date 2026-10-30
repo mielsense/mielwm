@@ -35,7 +35,12 @@ SF Pro only, through `Font.system` and `NSFont.systemFont`. Nothing is ever all 
 | A row's title, body text | 13 pt | regular | `Design.row`, `Design.rowSize` |
 | Text under a row, labels under thumbnails | 11 pt | regular | `Design.secondary`, `Design.secondarySize` |
 
-Regular is the default. Semibold marks a title or the chosen option in a `VisualPicker`. Medium appears only in `StatusBadge` and in the snapshot HUD's key caps. The overview's HUD scales every size by the HUD scale setting.
+Regular is the default, for every line of text you read. Two heavier weights mark something, the way System Settings does:
+
+- Semibold marks a heading or what is chosen: a pane's name, the chosen option in a `VisualPicker`, the shortcuts sheet's title and section names, the letters a search matched, and the current number in the workspace pill.
+- Medium is for small labels that must read at a glance: `StatusBadge`, the size a gap shows in the gaps diagram, window names on the canvas and the front window in the stack strip.
+
+SF Symbols take the weight of the text beside them, or medium inside an icon tile. Key caps are always regular. The overview's HUD scales every size by the HUD scale setting.
 
 ## Spacing
 
