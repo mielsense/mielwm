@@ -46,6 +46,12 @@ public struct Settings: Hashable, Codable, Sendable {
     public var workspaceRules = ""
     /// layout:stack_peek: points each window behind a stack's front one shows of its edge (AeroSpace's accordion padding).
     public var stackPeek = 0.0
+    /// `rules:<name>:<field>` entries: windows matched by app name or title (WindowRules.swift).
+    public var windowRules: [String: WindowRule] = [:]
+    /// Going to the workspace you are on goes back to the one before (AeroSpace's --auto-back-and-forth).
+    public var autoBackAndForth = false
+    /// Focus and move keys go on into the next workspace at its edge, instead of stopping there.
+    public var crossWorkspaces = false
 
     // animation:*
     public var animationEnabled = true

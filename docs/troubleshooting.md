@@ -14,7 +14,7 @@ Screen Recording is missing, or you granted it while mielwm was running. macOS a
 
 ## Windows are stuck in a screen corner
 
-Windows you aren't looking at wait in a bottom corner of a display, and mielwm brings them all back when it quits, pauses, or you log out. If mielwm crashes, a small watcher brings them back from the saved layout. If windows are still stuck after that, run:
+Windows you aren't looking at wait in a bottom corner of a display, and mielwm brings them all back when it quits, pauses, or you log out. If mielwm crashes, or an app doesn't answer while mielwm quits, a small watcher brings them back from the saved layout. If windows are still stuck after that, run:
 
 ```sh
 mielwm --unpark
@@ -22,7 +22,7 @@ mielwm --unpark
 
 ## Windows are out of place
 
-If windows don't sit where they should, for example after waking from sleep or plugging in a display, run `mielwm refresh`. It puts every window back where the canvas says.
+mielwm puts windows back on its own after the Mac wakes from sleep or a display comes or goes. If windows still don't sit where they should, run `mielwm refresh`. It reads every app's window list again and puts every window back where the canvas says.
 
 ## Windows jump back after you move them
 

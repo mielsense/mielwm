@@ -70,7 +70,11 @@ final class Controller {
     var restingSince: Double?
     var fadeStart: Double?
     var tickTimer: Timer?
+    var rescanTimer: Timer?
+    var rescanPauses: Set<String> = [] // "displays" asleep, "session" inactive
     var tickTimerDeadline: Double? // a one-shot tick timer's deadline; nil while it ticks every frame
+    var wakeTimer: Timer? // one tick at `wakeAt`
+    var wakeAt: Double?
     var keyCaptureFallback = false
 
     /// MIELWM_TIMINGS: logs how long each action's moves take, from the action to the last move confirmed.
@@ -92,7 +96,7 @@ final class Controller {
     var wallpaperStamps: [UInt32: String] = [:]
     private var commandSerial: [WindowID: Int] = [:]
     private var tokens: [NSObjectProtocol] = []
-    private var workspaceTokens: [NSObjectProtocol] = [] // on NSWorkspace's own notification center
+    var workspaceTokens: [NSObjectProtocol] = [] // on NSWorkspace's own notification center
     private var appearance: NSKeyValueObservation?
 
     init(mode: Mode) {
@@ -151,16 +155,22 @@ final class Controller {
             log("socket: \(error); `mielwm <action>` will not reach this instance")
         }
         registry.start()
+        startRescans()
     }
 
     /// Quit, toggle off, signals: every window back on a screen, then stop.
-    func shutdown(_ done: @escaping () -> Void) {
+    /// `done` gets false when some app did not answer in time.
+    func shutdown(quitting: Bool, _ done: @escaping (Bool) -> Void) {
         tap?.stop()
         tap = nil
         swipes.stop()
         configWatcher?.stop()
         tickTimer?.invalidate()
         tickTimer = nil
+        rescanTimer?.invalidate()
+        rescanTimer = nil
+        wakeTimer?.invalidate()
+        wakeTimer = nil
         gate?.timeout.cancel()
         gate = nil
         hideOverlays()
@@ -169,18 +179,23 @@ final class Controller {
         overlays = [:]
         tokens.forEach(NotificationCenter.default.removeObserver)
         workspaceTokens.forEach(NSWorkspace.shared.notificationCenter.removeObserver)
+        let parked = quitting ? LayoutSnapshot(state) : nil // for the crash watcher, should some app not answer
         let commands = state.send(.unparkAll)
         saveNow()
         ipc?.stop()
-        let registry = registry!, capture = capture
+        let registry = registry!, capture = capture, layoutURL = layoutURL
         let applied = registry.perform(commands) // on main: the registry's app list is main-only
         DispatchQueue.global(qos: .userInitiated).async {
-            if applied.wait(timeout: .now() + 2) != .success { log("some windows did not answer in time") }
+            let answered = applied.wait(timeout: 2)
+            if !answered { log("some windows did not answer in time") }
+            if !answered, let parked { // the crash watcher unparks them once mielwm exits
+                do { try parked.save(to: layoutURL) } catch { log("cannot save the layout: \(error)") }
+            }
             // While quitting, AppKit runs the main run loop in modal-panel mode, which the main queue does not reach.
             RunLoop.main.perform(inModes: [.default, .modalPanel]) {
                 registry.stop()
                 capture.stop(dropFrames: true)
-                done()
+                done(answered)
             }
             CFRunLoopWakeUp(CFRunLoopGetMain())
         }
@@ -194,6 +209,7 @@ final class Controller {
     /// frame is the desktop as it is.
     func input(_ input: CoreInput) {
         if case .tick = input { return apply(input) }
+        if case .action(.refresh) = input { registry.refresh() } // Core then puts every window back in its spot
         if case .action(.settings) = input { // the overlay would sit above the window
             if state.isOverview { apply(.action(.back)) }
             onSettings?(nil)
@@ -211,7 +227,7 @@ final class Controller {
     /// Reports, text and modifiers never bring the overlay up: no need to try them on a copy first.
     private func mayOpenOverlay(_ input: CoreInput) -> Bool {
         switch input {
-        case .system(.windowFrameChanged), .system(.windowTitleChanged), .modifiersChanged, .text, .markedText: false
+        case .system(.windowFrameChanged), .system(.windowTitleChanged), .system(.unmanagedFocus), .modifiersChanged, .text, .markedText: false
         default: true
         }
     }
@@ -237,6 +253,8 @@ final class Controller {
             switch c {
             case .focus:
                 if mode != .normal { continue } // tests never take the user's focus
+                now.append(c)
+            case .close, .minimize:
                 now.append(c)
             case let .setFrame(id, _):
                 commandSerial[id, default: 0] += 1

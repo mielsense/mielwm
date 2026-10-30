@@ -14,7 +14,7 @@ func stacked(settings: Settings = testSettings(layout: .tiles)) -> CanvasState {
     _ = s.send(.action(.workspace(2)))
     _ = s.send(.system(.windowAppeared(snapshot(4, onBuiltIn, app: "Safari", bundle: "com.apple.Safari"))))
     _ = s.send(.action(.workspace(1)))
-    _ = s.advance(2) // everything shown so far has faded, every move is confirmed or given up
+    _ = s.advance(2.5) // everything shown so far has faded, every move is confirmed or given up (after one resend)
     return s
 }
 

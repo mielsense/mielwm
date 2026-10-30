@@ -74,6 +74,7 @@ func settingsSelfTest(_ model: SettingsModel, _ window: SettingsWindow, _ paths:
         ("gaps:outer_top_external", .number(40)), ("menubar:style", .text("current")),
         ("appearance:glass", .text("frosted")), ("notices:workspace", .flag(false)), ("layout:stack_peek", .number(8)),
         ("input:move_modifier", .text("ctrl+cmd")), ("input:pan_sensitivity", .number(2)), ("input:scroll_factor", .number(0.5)),
+        ("layout:auto_back_and_forth", .flag(true)), ("layout:cross_workspaces", .flag(true)),
     ]
     for (key, value) in values { model.set(key, value) }
     model.flush()

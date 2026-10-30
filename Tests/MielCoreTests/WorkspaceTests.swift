@@ -10,9 +10,10 @@ let area = CGRect(x: 12, y: 50, width: 1488, height: 850) // the built-in's tile
 let left = CGRect(x: 12, y: 50, width: 740, height: 850), right = CGRect(x: 760, y: 50, width: 740, height: 850)
 
 /// Tiling on, past the startup window, so new windows join the current workspace.
-func tilingState(_ windows: [WindowSnapshot] = [], settings: Settings = testSettings(layout: .tiles)) -> CanvasState {
-    var s = CanvasState(screens: [builtIn, external], settings: settings, ownPID: 1, now: 0)
-    s.activeScreenID = builtIn.id
+func tilingState(_ windows: [WindowSnapshot] = [], settings: Settings = testSettings(layout: .tiles),
+                 screens: [ScreenInfo] = [builtIn, external]) -> CanvasState {
+    var s = CanvasState(screens: screens, settings: settings, ownPID: 1, now: 0)
+    s.activeScreenID = screens.first?.id
     _ = s.send(.tick(20))
     for w in windows { _ = s.send(.system(.windowAppeared(w))) }
     return s
@@ -309,6 +310,7 @@ extension CanvasState {
 
 @Test func nudgeSwapsTilesThenCrossesToTheNextWorkspace() {
     var s = twoTiles()
+    s.settings.crossWorkspaces = true
     _ = s.send(.action(.nudge(.right)))
     #expect(s.members(1) == [2, 1])
     #expect(s.canvasFrame(1) == right && s.canvasFrame(2) == left)
@@ -369,12 +371,12 @@ extension CanvasState {
 
 @Test func userResizeAlongTheSplitMovesTheNeighbour() {
     var s = twoTiles()
-    let commands = s.send(.system(.windowFrameChanged(wid(1), CGRect(x: 12, y: 50, width: 840, height: 850))))
+    let commands = s.send(.system(.windowFrameChanged(wid(1), CGRect(x: 12, y: 50, width: 840, height: 850), dragging: true)))
     #expect(s.canvasFrame(1) == CGRect(x: 12, y: 50, width: 840, height: 850))
     #expect(moves(commands) == [wid(2): CGRect(x: 860, y: 50, width: 640, height: 850)])
     // The left edge of the right tile moves the other one.
     _ = s.send(.system(.windowFrameChanged(wid(2), CGRect(x: 860, y: 50, width: 640, height: 850)))) // our move lands
-    _ = s.send(.system(.windowFrameChanged(wid(2), right)))
+    _ = s.send(.system(.windowFrameChanged(wid(2), right, dragging: true)))
     #expect(s.canvasFrame(1) == left && s.canvasFrame(2) == right)
 }
 
@@ -390,9 +392,9 @@ extension CanvasState {
     var s = twoTiles()
     let refused = CGRect(x: 12, y: 50, width: 740, height: 700) // a maximum height, say
     #expect(moves(s.send(.system(.windowFrameChanged(wid(1), refused)))) == [wid(1): left])
-    _ = s.advance(1.5) // our move never shows up
+    _ = s.advance(2.5) // our move never shows up, nor does sending it again
     #expect(moves(s.send(.system(.windowFrameChanged(wid(1), refused)))) == [wid(1): left])
-    _ = s.advance(1.5)
+    _ = s.advance(2.5)
     #expect(s.send(.system(.windowFrameChanged(wid(1), refused))).isEmpty) // given up
     #expect(s.canvasFrame(1)?.size == refused.size)
 }
@@ -522,7 +524,9 @@ extension CanvasState {
 }
 
 @Test func focusKeysAndASwitcherTapCutToTheWindowWithNoFlight() {
-    var s = makeState([snapshot(1, onBuiltIn), snapshot(2, onBuiltIn)], settings: testSettings(animated: true, layout: .tiles))
+    var settings = testSettings(animated: true, layout: .tiles)
+    settings.crossWorkspaces = true
+    var s = makeState([snapshot(1, onBuiltIn), snapshot(2, onBuiltIn)], settings: settings)
     _ = s.send(.system(.windowFocused(wid(1))))
     _ = s.send(.action(.focus(.right))) // window 2 lives on workspace 2, off screen
     #expect(s.focused == wid(2) && s.currentWorkspace == 2)

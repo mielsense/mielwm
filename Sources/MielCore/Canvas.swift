@@ -17,9 +17,12 @@ public struct ManagedWindow: Hashable, Sendable {
     public var real: CGRect // what macOS last reported, or we last set
     public var workspace: Int? // its workspace's slot; nil floats
     var floatingFrame: CGRect? // where it last floated, for going back
-    var reparks = 0
+    var reparks = 0 // tries to put it back where it belongs, in a row
+    var reparkedAt = 0.0 // the last try
+    var retryAt: Double? // when to put it where it belongs again: parked, or back in its tile after a drag
     var expected: Expectation?
     var pending: CGRect? // newest unconfirmed report while an expectation lives
+    var sent: [Expectation] = [] // the last frames we set, kept a few seconds to know late reports of them
 
     public var isShown: Bool { !isMinimized && !isHidden }
     var displayTitle: String { title.isEmpty ? appName : title }
@@ -29,6 +32,7 @@ public struct ManagedWindow: Hashable, Sendable {
 struct Expectation: Hashable, Sendable {
     var frame: CGRect
     var deadline: Double
+    var resent = false
 }
 
 struct FullscreenEntry: Hashable, Sendable {
@@ -51,9 +55,13 @@ struct Checkpoint: Hashable, Sendable {
 /// Everything Core knows. Change it only through `send` / `reduce`.
 public struct CanvasState: Sendable {
     static let expectationLifetime = 1.0 // seconds a setFrame has to show up
+    static let sentFrameMemory = 5.0 // seconds a report of a frame we set still counts as ours
+    static let focusLifetime = 0.6 // seconds a focus we asked for has to show up
     static let frameTolerance: CGFloat = 2
     static let screenGracePeriod = 1.5
-    static let maxReparks = 2
+    static let maxReparks = 2 // tries in a row before giving in (tiles) or waiting (parked windows)
+    static let maxRetries = 5 // waits after that for a parked window, 1 to 16 s; then it stays until the next switch
+    static let reparkQuiet = 3.0 // seconds after the last try that make the next one a first again
     static let toastDuration = 1.8
     static let undoDepth = 30
 
@@ -98,6 +106,8 @@ public struct CanvasState: Sendable {
     public internal(set) var workspaces: [Workspace] = []
     /// The workspace the desk camera rests on, or last rested on.
     public internal(set) var currentWorkspace: Int?
+    /// The workspace current before it, for workspace-back-and-forth.
+    public internal(set) var previousWorkspace: Int?
     public internal(set) var slots: SlotGrid
 
     var returnCamera: Camera?
@@ -109,6 +119,8 @@ public struct CanvasState: Sendable {
     var lastCheckpoint: Checkpoint?
     var graceUntil: Double?
     var expectedFocus: (id: WindowID, until: Double)?
+    var pendingFocus: WindowID? // reported focused while hidden or minimized: it gets focus once it shows
+    var heldFocus: SystemEvent? // the last focus report while expectedFocus lands, applied after
     var dragging: WindowID?
     var saved: LayoutSnapshot?
     var claimed = Set<Int>()
@@ -139,7 +151,8 @@ public struct CanvasState: Sendable {
         animator.enabled = settings.animationEnabled
         restoreUntil = now + 15
         slots = saved?.slots ?? SlotGrid(screens: screens, camera: camera)
-        setCurrent(restingSlot(camera)?.slot ?? saved?.current ?? 1)
+        widenSlots()
+        setCurrent(restingSlot(deskCamera)?.slot ?? saved?.current ?? 1)
     }
 
     /// `look` from the settings and the system: accent, appearance, accessibility. Reduce Motion cuts every flight.
@@ -354,6 +367,7 @@ public struct CanvasState: Sendable {
             let (desired, parked) = desiredFrame(windows[i])
             if parked != windows[i].parked {
                 windows[i].reparks = 0
+                windows[i].retryAt = nil
                 layoutRevision += 1 // the crash watcher needs to know what is parked
             }
             windows[i].parked = parked
@@ -366,7 +380,17 @@ public struct CanvasState: Sendable {
         guard !windows[i].isFullScreen else { return } // moving it mid-transition makes macOS replay the Space slide
         windows[i].expected = Expectation(frame: frame, deadline: now + Self.expectationLifetime)
         windows[i].pending = nil
+        windows[i].sent = windows[i].sent.filter { $0.deadline >= now }.suffix(3)
+            + [Expectation(frame: frame, deadline: now + Self.sentFrameMemory)]
         outbox.append(.setFrame(windows[i].id, frame))
+    }
+
+    /// Counts a try to put window `i` back and returns how many in a row that makes.
+    mutating func countRepark(_ i: Int) -> Int {
+        if now - windows[i].reparkedAt > Self.reparkQuiet { windows[i].reparks = 0 }
+        windows[i].reparks += 1
+        windows[i].reparkedAt = now
+        return windows[i].reparks
     }
 
     mutating func raise(_ i: Int) {

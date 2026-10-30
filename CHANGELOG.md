@@ -18,6 +18,13 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 
 ### Workspaces and layouts
 
+- `⌥` arrows and `⌥⇧` arrows stop at the edge of the workspace, as in AeroSpace. Turn on Settings > Layout > Focus and move past the edge to keep going into the next one.
+- A new `workspace-back-and-forth` action goes to the workspace you were on before. It has no key by default, since `⌥Tab` is the window switcher.
+- Turn on Settings > Layout > Workspace key goes back, and the key of the workspace you're on takes you to the one before.
+- Window rules can match an app's name or a window's title, so a Picture-in-Picture or splash window can float or open on a fixed workspace. They live in the config file.
+- `resize` takes an amount and a side, like AeroSpace's `resize smart +100` or `resize width -50`.
+- Close and minimize the focused window from a shortcut or the command line. Neither has a key by default.
+- Import from AeroSpace also brings over rules by app name or title, `workspace-back-and-forth`, `close`, `macos-native-minimize`, `resize` with any amount, and `--auto-back-and-forth`. `⌥Tab` stays the window switcher.
 - The top gap leaves room for a status bar such as Barik or SketchyBar only on displays that have one. Without one, external displays get the same 12 point top gap as the built-in display instead of 54. Settings > Layout > Top edge also offers Same as other edges and Custom, and a number already in your config keeps working as Custom.
 
 ### Settings and the menu bar
@@ -37,11 +44,29 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 
 ### Fixes
 
+- After you click the desktop, a dialog or an app mielwm leaves alone, window keys like `⌥T` no longer act on the last window you used.
 - Tidy windows from the menu bar, and other actions outside the overview, now show their message on screen. Before, it only showed in the overview.
 - Messages say "1 window", not "1 windows".
 - Messages and search results show the keys that work there: `⌘1` to `⌘9` for search results and `⌘⇧Z` to redo in the overview.
 - Leaving macOS full screen, like a full screen video, no longer flashes two desktops side by side. mielwm leaves a full screen window alone and keeps its tile for when it comes back.
+- Closing, minimizing or hiding the focused window keeps you on the same workspace. The most recent window on screen takes focus.
+- An app that resizes its own window, like an Electron app restoring its size, no longer shifts the split between tiles. Only dragging an edge does.
+- With displays of different widths, showing a workspace on one display no longer shows part of the workspace before it on another. Workspaces move further apart when a wider display is plugged in.
+- A window from another workspace that its app keeps putting back on screen is tucked away again after a short wait, instead of staying over the workspace you're on.
+- A tiled window you drag away goes back to its tile when you let go, every time, instead of staying where you dropped it after the second time.
+- A window whose app refuses its tile size settles at the size it wants, instead of being resized again each time the app reports a move.
+- Switching workspaces with many windows open no longer leaves some of them behind when their apps are slow to answer.
+- A window whose app misses a move, because it was busy at the time, gets the move once more a second later.
+- After restarting mielwm, windows whose title changed meanwhile, like a browser tab, come back to their places and workspaces.
 - Switching workspaces no longer flashes the old windows over the new workspace.
+- Windows that open while an app is busy no longer get lost. mielwm reads every app's window list again every 10 seconds and when you switch to an app.
+- A closed window no longer leaves an empty tile behind when mielwm misses that it closed.
+- Apps that take a long time to start, or that turn into regular apps after they start, get their windows managed.
+- Windows that open as a dialog and then become normal windows get tiled.
+- Apps that were already hidden when mielwm started no longer hold empty tiles.
+- After the Mac wakes from sleep, windows go back to their tiles on their own.
+- `mielwm refresh` also reads every app's window list again.
+- Windows of an app that is busy when you quit no longer stay in a screen corner. The watcher brings them back after mielwm exits.
 
 ### Performance
 

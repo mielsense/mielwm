@@ -148,6 +148,7 @@ extension Controller {
     /// 60 a second while something animates, else one at the earliest deadline.
     func scheduleTicks() {
         let wanted = !overlayShown && state.needsTicks
+        scheduleWake(wanted ? nil : state.nextWake)
         let deadline = wanted ? state.tickDeadline : nil
         let keep = switch (tickTimerDeadline, deadline) {
         case (nil, nil): true
@@ -170,6 +171,23 @@ extension Controller {
             ?? Timer(timeInterval: 1.0 / 60, repeats: true, block: tick)
         RunLoop.main.add(t, forMode: .common)
         tickTimer = t
+    }
+
+    /// A window waiting to be parked again needs one tick then, not sixty a second meanwhile,
+    /// and it must not keep the overview's frames awake while it waits.
+    private func scheduleWake(_ wake: Double?) {
+        guard wake != wakeAt else { return }
+        wakeTimer?.invalidate()
+        wakeTimer = nil
+        wakeAt = wake
+        guard let wake else { return }
+        wakeTimer = Timer(timeInterval: max(0, wake - CACurrentMediaTime()), repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.wakeAt = nil
+                self?.input(.tick(CACurrentMediaTime()))
+            }
+        }
+        RunLoop.main.add(wakeTimer!, forMode: .common)
     }
 
     func didOpenOverview() {

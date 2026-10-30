@@ -40,13 +40,14 @@ final class Session {
     let pid: Int32
     let registry: WindowRegistry
     private(set) var steps: [FixtureStep] = []
+    private(set) var events: [SystemEvent] = [] // everything the registry reported, in order
     private var origin = Date()
     private var watched: WindowID?
 
-    init(_ frames: [CGRect]) throws {
+    init(_ frames: [CGRect], options: [String] = []) throws {
         try #require(Permissions.accessibility(), "grant Accessibility to the terminal running the tests")
         process.executableURL = packageDir.appendingPathComponent(".build/debug/mielwm-testwindows")
-        process.arguments = ["--frames", frames.map { "\($0.minX),\($0.minY),\($0.width),\($0.height)" }.joined(separator: ";")]
+        process.arguments = ["--frames", frames.map { "\($0.minX),\($0.minY),\($0.width),\($0.height)" }.joined(separator: ";")] + options
         let out = Pipe()
         process.standardOutput = out
         try process.run() // fails with "run swift build first" style errors if the helper is missing
@@ -135,8 +136,9 @@ final class Session {
     }
 
     private func record(_ event: SystemEvent) {
+        events.append(event)
         let step: FixtureStep? = switch event {
-        case .windowFrameChanged(watched, let frame): FixtureStep(t: now(), event: "frameChanged", frame: frame)
+        case .windowFrameChanged(watched, let frame, _): FixtureStep(t: now(), event: "frameChanged", frame: frame)
         case .windowMinimized(watched, let value): FixtureStep(t: now(), event: "minimized", value: value)
         case .windowFocused(watched): FixtureStep(t: now(), event: "focused")
         case .windowTitleChanged(watched, _): FixtureStep(t: now(), event: "title")
@@ -279,6 +281,81 @@ struct WindowTests {
         #expect(s.steps.map(\.event) == ["closed"])
     }
 
+    @Test func appHiddenAtStartIsReported() async throws {
+        let s = try Session([CGRect(x: 240, y: 200, width: 400, height: 280)], options: ["--hidden", "--still"])
+        defer { s.end() }
+        let app = AXUIElementCreateApplication(s.pid)
+        #expect(await s.until { app.value(kAXHiddenAttribute) as? Bool == true })
+        let id = try #require(try await s.start(count: 1).first).id
+        let hidden = SystemEvent.appHidden(pid: s.pid, true)
+        #expect(await s.until { s.events.contains(hidden) })
+        let appeared = s.events.firstIndex { if case .windowAppeared(let w) = $0 { w.id == id } else { false } }
+        let reported = s.events.firstIndex(of: hidden)
+        #expect(appeared != nil && reported != nil && appeared! < reported!, "hidden must follow the window")
+    }
+
+    @Test func aWindowThatBecomesStandardIsAnnouncedAgain() async throws {
+        let s = try Session([CGRect(x: 260, y: 220, width: 400, height: 280)], options: ["--untitled", "--still"])
+        defer { s.end() }
+        let id = try #require(try await s.start(count: 1).first).id
+        #expect(s.registry.windows[id]?.isStandard == false)
+        kill(s.pid, SIGUSR2) // gives it a title bar
+        #expect(await s.until {
+            s.registry.refresh()
+            return s.registry.windows[id]?.isStandard == true
+        })
+    }
+
+    /// A close whose notification never arrives is caught by a rescan.
+    @Test func rescanClosesAWindowWhoseNotificationWasMissed() async throws {
+        let s = try Session([CGRect(x: 280, y: 240, width: 400, height: 280), CGRect(x: 720, y: 240, width: 400, height: 280)],
+                            options: ["--still"])
+        let (tracker, seen, end) = blindTracker(s)
+        defer { end() }
+        #expect(await s.until { seen.appeared.count == 2 })
+        let gone = try #require(seen.appeared.first { s.axWindow($0)?.value(kAXTitleAttribute) as? String == "PT-2" })
+        let button = s.axWindow(gone)?.value(kAXCloseButtonAttribute)
+        AXUIElementPerformAction(try #require(button as! AXUIElement?), kAXPressAction as CFString)
+        await s.settle()
+        #expect(!seen.events.contains(.windowClosed(gone)))
+        tracker.rescan()
+        #expect(await s.until { seen.events.contains(.windowClosed(gone)) })
+        #expect(seen.closed == [gone])
+    }
+
+    /// Ordering a window out, as apps that close to the menu bar do, destroys
+    /// its element: a rescan drops it like a closed one. (A window on another
+    /// Space keeps a live element and stays; no test can make one.)
+    @Test func rescanDropsAWindowTheAppOrderedOut() async throws {
+        let s = try Session([CGRect(x: 280, y: 240, width: 400, height: 280), CGRect(x: 720, y: 240, width: 400, height: 280)],
+                            options: ["--still"])
+        let (tracker, seen, end) = blindTracker(s)
+        defer { end() }
+        #expect(await s.until { seen.appeared.count == 2 })
+        let hidden = try #require(seen.appeared.first { s.axWindow($0)?.value(kAXTitleAttribute) as? String == "PT-1" })
+        let element = try #require(s.axWindow(hidden))
+        kill(s.pid, SIGINFO) // orders PT-1 out
+        #expect(await s.until { s.axWindow(hidden) == nil })
+        #expect(element.isGone)
+        tracker.rescan()
+        #expect(await s.until { seen.closed == [hidden] })
+    }
+
+    /// A hung app (stopped here) times out every write in well under the
+    /// wait, without moving anything: that must not count as answered.
+    @Test func writesAHungAppTimesOutDoNotCountAsApplied() async throws {
+        let start = CGRect(x: 300, y: 240, width: 400, height: 280)
+        let s = try Session([start], options: ["--still"])
+        defer { s.end() }
+        let id = try #require(try await s.start(count: 1).first).id
+        kill(s.pid, SIGSTOP)
+        defer { kill(s.pid, SIGCONT) }
+        let began = Date()
+        let answered = s.performAndWait([.setFrame(id, start.offsetBy(dx: 120, dy: 60))])
+        #expect(Date().timeIntervalSince(began) < 2, "the writes time out on their own, before the wait does")
+        #expect(!answered)
+    }
+
     @Test func stillOfAParkedWindow() async throws {
         let start = CGRect(x: 300, y: 220, width: 480, height: 320)
         let s = try Session([start])
@@ -387,6 +464,36 @@ struct WindowTests {
         let picture = await withCheckedContinuation { done in Wallpaper.image(for: screen) { done.resume(returning: $0) } }
         #expect(picture != nil)
     }
+}
+
+/// Events from a tracker's queue, kept on the main queue.
+private final class Seen: @unchecked Sendable {
+    var events: [SystemEvent] = []
+    var appeared: [WindowID] { events.compactMap { if case .windowAppeared(let w) = $0 { w.id } else { nil } } }
+    var closed: [WindowID] { events.compactMap { if case .windowClosed(let id) = $0 { id } else { nil } } }
+}
+
+/// A tracker of the session's helper whose notifications never arrive: its
+/// observer thread is blocked. `end` stops it and the helper (the session's
+/// registry never started, so not `s.end()`).
+@MainActor
+private func blindTracker(_ s: Session) -> (AppTracker, Seen, () -> Void) {
+    let thread = RunLoopThread(name: "test.blocked-observers")
+    thread.startAndWait()
+    let release = DispatchSemaphore(value: 0)
+    thread.perform { @Sendable in release.wait() } // not on the main actor: it runs on that thread
+    let seen = Seen()
+    let tracker = AppTracker(pid: s.pid, bundleID: nil, appName: "", observerThread: thread) { @Sendable event in
+        DispatchQueue.main.async { seen.events.append(event) }
+    }
+    tracker.start()
+    return (tracker, seen, {
+        tracker.stop()
+        release.signal()
+        thread.stop()
+        s.process.terminate()
+        s.process.waitUntilExit()
+    })
 }
 
 /// The bottom-right corner of `screen` with 1 pt showing, as AeroSpace parks.

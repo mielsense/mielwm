@@ -45,7 +45,9 @@ final class SettingsWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
         toolbar.allowsUserCustomization = false
         window.toolbar = toolbar
         window.toolbarStyle = .unified
-        window.titlebarAppearsTransparent = true // the title sits on the pane's own background, as in System Settings
+        // Before macOS 26 the title sits on the pane's own background, and TitlebarEdge stops rows at its edge.
+        // On 26 the title bar must stay a title bar: only then does the system fade and blur rows scrolling under it.
+        if #unavailable(macOS 26) { window.titlebarAppearsTransparent = true }
         window.setContentSize(NSSize(width: Self.width, height: 640))
         window.contentMinSize = NSSize(width: Self.width, height: 440)
         window.contentMaxSize = NSSize(width: Self.width, height: 4000)
@@ -233,8 +235,8 @@ struct SettingsDetail: View {
     }
 }
 
-/// Where scrolled rows meet the title bar. macOS 26 fades them under its glass
-/// by itself; before, they stop at its edge under a hairline, as System Settings does there.
+/// Where scrolled rows meet the title bar. macOS 26 fades and blurs them under the title bar by itself
+/// (its scroll edge effect); before, they stop at its edge under a hairline, as System Settings does there.
 private struct TitlebarEdge: ViewModifier {
     let scrolled: Bool
 
