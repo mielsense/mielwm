@@ -80,8 +80,7 @@ func snapshot(_ args: [String]) {
         MielSystem.Wallpaper.image(for: screen) { wallpaper = $0; done = true }
         spin(5) { done }
         renderer.setWallpaper(wallpaper, screenID: screen.id)
-        var chrome = ChromeContent(taking: &scene, worldShown: state.isOverview)
-        chrome.look.reduceTransparency = true // Liquid glass and the frosted material don't draw offscreen
+        let chrome = ChromeContent(taking: &scene, worldShown: state.isOverview)
         guard let canvas = renderer.renderImage(scene, frames: frames),
               let image = withChrome(canvas, chrome, transition: scene.transition, scale: screen.scale)
         else { fail("snapshot failed: nothing rendered") }

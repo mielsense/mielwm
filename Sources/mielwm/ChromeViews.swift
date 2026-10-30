@@ -386,7 +386,8 @@ private struct AppIcon: View {
 private struct ChromeStillKey: EnvironmentKey { static let defaultValue = false }
 
 extension EnvironmentValues {
-    /// The chrome is drawn once into an image (`mielwm snapshot`), where AppKit views don't draw.
+    /// The chrome is drawn once into an image (`mielwm snapshot`), where AppKit views and
+    /// materials don't draw: solid surfaces, a steady caret.
     var chromeStill: Bool {
         get { self[ChromeStillKey.self] }
         set { self[ChromeStillKey.self] = newValue }
@@ -464,10 +465,11 @@ private struct ChromeSurface<S: InsettableShape>: ViewModifier {
     let shape: S
     let look: Look
     let behindWindow: Bool
+    @Environment(\.chromeStill) private var still
 
     func body(content: Content) -> some View {
         Group {
-            switch Design.ChromeMaterial.current(look) {
+            switch still ? .solid : Design.ChromeMaterial.current(look) { // glass and frosted draw only on screen
             case .solid:
                 content.background(shape.fill(Color(nsColor: .windowBackgroundColor)))
                     .shadow(color: .black.opacity(look.dark ? 0.4 : 0.2), radius: 14, y: 4)
