@@ -81,7 +81,7 @@ final class Controller {
     var wallpaperStamps: [UInt32: String] = [:]
     private var commandSerial: [WindowID: Int] = [:]
     private var tokens: [NSObjectProtocol] = []
-    private var workspaceTokens: [NSObjectProtocol] = [] // on NSWorkspace's own notification center
+    var workspaceTokens: [NSObjectProtocol] = [] // on NSWorkspace's own notification center
     private var appearance: NSKeyValueObservation?
 
     init(mode: Mode) {

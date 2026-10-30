@@ -22,7 +22,7 @@ mielwm --unpark
 
 ## Windows are out of place
 
-If windows don't sit where they should, for example after waking from sleep or plugging in a display, run `mielwm refresh`. It reads every app's window list again and puts every window back where the canvas says.
+mielwm puts windows back on its own after the Mac wakes from sleep or a display comes or goes. If windows still don't sit where they should, run `mielwm refresh`. It reads every app's window list again and puts every window back where the canvas says.
 
 ## Windows jump back after you move them
 
