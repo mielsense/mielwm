@@ -287,12 +287,13 @@ extension CanvasState {
             if frame.isClose(to: desiredFrame(windows[i]).frame, tolerance: Self.frameTolerance) { return }
             // (c) An app pulled a parked window back, or resized it: keep the
             // new size and park it again. After two tries in a row, wait 1, 2,
-            // 4 up to 16 seconds before the next: it still belongs off screen.
+            // 4, 8 and 16 seconds before the next, then leave it until the
+            // camera moves again: it still belongs off screen.
             if !sameSize { windows[i].frame.size = frame.size }
             let n = countRepark(i)
             if n <= Self.maxReparks {
                 sync([id], force: true)
-            } else if windows[i].retryAt == nil {
+            } else if windows[i].retryAt == nil, n <= Self.maxReparks + Self.maxRetries {
                 windows[i].retryAt = now + min(16, pow(2, Double(n - Self.maxReparks - 1)))
             }
             return

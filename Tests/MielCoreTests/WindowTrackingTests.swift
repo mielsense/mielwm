@@ -204,6 +204,20 @@ func dragByTitleBar(_ s: inout CanvasState, by dx: CGFloat) -> [WindowCommand] {
     #expect(moves(s.send(.system(.windowFrameChanged(wid(1), area))))[wid(1)] == slot)
 }
 
+@Test func aParkedWindowThatAlwaysComesBackIsLeftAloneUntilTheNextSwitch() throws {
+    var s = tilingState([snapshot(1, onBuiltIn)])
+    let slot = try #require(moves(s.send(.action(.workspace(2))))[wid(1)])
+    var tries = 0
+    func pullBack() -> [WindowCommand] { s.run(.system(.windowFrameChanged(wid(1), slot)), .system(.windowFrameChanged(wid(1), area))) }
+    var commands = pullBack()
+    for _ in 0 ..< 600 { // two minutes of an app that puts its window back at once, every time
+        if moves(commands)[wid(1)] == slot { tries += 1; commands = pullBack() } else { commands = s.advance(0.2) }
+    }
+    #expect(tries == Int(CanvasState.maxReparks + CanvasState.maxRetries))
+    #expect(s.nextWake == nil)
+    #expect(moves(s.send(.action(.workspace(3))))[wid(1)] != nil) // switching tries again
+}
+
 @Test func aTileThatGaveInStaysGivenInThroughStrayReports() {
     var s = twoTiles()
     let refused = CGRect(x: 12, y: 50, width: 740, height: 700) // a maximum height, say

@@ -60,6 +60,7 @@ public struct CanvasState: Sendable {
     static let frameTolerance: CGFloat = 2
     static let screenGracePeriod = 1.5
     static let maxReparks = 2 // tries in a row before giving in (tiles) or waiting (parked windows)
+    static let maxRetries = 5 // waits after that for a parked window, 1 to 16 s; then it stays until the next switch
     static let reparkQuiet = 3.0 // seconds after the last try that make the next one a first again
     static let toastDuration = 1.8
     static let undoDepth = 30
