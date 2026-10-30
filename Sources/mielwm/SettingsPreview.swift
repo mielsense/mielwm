@@ -272,28 +272,6 @@ private func saveMenuBarPreview(dark: Bool, to url: URL) {
     try? canvas.representation(using: .png, properties: [:])?.write(to: url)
 }
 
-/// The screen region "x,y,width,height" (points from the primary display's top-left) as a PNG.
-func screencapture(_ region: String, to url: URL) {
-    let shot = Process()
-    shot.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-    shot.arguments = ["-x", "-R", region, url.path]
-    try? shot.run()
-    shot.waitUntilExit()
-}
-
-/// Runs AppKit's event loop for `seconds`, as NSApp.run would: windows
-/// lay out and redraw, monitors see events.
-@MainActor
-func pump(_ seconds: Double) {
-    let end = Date().addingTimeInterval(seconds)
-    while Date() < end {
-        if let event = NSApp.nextEvent(matching: .any, until: min(end, Date().addingTimeInterval(0.02)), inMode: .default, dequeue: true) {
-            NSApp.sendEvent(event)
-        }
-        NSApp.updateWindows()
-    }
-}
-
 /// The detail pane's scroll view (the sidebar has one too).
 private func detailScrollView(in view: NSView?) -> NSScrollView? {
     guard let view else { return nil }
