@@ -68,7 +68,7 @@ public struct Settings: Hashable, Codable, Sendable {
     /// notices:workspace: switching workspaces shows their numbers at the bottom of the display for a moment.
     var workspaceNotice = true
 
-    /// integrations:barik: Barik's menu bar shows mielwm's workspaces (docs/aerospace.md).
+    /// integrations:barik: Barik's menu bar shows mielwm's workspaces (docs/compatible-apps.md).
     public var barik = false
 
     /// Chord ("opt+ctrl+g") to action command ("overview").

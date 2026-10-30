@@ -14,7 +14,7 @@ public protocol BarikApps: AnyObject {
     func stopHelper()
 }
 
-/// Barik shows mielwm's workspaces (docs/aerospace.md). It looks for a
+/// Barik shows mielwm's workspaces (docs/compatible-apps.md). It looks for a
 /// running app called AeroSpace once, when it starts, then runs the command
 /// at `aerospace.path` in its config. So: point that at mielwm's `aerospace`
 /// command, keep the AeroSpace helper running, and relaunch Barik.

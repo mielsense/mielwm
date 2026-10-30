@@ -2,7 +2,7 @@ import Darwin
 import Dispatch
 import os
 
-// Two jobs, one binary (docs/aerospace.md):
+// Two jobs, one binary (docs/compatible-apps.md):
 //
 //   aerospace <command>          Contents/Helpers/aerospace: answers Barik's AeroSpace
 //                                commands from the running mielwm

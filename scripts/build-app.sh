@@ -95,7 +95,7 @@ cat > "$APP/Contents/Info.plist" <<EOF
 </plist>
 EOF
 
-# Barik (docs/aerospace.md): its `aerospace` command, and the hidden app called
+# Barik (docs/compatible-apps.md): its `aerospace` command, and the hidden app called
 # AeroSpace it looks for. One binary does both.
 HELPER="$APP/Contents/Helpers/AeroSpace.app"
 mkdir -p "$HELPER/Contents/MacOS"
