@@ -19,6 +19,8 @@ public final class CaptureManager: NSObject, WindowFrameSource, @unchecked Senda
 
     /// Main queue, once per `warm`: the first fresh frame of that window.
     public var onFirstFrame: ((WindowID) -> Void)?
+    private var wake: (() -> Void)? // see `wakeOnNextPicture`
+    private var storedCount: UInt64 = 0 // new pictures so far
 
     private struct Slot {
         var frame: WindowFrame?
@@ -52,6 +54,20 @@ public final class CaptureManager: NSObject, WindowFrameSource, @unchecked Senda
 
     public func generation(for id: WindowID) -> UInt64 {
         lock.withLock { slots[id]?.generation ?? 0 }
+    }
+
+    /// How many new pictures of any window have been stored so far.
+    public var picturesStored: UInt64 { lock.withLock { storedCount } }
+
+    /// `body` runs once on the main queue at the first new picture after `seen` were stored:
+    /// at once if one already was, so one stored while the caller decided to wait still counts.
+    public func wakeOnNextPicture(after seen: UInt64, _ body: @escaping () -> Void) {
+        let missed: Bool = lock.withLock {
+            if storedCount > seen { return true }
+            wake = body
+            return false
+        }
+        if missed { DispatchQueue.main.async(execute: body) }
     }
 
     // MARK: Streams
@@ -197,7 +213,14 @@ public final class CaptureManager: NSObject, WindowFrameSource, @unchecked Senda
     // MARK: Private
 
     func store(_ frame: WindowFrame, for id: WindowID) {
-        lock.withLock { if !closed.contains(id) { slots[id, default: Slot()].store(frame) } }
+        var woken: (() -> Void)?
+        lock.withLock {
+            guard !closed.contains(id) else { return }
+            slots[id, default: Slot()].store(frame)
+            storedCount &+= 1
+            swap(&woken, &wake)
+        }
+        woken.map { DispatchQueue.main.async(execute: $0) }
     }
 
     private func withWindows(_ ids: [WindowID], _ body: @escaping ([(WindowID, SCWindow)]) -> Void) {
@@ -304,6 +327,7 @@ extension CaptureManager: SCStreamOutput, SCStreamDelegate {
         // dirty (macOS 27): compare the pixels. Outside the lock, which the main thread reads under.
         let same = stored.map { Self.sameRows(pixels, $0, phase: checks) } ?? false
         var slow: (stream: SCStream, config: SCStreamConfiguration)?
+        var woken: (() -> Void)?
         let first: WindowID? = lock.withLock {
             guard var slot = slots[id], slot.live?.stream === stream else { return nil }
             defer { slots[id] = slot }
@@ -318,11 +342,14 @@ extension CaptureManager: SCStreamOutput, SCStreamDelegate {
             }
             if same { return nil }
             slot.store(.pixelBuffer(pixels))
+            storedCount &+= 1
+            swap(&woken, &wake)
             guard slot.waitingForFirstFrame else { return nil }
             slot.waitingForFirstFrame = false
             return id
         }
         slow.map { $0.stream.updateConfiguration($0.config) { _ in } }
+        woken.map { DispatchQueue.main.async(execute: $0) }
         if let first { DispatchQueue.main.async { self.onFirstFrame?(first) } }
     }
 

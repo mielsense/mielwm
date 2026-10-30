@@ -299,6 +299,7 @@ func tempDir() throws -> URL {
 
 @Test func onlyMultiModifierOverviewChordsWarmTheCaptures() {
     var settings = Settings()
+    settings.moveModifier = "cmd+ctrl" // ⌃⌥ also moves windows by default: see the next test
     #expect(settings.warmModifiers == [[.control, .option]]) // ⌃⌥G
     settings.bindings["ctrl+opt+g"] = "none"
     settings.bindings["opt+space"] = "overview" // ⌥ alone is held for ⌥1-9 and more
@@ -321,4 +322,13 @@ func tempDir() throws -> URL {
     #expect(!s.look.liquid)
     #expect(Settings().look.glass == .liquid) // the same default on every Mac
     #expect(Settings.keys.contains("appearance:glass"))
+}
+
+@Test func theMoveModifiersNeverWarmTheCaptures() {
+    var settings = Settings()
+    #expect(settings.warmModifiers.isEmpty) // ⌃⌥G, but ⌃⌥ is held for every modifier drag
+    settings.bindings["cmd+shift+o"] = "overview"
+    #expect(settings.warmModifiers == [[.command, .shift]])
+    settings.moveModifier = "cmd+shift"
+    #expect(settings.warmModifiers == [[.control, .option]])
 }

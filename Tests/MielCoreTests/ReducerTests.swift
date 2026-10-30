@@ -260,3 +260,15 @@ func panDesk(_ s: inout CanvasState, dx: CGFloat) -> [WindowCommand] {
     #expect(s.send(.system(.windowAppeared(snapshot(2, hidden)))).isEmpty)
     #expect(s.canvasFrame(2) == hidden)
 }
+
+@Test func settledTicksWaitOnlyForTheEarliestDeadline() {
+    var s = focusedState()
+    #expect(!s.needsTicks && s.tickDeadline == nil)
+    _ = s.send(.action(.nudge(.right))) // a move awaiting its report, nothing animating
+    #expect(s.needsTicks && s.tickDeadline == s.now + CanvasState.expectationLifetime)
+    _ = s.send(.tick(s.tickDeadline! + 0.001)) // one tick past it lapses the move
+    #expect(!s.needsTicks)
+    var flying = makeState([snapshot(1, onBuiltIn)], settings: testSettings(animated: true))
+    _ = flying.send(.action(.toggleOverview))
+    #expect(flying.needsTicks && flying.tickDeadline == nil) // a flight needs every frame
+}

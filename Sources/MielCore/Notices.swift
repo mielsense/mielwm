@@ -79,6 +79,12 @@ public struct Notices: Equatable, Sendable {
 
     public var isEmpty: Bool { toast == nil && workspace == nil && stack == nil }
 
+    /// When each notice starts to fade: a tick then has something to change.
+    var holds: [Double] { [toast?.until, workspace?.until, stack?.until].compactMap { $0 } }
+
+    /// Some notice is fading out (or done and not yet dropped): every tick changes it.
+    func fading(at now: Double) -> Bool { holds.contains { now >= $0 } }
+
     /// Drops what has faded out.
     mutating func expire(_ now: Double) {
         if let n = toast, n.opacity(at: now) <= 0 { toast = nil }

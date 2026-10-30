@@ -107,3 +107,32 @@ func stacked(settings: Settings = testSettings(layout: .tiles)) -> CanvasState {
     s.set(.flag(false), forKey: "notices:workspace")
     #expect(!s.workspaceNotice)
 }
+
+// MARK: Ticks: the overlay's frames and the tick timer may rest only when nothing on screen changes
+
+@Test func aNoticeWaitsForItsFadeThenTicksEveryFrameUntilGone() {
+    var s = stacked()
+    _ = s.send(.action(.workspace(2)))
+    let pill = try! #require(s.notices.workspace)
+    // Held: no tick every frame, one at the next deadline (the focus the switch asked for lands first).
+    #expect(s.needsTicks && (s.tickDeadline ?? .infinity) <= pill.until)
+    _ = s.advance(0.65)
+    #expect(s.tickDeadline == pill.until)
+    _ = s.advance(0.07)
+    #expect(s.needsTicks && s.tickDeadline == nil) // fading: every tick changes it
+    _ = s.advance(0.2)
+    #expect(s.notices.workspace == nil)
+}
+
+@Test func aToastInTheOverviewKeepsItsFramesAwake() {
+    var s = stacked()
+    _ = s.send(.action(.toggleOverview))
+    _ = s.advance(2) // the zoom has landed
+    #expect(!s.needsTicks) // nothing changes: the overview may rest
+    _ = s.send(.action(.redo))
+    #expect(s.toast == "Nothing to redo" && s.needsTicks && s.tickDeadline == s.notices.toast?.until)
+    _ = s.advance(1.9)
+    #expect(s.toast != nil && s.needsTicks && s.tickDeadline == nil) // its fade
+    _ = s.advance(0.1)
+    #expect(s.toast == nil && !s.needsTicks)
+}

@@ -48,6 +48,10 @@ final class Overlay {
         view.resize()
     }
 
+    /// Frames in a row with nothing new to draw; past `idleAfter` its display link pauses until `wake`.
+    var idleFrames = 0
+    static let idleAfter = 30
+
     func show(key: Bool) {
         if key {
             window.makeKeyAndOrderFront(nil)
@@ -55,6 +59,11 @@ final class Overlay {
         } else {
             window.orderFrontRegardless()
         }
+        wake()
+    }
+
+    func wake() {
+        idleFrames = 0
         view.link?.isPaused = false
     }
 
@@ -75,7 +84,12 @@ final class Overlay {
     }
 
     func draw(_ scene: Scene, renderer: Renderer, frames: WindowFrameSource) {
-        guard renderer.needsDraw(scene, frames: frames), let drawable = view.metal.nextDrawable() else { return }
+        guard renderer.needsDraw(scene, frames: frames) else {
+            idleFrames += 1
+            return
+        }
+        idleFrames = 0
+        guard let drawable = view.metal.nextDrawable() else { return }
         renderer.draw(scene, frames: frames, into: drawable)
     }
 }
