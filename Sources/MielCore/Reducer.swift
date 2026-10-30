@@ -242,19 +242,25 @@ extension CanvasState {
     /// (a) Our own moves come back as reports: one that matches what we asked
     /// for is ignored, never adopted. While an expectation lives (size, then
     /// position, then size again gives three reports) only the newest report
-    /// is kept, and judged if the expectation lapses without a match.
+    /// is kept, and judged if the expectation lapses without a match. A late
+    /// report of an earlier move of ours (a busy app, many windows moving at
+    /// once) is ignored too, unless the user is dragging.
     mutating func frameChanged(_ id: WindowID, _ frame: CGRect, dragging: Bool = false) {
         guard let i = index(id) else { return }
         windows[i].real = frame
         if windows[i].isFullScreen { return } // the screen-sized frame is not a resize to adopt
         if graceUntil != nil { return } // (h) macOS shuffles windows while screens change
-        if let e = windows[i].expected, now <= e.deadline {
-            if frame.isClose(to: e.frame, tolerance: Self.frameTolerance) {
-                windows[i].expected = nil
-                windows[i].pending = nil
-            } else {
-                windows[i].pending = frame
-            }
+        let live = windows[i].expected.flatMap { now <= $0.deadline ? $0 : nil }
+        if let live, frame.isClose(to: live.frame, tolerance: Self.frameTolerance) {
+            windows[i].expected = nil
+            windows[i].pending = nil
+            return
+        }
+        if !dragging, windows[i].sent.contains(where: { now <= $0.deadline && frame.isClose(to: $0.frame, tolerance: Self.frameTolerance) }) {
+            return
+        }
+        if live != nil {
+            windows[i].pending = frame
             return
         }
         windows[i].expected = nil

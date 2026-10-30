@@ -134,3 +134,20 @@ func builtInAloneOnWorkspace3() -> CanvasState {
     // Seconds later it is a new move, and it snaps back again.
     #expect(moves(s.send(.system(.windowFrameChanged(wid(1), moved.offsetBy(dx: 10, dy: 0))))) == [wid(1): left])
 }
+
+// MARK: Late reports
+
+@Test func aLateReportOfAnEarlierMoveIsNotAdopted() throws {
+    var s = focusedState()
+    let slot = try #require(moves(panDesk(&s, dx: -3000))[wid(1)])
+    #expect(moves(panDesk(&s, dx: 3000))[wid(1)] == onBuiltIn) // back before the park landed
+    _ = s.advance(1.5)
+    // The busy app reports the park only now, after both moves lapsed.
+    #expect(s.send(.system(.windowFrameChanged(wid(1), slot))).isEmpty)
+    #expect(s.canvasFrame(1) == onBuiltIn)
+    _ = s.send(.system(.windowFrameChanged(wid(1), onBuiltIn)))
+    // A move nobody asked for is still the user's.
+    let dragged = onBuiltIn.offsetBy(dx: 200, dy: 0)
+    _ = s.send(.system(.windowFrameChanged(wid(1), dragged)))
+    #expect(s.canvasFrame(1) == dragged)
+}

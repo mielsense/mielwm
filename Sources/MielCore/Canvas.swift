@@ -22,6 +22,7 @@ public struct ManagedWindow: Hashable, Sendable {
     var reparkRetry: Double? // when to try parking it again
     var expected: Expectation?
     var pending: CGRect? // newest unconfirmed report while an expectation lives
+    var sent: [Expectation] = [] // the last frames we set, kept a few seconds to know late reports of them
 
     public var isShown: Bool { !isMinimized && !isHidden }
     var displayTitle: String { title.isEmpty ? appName : title }
@@ -53,6 +54,7 @@ struct Checkpoint: Hashable, Sendable {
 /// Everything Core knows. Change it only through `send` / `reduce`.
 public struct CanvasState: Sendable {
     static let expectationLifetime = 1.0 // seconds a setFrame has to show up
+    static let sentFrameMemory = 5.0 // seconds a report of a frame we set still counts as ours
     static let focusLifetime = 0.6 // seconds a focus we asked for has to show up
     static let frameTolerance: CGFloat = 2
     static let screenGracePeriod = 1.5
@@ -370,6 +372,8 @@ public struct CanvasState: Sendable {
         guard !windows[i].isFullScreen else { return } // moving it mid-transition makes macOS replay the Space slide
         windows[i].expected = Expectation(frame: frame, deadline: now + Self.expectationLifetime)
         windows[i].pending = nil
+        windows[i].sent = windows[i].sent.filter { $0.deadline >= now }.suffix(3)
+            + [Expectation(frame: frame, deadline: now + Self.sentFrameMemory)]
         outbox.append(.setFrame(windows[i].id, frame))
     }
 

@@ -12,6 +12,7 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 - With displays of different widths, showing a workspace on one display no longer shows part of the workspace before it on another. Workspaces move further apart when a wider display is plugged in.
 - A window from another workspace that its app keeps putting back on screen is tucked away again after a short wait, instead of staying over the workspace you're on.
 - A tiled window snaps back to its tile each time you drag it away, not only the first two times.
+- Switching workspaces with many windows open no longer leaves some of them behind when their apps are slow to answer.
 
 ## 0.1.0
 
