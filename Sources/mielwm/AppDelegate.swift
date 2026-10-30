@@ -82,10 +82,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         guard let c = controller else { return }
         controller = nil
         stopping = true
-        c.shutdown { [weak self] in
+        c.shutdown { [weak self] answered in
             guard let self else { return }
             stopping = false
-            stopWatcher()
+            // Quitting while an app did not answer: the watcher unparks its
+            // windows from layout.json once this process exits.
+            if answered || !quitWhenStopped { stopWatcher() } else { watcher = nil }
             refreshIcon()
             if quitWhenStopped { NSApp.reply(toApplicationShouldTerminate: true) }
         }

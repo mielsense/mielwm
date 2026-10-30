@@ -14,7 +14,7 @@ Screen Recording is missing, or you granted it while mielwm was running. macOS a
 
 ## Windows are stuck in a screen corner
 
-Windows you aren't looking at wait in a bottom corner of a display, and mielwm brings them all back when it quits, pauses, or you log out. If mielwm crashes, a small watcher brings them back from the saved layout. If windows are still stuck after that, run:
+Windows you aren't looking at wait in a bottom corner of a display, and mielwm brings them all back when it quits, pauses, or you log out. If mielwm crashes, or an app doesn't answer while mielwm quits, a small watcher brings them back from the saved layout. If windows are still stuck after that, run:
 
 ```sh
 mielwm --unpark

@@ -14,6 +14,7 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 - Apps that were already hidden when mielwm started no longer hold empty tiles.
 - After the Mac wakes from sleep, windows go back to their tiles on their own.
 - `mielwm refresh` also reads every app's window list again.
+- Windows of an app that is busy when you quit no longer stay in a screen corner. The watcher brings them back after mielwm exits.
 
 ## 0.1.0
 
