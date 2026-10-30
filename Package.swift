@@ -47,6 +47,8 @@ let package = Package(
         .testTarget(name: "MielCoreTests", dependencies: ["MielCore", .product(name: "TOMLDecoder", package: "TOMLDecoder")],
                     swiftSettings: testing),
         .testTarget(name: "MielRenderTests", dependencies: ["MielRender", "MielCore"], swiftSettings: testing),
+        // The app's own logic, from the executable module; nothing here opens windows.
+        .testTarget(name: "mielwmTests", dependencies: ["mielwm", "MielCore", "MielSystem"], swiftSettings: testing),
         .testTarget(name: "MielSystemTests", dependencies: ["MielSystem", "MielIPC", "MielCore"],
                     exclude: ["Fixtures"], swiftSettings: testing),
     ]

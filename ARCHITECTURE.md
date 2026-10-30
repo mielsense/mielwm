@@ -49,7 +49,7 @@ flowchart TD
 - **mielwm-aerospace** is the `aerospace` command that status bars like Barik run, and the hidden helper app that tells them AeroSpace is running. [Decision 0004](decisions/0004-aerospace-helper.md) explains why.
 - **mielwm-testwindows** opens throwaway windows, so system tests never move real ones.
 
-Tests mirror the libraries: `MielCoreTests`, `MielRenderTests` and `MielSystemTests`. The test-only `TOMLDecoder` dependency, pinned to the version Barik uses, lets the tests read the status bar configs mielwm edits the way Barik does.
+Tests mirror the modules: `MielCoreTests`, `MielRenderTests`, `MielSystemTests`, and `mielwmTests` for the app's own logic. The test-only `TOMLDecoder` dependency, pinned to the version Barik uses, lets the tests read the status bar configs mielwm edits the way Barik does.
 
 ## How an event moves through
 

@@ -48,7 +48,7 @@ jobs:
         # One process per test target, as with the Command Line Tools: in a single
         # process the render tests starve the system tests' main and utility queues.
         run: |
-          for target in MielCoreTests MielRenderTests MielSystemTests; do
+          for target in MielCoreTests MielRenderTests MielSystemTests mielwmTests; do
             swift test --skip-build --filter "$target"
           done
       - name: Build the app bundle
