@@ -19,14 +19,11 @@ mielwm draws on four surfaces, with three drawing technologies. They share the v
 | Surface | Drawn with | Code |
 | --- | --- | --- |
 | Settings, onboarding, About, sheets | SwiftUI, from `Design` and the components | `Sources/mielwm/*Pane.swift`, `SettingsWindow.swift`, `Onboarding.swift` |
-| The overview's HUD, live | SwiftUI over the Metal canvas, `Design` values times the HUD scale | `Sources/mielwm/ChromeViews.swift`, `OverlayChrome.swift` |
+| The overview's HUD, live and in `mielwm snapshot` | SwiftUI over the Metal canvas, `Design` values times the HUD scale. Snapshots use the solid material, since Liquid glass only draws on screen. | `Sources/mielwm/ChromeViews.swift`, `OverlayChrome.swift` |
 | Notices over the desktop | AppKit drawing from `Design` values | `Sources/mielwm/NoticeDrawing.swift`, `NoticePanel.swift` |
-| The overview's HUD in `mielwm snapshot` and the render tests | Core Text into Metal textures | `Sources/MielRender/HUD.swift` |
+| Window names, workspace pills and empty-workspace messages on the canvas | Core Text into Metal textures, after the lens so text never bends | `Sources/MielRender/TagPainter.swift` |
 
-Two things keep them in step:
-
-- `PaletteMetrics` in [Sources/MielCore/HUD.swift](Sources/MielCore/HUD.swift) sizes the search panel and the key hints for both HUD renderers, and the camera uses the same numbers to keep the canvas clear of them.
-- `MielRender` can't import the app, so `HUD.swift` copies the key cap recipe and the type sizes. A change to the live HUD in `ChromeViews.swift` belongs in `HUD.swift` too, in the same commit.
+`PaletteMetrics` in [Sources/MielCore/HUD.swift](Sources/MielCore/HUD.swift) sizes the search panel and the key hints, and the camera uses the same numbers to keep the canvas clear of them.
 
 ## Type
 
@@ -92,7 +89,7 @@ What floats over content is made of one of three materials:
 - **Frosted**, the blurred HUD material, `NSVisualEffectView` with `.hudWindow`. It's what every Mac before macOS 26 shows. Frosted panels draw their own shadow.
 - **Solid**, the window background colour. With Reduce Transparency on, every panel turns solid.
 
-The Glass style setting in Settings > Appearance, `appearance:glass` in the config file, chooses between Liquid glass and Frosted for the overview and the notices. `Look.liquid` decides what actually shows. Liquid glass needs the setting, macOS 26 and Reduce Transparency off. Anywhere else, a stored `liquid` shows as frosted. `NoticeMaterial.current(_:)` in `NoticePanel.swift` turns that into one of the three materials, and the HUD's `chromeMaterial` uses the same function, so the HUD and the notices always match.
+The Glass style setting in Settings > Appearance, `appearance:glass` in the config file, chooses between Liquid glass and Frosted for the overview and the notices. `Look.liquid` decides what actually shows. Liquid glass needs the setting, macOS 26 and Reduce Transparency off. Anywhere else, a stored `liquid` shows as frosted. `Design.ChromeMaterial.current(_:)` in `Design/Design.swift` turns that into one of the three materials. The notices and the HUD's `chromeMaterial` both use it, so they always match.
 
 In Settings, `glassSurface(_:in:)` draws a floating surface in Liquid glass or the regular material, following the same setting.
 

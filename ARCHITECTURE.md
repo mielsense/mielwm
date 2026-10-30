@@ -42,7 +42,7 @@ flowchart TD
 ```
 
 - **MielCore** is the logic, and it's pure: no AppKit, no windows, no timers, no clock. Workspaces, tiling, the camera, search, the overview's keys, the configuration format and the AeroSpace import live here, and so do most of the tests. [Decision 0001](decisions/0001-one-pure-reducer.md) explains why.
-- **MielRender** draws the overview with Metal: the lens, window pictures, the minimap, and the HUD for `mielwm snapshot` and the render tests. It reads a `Scene` and knows nothing else. Its shaders compile at runtime from source strings, because the Command Line Tools have no `metal` compiler.
+- **MielRender** draws the overview with Metal: the lens, window pictures, the minimap, and the window names and workspace pills on the canvas. It reads a `Scene` and knows nothing else. Its shaders compile at runtime from source strings, because the Command Line Tools have no `metal` compiler.
 - **MielSystem** talks to macOS: Accessibility to read and move windows, the event taps for shortcuts and swipes, ScreenCaptureKit for window pictures, displays, wallpapers, the file watcher, and the link to status bars that speak AeroSpace.
 - **MielIPC** is the socket protocol the app, the `mielwm` command and the `aerospace` command share. It uses only Foundation, so the `aerospace` command starts fast.
 - **mielwm** is the app. It wires the modules together and owns the overlay windows, the HUD, the notices, the Settings window, the menu bar item and onboarding. It's also the `mielwm` command-line tool. `Controller.swift` is the center.
