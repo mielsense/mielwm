@@ -2,7 +2,7 @@ import AppKit
 import MielCore
 import MielIPC
 import MielRender
-@preconcurrency import MielSystem
+import MielSystem
 import QuartzCore
 
 /// Owns Core's CanvasState and wires it to System (windows, keys, captures)
