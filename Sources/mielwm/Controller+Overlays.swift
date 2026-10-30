@@ -121,6 +121,7 @@ extension Controller {
             scene.dropIndicator = nil
         }
         scene.opacity = opacity
+        pictureChecks[screenID] = capture.picturesStored // before the look, so a picture landing during it counts as new
         overlay.draw(scene, renderer: renderer, frames: capture)
         // Settled with nothing new to draw on any display: no frames (nor ticks, which would
         // wake them) until an input, a state change or a new picture.
@@ -128,7 +129,8 @@ extension Controller {
            overlays.values.allSatisfy({ $0.idleFrames > Overlay.idleAfter }) {
             for o in overlays.values { o.view.link?.isPaused = true }
             framesPaused = true
-            capture.wakeOnNextPicture { [weak self] in MainActor.assumeIsolated { self?.wakeFrames() } }
+            let looked = overlays.keys.compactMap { pictureChecks[$0] }.min() ?? 0 // the display that looked longest ago
+            capture.wakeOnNextPicture(after: looked) { [weak self] in MainActor.assumeIsolated { self?.wakeFrames() } }
         }
     }
 

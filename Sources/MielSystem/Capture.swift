@@ -20,6 +20,7 @@ public final class CaptureManager: NSObject, WindowFrameSource, @unchecked Senda
     /// Main queue, once per `warm`: the first fresh frame of that window.
     public var onFirstFrame: ((WindowID) -> Void)?
     private var wake: (() -> Void)? // see `wakeOnNextPicture`
+    private var storedCount: UInt64 = 0 // new pictures so far
 
     private struct Slot {
         var frame: WindowFrame?
@@ -55,9 +56,18 @@ public final class CaptureManager: NSObject, WindowFrameSource, @unchecked Senda
         lock.withLock { slots[id]?.generation ?? 0 }
     }
 
-    /// `body` runs once on the main queue, when the next new picture of any window is stored.
-    public func wakeOnNextPicture(_ body: @escaping () -> Void) {
-        lock.withLock { wake = body }
+    /// How many new pictures of any window have been stored so far.
+    public var picturesStored: UInt64 { lock.withLock { storedCount } }
+
+    /// `body` runs once on the main queue at the first new picture after `seen` were stored:
+    /// at once if one already was, so one stored while the caller decided to wait still counts.
+    public func wakeOnNextPicture(after seen: UInt64, _ body: @escaping () -> Void) {
+        let missed: Bool = lock.withLock {
+            if storedCount > seen { return true }
+            wake = body
+            return false
+        }
+        if missed { DispatchQueue.main.async(execute: body) }
     }
 
     // MARK: Streams
@@ -207,6 +217,7 @@ public final class CaptureManager: NSObject, WindowFrameSource, @unchecked Senda
         lock.withLock {
             guard !closed.contains(id) else { return }
             slots[id, default: Slot()].store(frame)
+            storedCount &+= 1
             swap(&woken, &wake)
         }
         woken.map { DispatchQueue.main.async(execute: $0) }
@@ -331,6 +342,7 @@ extension CaptureManager: SCStreamOutput, SCStreamDelegate {
             }
             if same { return nil }
             slot.store(.pixelBuffer(pixels))
+            storedCount &+= 1
             swap(&woken, &wake)
             guard slot.waitingForFirstFrame else { return nil }
             slot.waitingForFirstFrame = false

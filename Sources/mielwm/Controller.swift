@@ -24,6 +24,7 @@ final class Controller {
         didSet { if framesPaused { wakeFrames() } } // inputs and the appearance alike: the paused overview draws again
     }
     var framesPaused = false // some overlay's display link waits for `wakeFrames`
+    var pictureChecks: [UInt32: UInt64] = [:] // per display, the pictures stored when it last looked for new ones
     var configErrors: [String]
     /// The menu refreshes on this.
     var onChange: (() -> Void)?
