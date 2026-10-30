@@ -56,18 +56,18 @@ func losingTheFocusedWindowKeepsTheWorkspace(_ how: String) {
 
 @Test func aResizeReportedJustAfterReleaseMovesTheSplit() {
     var s = twoTiles()
-    // The app reports the last step of the drag 0.2 s after the last drag event, the button already up.
-    let late = isUserDrag(buttonDown: false, sinceDrag: 0.2)
+    // The app reports the last step 0.2 s after release; the user held still for a second before letting go.
+    let late = isUserDrag(buttonDown: false, sinceMouseDown: 3, sinceDrag: 1.2, sinceMouseUp: 0.2)
     _ = s.send(.system(.windowFrameChanged(wid(1), CGRect(x: 12, y: 50, width: 840, height: 850), dragging: late)))
     #expect(s.canvasFrame(1) == CGRect(x: 12, y: 50, width: 840, height: 850))
-    #expect(!isUserDrag(buttonDown: false, sinceDrag: 2)) // long after a drag it is the app's own
-    #expect(isUserDrag(buttonDown: true, sinceDrag: 30))
+    #expect(!isUserDrag(buttonDown: false, sinceMouseDown: 4, sinceDrag: 3, sinceMouseUp: 2)) // long after a drag it is the app's own
+    #expect(isUserDrag(buttonDown: true, sinceMouseDown: 30, sinceDrag: 30, sinceMouseUp: 31))
 }
 
 @Test func aResizeJustAfterAPlainClickSnapsBack() {
     var s = twoTiles()
-    // A click on the Dock icon, no drag for a minute; the app restores its bounds 0.2 s later.
-    let dragging = isUserDrag(buttonDown: false, sinceDrag: 60)
+    // A click on the Dock icon 0.2 s ago, no drag since the press; the app restores its bounds.
+    let dragging = isUserDrag(buttonDown: false, sinceMouseDown: 0.3, sinceDrag: 60, sinceMouseUp: 0.2)
     let commands = s.send(.system(.windowFrameChanged(wid(1), CGRect(x: 12, y: 50, width: 840, height: 850), dragging: dragging)))
     #expect(moves(commands) == [wid(1): left])
     #expect(s.canvasFrame(1) == left && s.canvasFrame(2) == right)

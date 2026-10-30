@@ -82,8 +82,8 @@ public struct WindowSnapshot: Hashable, Codable, Sendable {
 public enum SystemEvent: Sendable, Equatable {
     case windowAppeared(WindowSnapshot)
     case windowClosed(WindowID)
-    /// `dragging`: the left mouse button was down or the mouse was just
-    /// dragged (see `isUserDrag`), so the user may be dragging it. Only then does a resize
+    /// `dragging`: the left mouse button is down, or just came up at the end
+    /// of a drag (see `isUserDrag`), so the user may be dragging it. Only then does a resize
     /// move the split with a neighbour tile.
     case windowFrameChanged(WindowID, CGRect, dragging: Bool = false)
     case windowTitleChanged(WindowID, String)
@@ -99,16 +99,17 @@ public enum SystemEvent: Sendable, Equatable {
     case screensChanged([ScreenInfo])
 }
 
-/// Seconds after the last mouse drag that frame reports still belong to the
-/// user's drag: slow apps report its last steps late, some resize only on release.
+/// Seconds after the left button comes up that frame reports still belong to
+/// the user's drag: slow apps report its last steps late, some resize only on release.
 public let dragGrace = 0.5
 
 /// Whether a frame report is part of a user drag (`windowFrameChanged`'s
-/// `dragging`), from the left button and the time since the last drag event.
-/// Timed from the drag, not the release, so a plain click (a Dock icon, a
-/// double-click on a title bar) never makes an app's own resize look like the user's.
-public func isUserDrag(buttonDown: Bool, sinceDrag: Double) -> Bool {
-    buttonDown || sinceDrag < dragGrace
+/// `dragging`): the button is down, or it came up recently after a press that
+/// dragged. Seconds since the last press, drag and release, from the same clock.
+/// A plain click (a Dock icon, a double-click on a title bar) has no drag after
+/// its press, so an app's own resize right after it is never taken for the user's.
+public func isUserDrag(buttonDown: Bool, sinceMouseDown: Double, sinceDrag: Double, sinceMouseUp: Double) -> Bool {
+    buttonDown || (sinceMouseUp < dragGrace && sinceDrag < sinceMouseDown)
 }
 
 /// What Core asks System to do. System runs these off the main thread, one
