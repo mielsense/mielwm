@@ -121,7 +121,7 @@ extension AppDelegate {
 
     /// The running settings, or the config file's while paused (read once per call).
     private var config: (settings: MielCore.Settings, errors: [String]) {
-        if let controller { return (controller.state.settings, controller.configErrors) }
+        if let controller { return (controller.state.settings, controller.problems) }
         let loaded = loadSettings(.standard())
         return (loaded.settings, loaded.errors)
     }

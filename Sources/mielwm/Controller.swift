@@ -18,14 +18,20 @@ final class Controller {
     static let maxStreams = 12 // windows on screen past this get stills
 
     let mode: Mode
-    let paths = ConfigPaths.standard()
+    let paths: ConfigPaths
     let layoutURL: URL
     var state: CanvasState {
         didSet { if framesPaused { wakeFrames() } } // inputs and the appearance alike: the paused overview draws again
     }
     var framesPaused = false // some overlay's display link waits for `wakeFrames`
     var pictureChecks: [UInt32: UInt64] = [:] // per display, the pictures stored when it last looked for new ones
+    /// What config.json gets wrong, read again on every reload.
     var configErrors: [String]
+    /// What mielwm found missing when it started, kept until the next start.
+    var permissionProblems: [String] = []
+    /// Everything the menu warns about.
+    var problems: [String] { configErrors + permissionProblems }
+    static let shortcutsNeedAccessibility = "Keyboard shortcuts need the Accessibility permission"
     /// The menu refreshes on this.
     var onChange: (() -> Void)?
     /// The settings action (a shortcut or `mielwm settings`): the app opens its window.
@@ -97,8 +103,9 @@ final class Controller {
     var workspaceTokens: [NSObjectProtocol] = [] // on NSWorkspace's own notification center
     private var appearance: NSKeyValueObservation?
 
-    init(mode: Mode) {
+    init(mode: Mode, paths: ConfigPaths = .standard()) {
         self.mode = mode
+        self.paths = paths
         let loaded = loadSettings(paths)
         configErrors = loaded.errors
         layoutURL = mode == .normal ? LayoutSnapshot.standardURL()
@@ -125,7 +132,7 @@ final class Controller {
         }
         if mode == .normal {
             let tap = EventTap { [weak self] event in MainActor.assumeIsolated { self?.tapEvent(event) } }
-            if tap.start() { self.tap = tap } else { configErrors.append("Keyboard shortcuts need the Accessibility permission") }
+            if tap.start() { self.tap = tap } else { permissionProblems.append(Self.shortcutsNeedAccessibility) }
             updateTap()
             let center = NotificationCenter.default
             tokens.append(center.addObserver(forName: NSColor.systemColorsDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
