@@ -62,7 +62,7 @@ What the menu bar item shows is up to you, in General > Menu bar:
 
 - All workspaces: the numbers of the workspaces that have windows, with the current one filled.
 - Current only: just the current workspace's number, for a crowded menu bar or one cut short by the notch.
-- Icon: the mielwm icon. Turning on Work with Barik switches to this, since Barik shows the numbers already.
+- Icon: the mielwm icon. Turning on Work with Barik switches All workspaces to this, since Barik shows the numbers already.
 
 While the configuration file has errors, a warning sign takes its place.
 
