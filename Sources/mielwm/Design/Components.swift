@@ -156,6 +156,8 @@ struct VisualPicker<Value: Hashable, Thumbnail: View>: View {
                 }
             }
             .padding(.vertical, 2)
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel(title)
         } label: {
             Text(title)
             if let subtitle { Text(subtitle) }
@@ -216,10 +218,12 @@ struct StatusBadge: View {
 struct SearchField: NSViewRepresentable {
     @Binding var text: String
     var prompt = "Search"
+    let label: String // what VoiceOver says the field searches
 
     func makeNSView(context: Context) -> NSSearchField {
         let field = NSSearchField()
         field.placeholderString = prompt
+        field.setAccessibilityLabel(label)
         field.sendsSearchStringImmediately = true
         field.delegate = context.coordinator
         field.focusRingType = .default

@@ -135,8 +135,7 @@ struct SettingsSidebar: View {
             return m.matches ? (pane: pane, keyword: m.keyword) : nil
         } }
         VStack(spacing: 0) {
-            SearchField(text: $model.paneQuery)
-                .accessibilityLabel("Search settings")
+            SearchField(text: $model.paneQuery, label: "Search settings")
                 .padding(.horizontal, 10)
                 .padding(.top, 6)
                 .padding(.bottom, 4)
@@ -165,7 +164,7 @@ struct SettingsSidebar: View {
             .scrollContentBackground(.hidden)
             .overlay {
                 if groups.allSatisfy(\.isEmpty) {
-                    Text("No Results").font(Design.row).foregroundStyle(.secondary)
+                    Text("No results").font(Design.row).foregroundStyle(.secondary)
                 }
             }
         }

@@ -22,8 +22,7 @@ struct KeyboardPane: View {
         Form {
             Section {
                 PaneHeader(pane: .keyboard) {
-                    SearchField(text: $model.keyQuery, prompt: "Search shortcuts")
-                        .accessibilityLabel("Search shortcuts")
+                    SearchField(text: $model.keyQuery, prompt: "Search shortcuts", label: "Search shortcuts")
                         .frame(width: 260)
                 }
             }
