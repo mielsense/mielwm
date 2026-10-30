@@ -24,6 +24,7 @@ final class Controller {
         didSet { if framesPaused { wakeFrames() } } // inputs and the appearance alike: the paused overview draws again
     }
     var framesPaused = false // some overlay's display link waits for `wakeFrames`
+    var framesDrawn = 0 // overlay frames drawn, for `mielwm state`
     var pictureChecks: [UInt32: UInt64] = [:] // per display, the pictures stored when it last looked for new ones
     /// What config.json gets wrong, read again on every reload.
     var configErrors: [String]

@@ -30,6 +30,7 @@ swift build && swift test        # build, then run every test
 scripts/build-app.sh             # build/mielwm.app in release mode, signed
 scripts/build-app.sh --install   # also copy it to ~/Applications, reopening it if it ran
 scripts/build-app.sh --dmg       # also build/mielwm-<version>.dmg
+scripts/e2e.sh                   # every end-to-end test below, each after 30 s of idle
 scripts/system-test.sh           # throwaway windows, end to end
 scripts/barik-test.sh            # a status bar's AeroSpace code against a test copy
 scripts/benchmark.sh             # CPU and memory, the numbers in docs/performance.md
@@ -47,7 +48,7 @@ cd website && pnpm check && pnpm build     # what CI runs on the website
 
 A window manager under test moves windows, so the tools stay away from yours. Never run a development build in normal mode while your own mielwm runs. Two copies fight over every window.
 
-- `swift test` runs the pure logic, the renderer and the system layer. It moves nothing.
+- `swift test` runs the pure logic, the renderer, the socket, the system layer and the app's own logic. It moves nothing. On CI each test target runs in its own process: `swift test --skip-build --filter MielCoreTests`, and so on for `MielRenderTests`, `MielIPCTests`, `MielSystemTests` and `mielwmTests`.
 - `mielwm snapshot --state overview|search:<text>|help|switcher|desktop [--light|--dark] --out x.png` draws any state of the overview to a PNG from made-up windows, with the chrome in its solid Reduce Transparency material, since Liquid glass only draws on screen. `--real` uses your windows' pictures but still moves nothing.
 - `mielwm --settings-preview --out <dir>` saves every Settings pane, the onboarding and the menu as PNGs in light and dark, on a copy of your config. `--selftest` drives the Settings window through its controls instead.
 - `mielwm --manage-only <pid>` manages one app's windows only, with no shortcuts and no focus changes. Point it at `mielwm-testwindows` to try something live.
@@ -55,7 +56,17 @@ A window manager under test moves windows, so the tools stay away from yours. Ne
 
 Every test copy gets its own `MIELWM_SOCKET` and `MIELWM_CONFIG_DIR`, and `MIELWM_TEST_OVERLAY=1` turns on its overlay. Set `MIELWM_SOCKET` on every `mielwm` command you send to a test copy too. Without it, the command reaches the mielwm you use.
 
-Run `scripts/system-test.sh` when you change window handling, and `scripts/benchmark.sh` before and after a change meant to make mielwm faster or lighter.
+### End to end
+
+`scripts/e2e.sh` runs every test that puts windows on screen, one after another. Each part first waits until nobody has touched the keyboard or the mouse for 30 seconds, so start it and leave the Mac alone.
+
+- `MIELWM_SYSTEM_TESTS=1 swift test --filter WindowTests` drives throwaway windows through the system layer: reading and moving them, parking, minimizing, closing, hidden apps, rescans, a hung app, window pictures and the event tap.
+- `scripts/system-test.sh` drives a test copy from the command line. With floating windows it pans until they park and back, and adopts a move the app makes itself. With tiles it switches workspaces, focuses, moves a window to another workspace, stacks, tiles and floats, closes and minimizes, opens, searches and closes the overview and checks it keeps drawing, rescans, answers the `aerospace` command and quits with every window back on screen.
+- `scripts/barik-test.sh` runs a status bar's own AeroSpace code against a test copy.
+
+The checks wait for a condition, like a window being parked, instead of sleeping, and fail after a few seconds without it. `mielwm state` reports what they read, including `settled` once nothing moves and `framesDrawn` for the overlay.
+
+Run `scripts/e2e.sh` when you change window handling, and `scripts/benchmark.sh` before and after a change meant to make mielwm faster or lighter.
 
 ## Where a change goes
 

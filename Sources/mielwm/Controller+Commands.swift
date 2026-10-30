@@ -59,12 +59,18 @@ extension Controller {
 
     func stateJSON() -> Data {
         struct Window: Encodable {
-            var id: String, app: String, title: String, frame: [Double], real: [Double]
-            var parked: Bool, pinned: Bool, minimized: Bool, hidden: Bool
+            var id: String, number: UInt32, app: String, title: String, frame: [Double], real: [Double]
+            var parked: Bool, pinned: Bool, minimized: Bool, hidden: Bool, workspace: Int?
+        }
+        struct Space: Encodable {
+            var slot: Int, mode: String, members: [String]
         }
         struct Dump: Encodable {
             var overview: Bool, zoom: Double, camera: [Double], deskCamera: [Double]
             var focused: String?, selection: String?, windows: [Window], screens: [String]
+            var workspace: Int?, workspaces: [Space]
+            var settled: Bool // nothing flies, and macOS confirmed every move
+            var framesDrawn: Int // overlay frames drawn so far, to see they keep coming
         }
         func r(_ f: CGRect) -> [Double] { [f.minX, f.minY, f.width, f.height] }
         let s = state
@@ -72,10 +78,13 @@ extension Controller {
                         deskCamera: [s.deskCamera.center.x, s.deskCamera.center.y],
                         focused: s.focused?.description, selection: s.selection?.description,
                         windows: s.windows.map {
-                            Window(id: $0.id.description, app: $0.appName, title: $0.title, frame: r($0.frame), real: r($0.real),
-                                   parked: $0.parked, pinned: $0.pinned != nil, minimized: $0.isMinimized, hidden: $0.isHidden)
+                            Window(id: $0.id.description, number: $0.id.number, app: $0.appName, title: $0.title, frame: r($0.frame),
+                                   real: r($0.real), parked: $0.parked, pinned: $0.pinned != nil, minimized: $0.isMinimized,
+                                   hidden: $0.isHidden, workspace: $0.workspace)
                         },
-                        screens: s.screens.map(\.name))
+                        screens: s.screens.map(\.name), workspace: s.currentWorkspace,
+                        workspaces: s.workspaces.map { Space(slot: $0.slot, mode: $0.mode.rawValue, members: $0.members.map(\.description)) },
+                        settled: s.animator.isSettled && !s.movesInFlight, framesDrawn: framesDrawn)
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
         return (try? encoder.encode(dump)) ?? Data("{}".utf8)

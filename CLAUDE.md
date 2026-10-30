@@ -11,7 +11,7 @@ A window manager under test moves windows. The person working with you is using 
 - Never run mielwm in normal mode: no `mielwm` with no arguments, no `open mielwm.app`, no `build/mielwm.app`. A second copy fights the one they use over every window.
 - Their own mielwm is probably running. Every `mielwm` command you send carries its own socket, `MIELWM_SOCKET=/tmp/<something>.sock`, or it reaches their app. Test copies also get their own `MIELWM_CONFIG_DIR`.
 - Never post synthetic input: no CGEvent posting, no AppleScript keystrokes, no clicking through the UI to test.
-- Anything that puts windows or overlays on screen waits until the user has been idle for 30 seconds. That's `scripts/system-test.sh`, `scripts/barik-test.sh`, `scripts/benchmark.sh`, `--settings-preview`, `--selftest`, and `--manage-only` with `mielwm-testwindows`. This must print 30 or more, checked inside one shell loop:
+- Anything that puts windows or overlays on screen waits until the user has been idle for 30 seconds. That's `scripts/e2e.sh`, `scripts/system-test.sh`, `scripts/barik-test.sh`, `scripts/benchmark.sh`, `--settings-preview`, `--selftest`, and `--manage-only` with `mielwm-testwindows`. This must print 30 or more, checked inside one shell loop:
   `ioreg -c IOHIDSystem | awk '/HIDIdleTime/ {print int($NF/1000000000); exit}'`
 - Don't touch their AeroSpace config, their status bar app or its config, system settings, or `~/Applications/mielwm.app`. `scripts/build-app.sh --install` replaces their app, so only run it when they ask.
 
