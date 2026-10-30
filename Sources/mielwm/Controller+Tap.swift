@@ -25,8 +25,7 @@ extension Controller {
                 if action == .noop { swallow.insert(c) } else { bindings[c] = action }
             }
             bindingTable = BindingTable(bindings: bindings, swallow: swallow)
-            // Held for every modifier drag too: warming then would start streams that are seldom used.
-            warmModifiers = s.warmModifiers.subtracting([s.moveModifiers])
+            warmModifiers = s.warmModifiers
             t.dragThreshold = s.dragThreshold
             t.moveModifiers = s.moveModifiers
         }
