@@ -456,18 +456,18 @@ extension View {
     /// Liquid glass, frosted, or solid with Reduce Transparency; outlined with Increase Contrast.
     /// `behindWindow`: what to blur is the desktop behind the overlay, not the canvas inside it (frosted only).
     func chromeMaterial<S: InsettableShape>(_ shape: S, look: Look, behindWindow: Bool = false) -> some View {
-        modifier(ChromeMaterial(shape: shape, look: look, behindWindow: behindWindow))
+        modifier(ChromeSurface(shape: shape, look: look, behindWindow: behindWindow))
     }
 }
 
-private struct ChromeMaterial<S: InsettableShape>: ViewModifier {
+private struct ChromeSurface<S: InsettableShape>: ViewModifier {
     let shape: S
     let look: Look
     let behindWindow: Bool
 
     func body(content: Content) -> some View {
         Group {
-            switch NoticeMaterial.current(look) {
+            switch Design.ChromeMaterial.current(look) {
             case .solid:
                 content.background(shape.fill(Color(nsColor: .windowBackgroundColor)))
                     .shadow(color: .black.opacity(look.dark ? 0.4 : 0.2), radius: 14, y: 4)

@@ -2,18 +2,6 @@ import AppKit
 import MielCore
 import MielSystem
 
-/// What a notice panel is made of: Liquid Glass (macOS 26 and later), the
-/// frosted HUD material, or a solid fill with Reduce Transparency.
-enum NoticeMaterial: Equatable {
-    case glass, hud, solid
-
-    static func current(_ look: Look) -> NoticeMaterial {
-        if look.reduceTransparency { return .solid }
-        if look.liquid, #available(macOS 26, *) { return .glass }
-        return .hud
-    }
-}
-
 /// Above normal windows and below the overview's overlay; it never takes
 /// focus or the mouse. mielwm tracks and captures only other apps' windows,
 /// so it never sees this one.
@@ -31,13 +19,13 @@ final class NoticePanel {
         var screenID: UInt32
         var accent: RGB
         var increaseContrast: Bool
-        var material: NoticeMaterial
+        var material: Design.ChromeMaterial
     }
 
     let window: NoticeWindow
     var drawn: Drawn?
     private let canvas = NoticeCanvas()
-    private var built: (material: NoticeMaterial, radius: CGFloat, increaseContrast: Bool)?
+    private var built: (material: Design.ChromeMaterial, radius: CGFloat, increaseContrast: Bool)?
 
     init() {
         window = NoticeWindow(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: true)
@@ -52,7 +40,7 @@ final class NoticePanel {
     }
 
     /// Draws `drawing` centred on `x` with its top edge at `top`, in AppKit points (y up).
-    func show(_ drawing: NoticeDrawing, center x: CGFloat, top: CGFloat, material: NoticeMaterial, increaseContrast: Bool) {
+    func show(_ drawing: NoticeDrawing, center x: CGFloat, top: CGFloat, material: Design.ChromeMaterial, increaseContrast: Bool) {
         if built?.material != material || built?.radius != drawing.radius || built?.increaseContrast != increaseContrast {
             build(material, radius: drawing.radius, increaseContrast: increaseContrast)
         }
@@ -70,7 +58,7 @@ final class NoticePanel {
         if window.isVisible { window.orderOut(nil) }
     }
 
-    private func build(_ material: NoticeMaterial, radius: CGFloat, increaseContrast: Bool) {
+    private func build(_ material: Design.ChromeMaterial, radius: CGFloat, increaseContrast: Bool) {
         built = (material, radius, increaseContrast)
         canvas.radius = radius
         canvas.edge = increaseContrast ? .contrast : material == .glass ? .none : .light
@@ -190,7 +178,7 @@ final class NoticeBoard {
         }
         let a = state.accessibility
         let key = NoticePanel.Drawn(content: wrap(notice.content), screenID: notice.screenID, accent: state.look.accent,
-                                    increaseContrast: a.increaseContrast, material: NoticeMaterial.current(state.look))
+                                    increaseContrast: a.increaseContrast, material: Design.ChromeMaterial.current(state.look))
         if panel.drawn != key {
             let drawing = noticeDrawing(key.content, accent: key.accent, increaseContrast: key.increaseContrast, maxWidth: screen.visibleFrame.width - 48)
             let p = position(notice.content, screen.frame, screen.visibleFrame, drawing.size)

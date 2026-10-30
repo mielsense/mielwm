@@ -101,18 +101,24 @@ enum Design {
 
     // MARK: Materials
 
-    /// What floats over content: Liquid Glass on macOS 26, frosted material before.
-    /// The overview's "Glass style" setting (`appearance:glass`) chooses between them.
-    typealias Glass = GlassStyle
-}
+    /// What the overview's chrome and the notices are made of: Liquid glass
+    /// (macOS 26 and later), the frosted HUD material, or a solid fill with
+    /// Reduce Transparency. The "Glass style" setting (`appearance:glass`)
+    /// chooses between the first two.
+    enum ChromeMaterial: Equatable {
+        case glass, hud, solid
 
-extension GlassStyle {
-    static var systemDefault: GlassStyle { Controller.liquidGlassAvailable ? .liquid : .frosted }
+        static func current(_ look: Look) -> ChromeMaterial {
+            if look.reduceTransparency { return .solid }
+            if look.liquid, #available(macOS 26, *) { return .glass }
+            return .hud
+        }
+    }
 }
 
 extension View {
-    /// A floating surface in `shape`: Liquid Glass or a frosted material, per `style`.
-    @ViewBuilder func glassSurface(_ style: Design.Glass = .systemDefault, in shape: some Shape) -> some View {
+    /// A floating surface in `shape`: Liquid glass or a frosted material, per `style`.
+    @ViewBuilder func glassSurface(_ style: GlassStyle, in shape: some Shape) -> some View {
         if #available(macOS 26, *), style == .liquid {
             glassEffect(.regular, in: shape)
         } else {

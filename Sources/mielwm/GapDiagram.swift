@@ -45,7 +45,7 @@ struct GapDiagram: View {
                 }
                 ForEach(markers, id: \.keys) { marker in
                     MarkerView(marker: marker, focused: focus.key.map(marker.keys.contains) ?? false,
-                               glass: Controller.liquidGlassAvailable ? s.look.glass : .frosted)
+                               glass: s.look.glass)
                 }
             }
             .frame(width: size.width, height: size.height, alignment: .topLeading)

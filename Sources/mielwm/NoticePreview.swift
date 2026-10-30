@@ -32,7 +32,7 @@ func noticePreview(_ args: [String]) -> Never {
     let panels = contents.map { _ in NoticePanel() }
     let accent = Settings().resolvedLook(systemAccent: nil).accent
 
-    var looks: [(String, NoticeMaterial, Bool)] = [("glass", .glass, false), ("hud", .hud, false), ("solid", .solid, false), ("glass-contrast", .glass, true)]
+    var looks: [(String, Design.ChromeMaterial, Bool)] = [("glass", .glass, false), ("hud", .hud, false), ("solid", .solid, false), ("glass-contrast", .glass, true)]
     if #unavailable(macOS 26) { looks.removeAll { $0.1 == .glass } }
     for (appearanceName, appearance) in [("dark", NSAppearance.Name.darkAqua), ("light", .aqua)] {
         NSApp.appearance = NSAppearance(named: appearance)
