@@ -241,6 +241,13 @@ public struct RGB: Hashable, Codable, Sendable {
     }
 
     static let mielOrange = RGB(1.0, 0x6B / 255.0, 0x1A / 255.0) // #ff6b1a
+
+    /// Text on this color reads better dark than white: white wins unless the color is very light (WCAG).
+    public var wantsDarkText: Bool {
+        func linear(_ c: Double) -> Double { c <= 0.04045 ? c / 12.92 : pow((c + 0.055) / 1.055, 2.4) }
+        let luminance = 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b)
+        return (luminance + 0.05) / 0.05 >= 1.05 / (luminance + 0.05) * 1.6
+    }
 }
 
 public struct Look: Hashable, Codable, Sendable {

@@ -10,6 +10,7 @@ Open Settings from the menu bar item, with `⌘,` in the overview, or with `miel
 
 - Open mielwm at login.
 - Show workspace numbers in the menu bar, or just the icon.
+- Show the workspace numbers at the bottom of the display for a moment when you switch.
 - How far the overview zooms out when it opens.
 - Whether clicks, drags and scrolling work in the overview.
 - Animation on or off, and its speed.

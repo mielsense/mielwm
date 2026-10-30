@@ -18,7 +18,7 @@ public enum Displays {
 
     /// AppKit rects grow upward from the primary display's bottom-left; the
     /// contract's grow downward from its top-left.
-    static func toYDown(_ rect: CGRect, primaryHeight: CGFloat) -> CGRect {
+    public static func toYDown(_ rect: CGRect, primaryHeight: CGFloat) -> CGRect {
         CGRect(x: rect.minX, y: primaryHeight - rect.maxY, width: rect.width, height: rect.height)
     }
 

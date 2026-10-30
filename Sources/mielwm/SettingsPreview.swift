@@ -172,11 +172,7 @@ private func saveMenuPreview(to url: URL) {
     let rect = "\(Int(at.x) - 12),\(Int(screen.frame.maxY - at.y) - 12),\(Int(menu.size.width) + 24),\(Int(menu.size.height) + 24)"
     nonisolated(unsafe) let open = menu // the timer fires on the main thread, inside the menu's tracking loop
     let timer = Timer(timeInterval: 0.6, repeats: false) { _ in
-        let shot = Process()
-        shot.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-        shot.arguments = ["-x", "-R", rect, url.path]
-        try? shot.run()
-        shot.waitUntilExit()
+        screencapture(rect, to: url)
         open.cancelTracking()
     }
     RunLoop.main.add(timer, forMode: .common)
@@ -223,6 +219,15 @@ private func saveMenuBarPreview(dark: Bool, to url: URL) {
     }
     NSGraphicsContext.restoreGraphicsState()
     try? canvas.representation(using: .png, properties: [:])?.write(to: url)
+}
+
+/// The screen region "x,y,width,height" (points from the primary display's top-left) as a PNG.
+func screencapture(_ region: String, to url: URL) {
+    let shot = Process()
+    shot.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+    shot.arguments = ["-x", "-R", region, url.path]
+    try? shot.run()
+    shot.waitUntilExit()
 }
 
 /// Runs AppKit's event loop for `seconds`, as NSApp.run would: windows

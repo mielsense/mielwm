@@ -118,6 +118,7 @@ let settingPaths: [String: SettingPath] = [
     "window:rounding": .number(\.look.windowRounding, 0 ... 40),
     "window:shadow": .flag(\.look.windowShadow),
     "menubar:workspaces": .flag(\.menuBarWorkspaces),
+    "notices:workspace": .flag(\.workspaceNotice),
     "integrations:barik": .flag(\.barik),
 ]
 

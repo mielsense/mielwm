@@ -21,7 +21,7 @@ A workspace is a screen-sized area of the canvas. Workspaces 1 to 9 sit side by 
 | `⌃←`, `⌃→` | The previous or next workspace that has windows. They stop at the first and last. |
 | Three fingers left, right | The same, from the trackpad. See [Trackpad and mouse](trackpad.md). |
 
-Switching is instant, with no animation. The menu bar shows the numbers of the workspaces that have windows, with the current one filled.
+Switching is instant, with no animation. The menu bar shows the numbers of the workspaces that have windows, with the current one filled. The same numbers show at the bottom of the display for 0.7 seconds after each switch, which helps when the menu bar is on another display. Turn this off with Show workspace on switch in General settings.
 
 ## Layouts
 
@@ -38,6 +38,8 @@ A tiled window can't be dragged smaller than its tile. Drag the edge between two
 ### Stack
 
 A stack shows one window at a time at full size, like AeroSpace's accordion. `⌥,` stacks the workspace and `⌥,` again goes back to tiles. In a stack, `⌥←` and `⌥→` step through its windows, and so does `⌥Tab`. Zoomed out, a stack looks like a fanned deck of cards.
+
+When you go to a stack, or another of its windows comes to the front, a strip at the top of the stack shows its windows in order: each app's icon and the window's title, the front one highlighted, and where it sits, like "2 of 4". It goes after 0.7 seconds and never takes space from the windows. When the titles don't fit, the strip shows only the front window's title.
 
 ### Floating
 

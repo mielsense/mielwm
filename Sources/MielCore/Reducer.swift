@@ -41,6 +41,7 @@ public extension CanvasState {
     /// Applies one input and returns the window commands it causes.
     mutating func send(_ input: CoreInput) -> [WindowCommand] {
         outbox = []
+        let watch: NoticeWatch? = if case .tick = input { nil } else { noticeWatch }
         switch input {
         case let .system(event): handle(event)
         case let .action(action): perform(action)
@@ -60,6 +61,7 @@ public extension CanvasState {
         case .unparkAll: unparkAll()
         case let .setSettings(s): settings = s
         }
+        if let watch { updateNotices(from: watch) }
         // One batch moves each window once: its last setFrame wins.
         var seen = Set<WindowID>()
         let out = outbox.reversed().filter { command in
@@ -71,10 +73,10 @@ public extension CanvasState {
     }
 
     /// Ticks are needed while this is true: animations, moves awaiting
-    /// confirmation, the screen grace period, toasts, the switcher's delay.
+    /// confirmation, the screen grace period, toasts and notices, the switcher's delay.
     var needsTicks: Bool {
-        !animator.isSettled || windows.contains { $0.expected != nil } || graceUntil != nil || toast != nil
-            || expectedFocus != nil || (overview.switcherRevealAt.map { $0 > now } ?? false)
+        !animator.isSettled || windows.contains { $0.expected != nil } || graceUntil != nil
+            || expectedFocus != nil || (overview.switcherRevealAt.map { $0 > now } ?? false) || !notices.isEmpty
     }
 
     /// The overlay must be up: zoomed out, panning at full size, flying, or
@@ -106,7 +108,7 @@ extension CanvasState {
             for i in windows.indices { windows[i].expected = nil; windows[i].pending = nil }
             sync(force: true)
         }
-        if toast != nil, now >= toastUntil { toast = nil }
+        notices.expire(now)
         if let f = expectedFocus, now >= f.until { expectedFocus = nil }
     }
 

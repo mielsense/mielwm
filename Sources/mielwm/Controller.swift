@@ -49,6 +49,7 @@ final class Controller {
     private var ipc: IPCServer?
     private(set) var renderer: Renderer?
     var overlays: [UInt32: Overlay] = [:]
+    let notices = NoticeBoard() // toasts, the workspace pill and the stack strip over the desktop
 
     // Opening: inputs wait here until captures are fresh (see `input`).
     var gate: (queue: [CoreInput], waitFor: WindowID?, opensOverview: Bool, timeout: DispatchWorkItem)?
@@ -152,6 +153,7 @@ final class Controller {
         gate?.timeout.cancel()
         gate = nil
         hideOverlays()
+        notices.hideAll()
         for o in overlays.values { o.close() }
         overlays = [:]
         tokens.forEach(NotificationCenter.default.removeObserver)
@@ -263,6 +265,7 @@ final class Controller {
                 restingSince = state.now
             }
         }
+        if renderer != nil { notices.update(state) }
         updateTap()
         if state.layoutRevision != savedLayoutRevision { scheduleSave() }
         scheduleTicks()

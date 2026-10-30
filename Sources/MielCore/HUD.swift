@@ -32,6 +32,23 @@ public enum PaletteMetrics {
     }
 }
 
+/// "{⌃0} Fit all" as [(key ⌃0), (text Fit all)]: the `{...}` spans are keys.
+public func hintSegments(_ text: String) -> [(text: String, isKey: Bool)] {
+    var out: [(text: String, isKey: Bool)] = []
+    var current = "", inKey = false
+    for ch in text {
+        if ch == "{" || ch == "}" {
+            if !current.isEmpty { out.append((current, inKey)) }
+            current = ""
+            inKey = ch == "{"
+        } else {
+            current.append(ch)
+        }
+    }
+    if !current.isEmpty { out.append((current, inKey)) }
+    return out
+}
+
 public extension CanvasState {
     /// The HUD for one screen: only the active screen shows the palette.
     func hud(for screen: ScreenInfo) -> HUDModel {

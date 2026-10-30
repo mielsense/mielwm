@@ -6,12 +6,17 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 
 ### On screen
 
+- Switching workspaces shows the workspace numbers at the bottom of the display for a moment, with the current one filled. Turn it off in General settings.
+- Going to a stack, or bringing another of its windows to the front, shows a strip at the top with each window's icon and title and where you are, like "2 of 4".
+- VoiceOver says the workspace you switch to and the app selected in the `⌥Tab` switcher.
 - The `⌥Tab` switcher's highlight follows the panel's rounded corners, and its arrows to more windows are drawn chevrons.
 
 ### Fixes
 
+- Tidy windows from the menu bar, and other actions outside the overview, now show their message on screen. Before, it only showed in the overview.
 - Messages say "1 window", not "1 windows".
 - Messages and search results show the keys that work there: `⌘1` to `⌘9` for search results and `⌘⇧Z` to redo in the overview.
+
 - Leaving macOS full screen, like a full screen video, no longer flashes two desktops side by side. mielwm leaves a full screen window alone and keeps its tile for when it comes back.
 
 ## 0.1.0

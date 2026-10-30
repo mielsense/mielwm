@@ -23,6 +23,10 @@ struct GeneralPane: View {
                     Text("Show workspaces in the menu bar")
                     Text("The numbers of the workspaces that have windows, with the current one filled.")
                 }
+                Toggle(isOn: model.flag("notices:workspace")) {
+                    Text("Show workspace on switch")
+                    Text("The same numbers appear at the bottom of the display for a moment when you switch.")
+                }
             }
             Section("Overview") {
                 LabeledSlider("Zoomed-out level", value: model.number("canvas:initial_zoom"), in: 0.1 ... 0.95) { "\(Int(($0 * 100).rounded()))%" }

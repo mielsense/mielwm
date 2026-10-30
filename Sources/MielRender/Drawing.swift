@@ -160,10 +160,7 @@ struct Theme {
         let a = look.accent
         accent = rgba(a.r, a.g, a.b)
         accentRGBA = SIMD4(Float(a.r), Float(a.g), Float(a.b), 1)
-        // White text on the accent unless the accent is very light (WCAG).
-        func linear(_ c: Double) -> Double { c <= 0.04045 ? c / 12.92 : pow((c + 0.055) / 1.055, 2.4) }
-        let luminance = 0.2126 * linear(a.r) + 0.7152 * linear(a.g) + 0.0722 * linear(a.b)
-        onAccent = (luminance + 0.05) / 0.05 >= 1.05 / (luminance + 0.05) * 1.6 ? rgba(0, 0, 0, 0.85) : rgba(1, 1, 1)
+        onAccent = a.wantsDarkText ? rgba(0, 0, 0, 0.85) : rgba(1, 1, 1)
         let alpha = look.reduceTransparency ? 1 : min(max(look.panelOpacity, 0), 1)
         let contrast = look.increaseContrast ? 2.5 : 1.0 // Increase Contrast: stronger hairlines and secondary text
         if look.dark {
@@ -279,23 +276,6 @@ final class Typesetter {
         }
         return runs
     }
-}
-
-/// "{⌃0} Fit all" as [(key ⌃0), (text Fit all)]: the `{...}` spans are keys.
-func hintSegments(_ text: String) -> [(text: String, isKey: Bool)] {
-    var out: [(text: String, isKey: Bool)] = []
-    var current = "", inKey = false
-    for ch in text {
-        if ch == "{" || ch == "}" {
-            if !current.isEmpty { out.append((current, inKey)) }
-            current = ""
-            inKey = ch == "{"
-        } else {
-            current.append(ch)
-        }
-    }
-    if !current.isEmpty { out.append((current, inKey)) }
-    return out
 }
 
 // MARK: - App icons

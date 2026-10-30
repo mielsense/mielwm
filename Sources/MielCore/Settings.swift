@@ -56,6 +56,9 @@ public struct Settings: Hashable, Codable, Sendable {
     /// menubar:workspaces: the menu bar shows the workspace numbers instead of the icon.
     public var menuBarWorkspaces = true
 
+    /// notices:workspace: switching workspaces shows their numbers at the bottom of the display for a moment.
+    public var workspaceNotice = true
+
     /// integrations:barik: Barik's menu bar shows mielwm's workspaces (docs/aerospace.md).
     public var barik = false
 
