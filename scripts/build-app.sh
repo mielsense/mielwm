@@ -45,16 +45,20 @@ BUILD=$(git rev-list --count HEAD 2>/dev/null || echo 1)
 APP=build/mielwm.app
 
 echo "== swift build -c release"
+# SwiftPM's build system records the deployment target as the SDK version. macOS
+# 26 and later then draw the app in its old look, without the glass sidebar.
+SDK_VERSION=$(xcrun --sdk macosx --show-sdk-version)
+STAMP=(-Xlinker -platform_version -Xlinker macos -Xlinker 15.0 -Xlinker "$SDK_VERSION")
 # Short output, but a failed build stops here: never sign and ship the last good binary.
 for product in mielwm mielwm-aerospace; do
-    if ! build_log=$(swift build -c release --product $product 2>&1); then
+    if ! build_log=$(swift build -c release --product $product "${STAMP[@]}" 2>&1); then
         echo "$build_log" | grep -E "error" || echo "$build_log" | tail -20
         echo "build failed" >&2
         exit 1
     fi
     echo "$build_log" | grep -E "error|Build complete" || true
 done
-BIN_DIR=$(swift build -c release --show-bin-path)
+BIN_DIR=$(swift build -c release --show-bin-path "${STAMP[@]}")
 BIN=$BIN_DIR/mielwm
 [ -x "$BIN" ] && [ -x "$BIN_DIR/mielwm-aerospace" ] || { echo "build failed" >&2; exit 1; }
 

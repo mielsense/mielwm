@@ -14,6 +14,7 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 - The menu lists each workspace with windows, with its apps' icons and a check on the current one. Click one to go there.
 - The menu warns when secure input is on, since mielwm's shortcuts don't work while it is.
 - Settings > Advanced links to the Configuration file page for the settings that exist only in the file.
+- On macOS 26 and later, mielwm's windows use the system's current look, with the new sidebar, grouped rows and controls.
 
 ### Fixes
 
