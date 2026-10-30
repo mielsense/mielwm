@@ -10,15 +10,13 @@ enum Design {
     static let headerTitle = Font.system(size: 22, weight: .semibold)
     /// A row's title, and body text.
     static let row = Font.system(size: 13)
-    /// The bold title above a group of rows.
-    static let sectionTitle = Font.system(size: 13, weight: .semibold)
     /// Text under a row or a group, the header card's line, labels under thumbnails.
     static let secondary = Font.system(size: 11)
 
     // MARK: Spacing, on a 4 pt grid.
 
     enum Space {
-        static let xs: CGFloat = 4, s: CGFloat = 8, m: CGFloat = 12, l: CGFloat = 16, xl: CGFloat = 20, xxl: CGFloat = 24
+        static let xs: CGFloat = 4, s: CGFloat = 8, m: CGFloat = 12, xl: CGFloat = 20, xxl: CGFloat = 24
     }
 
     // MARK: Radii, all continuous.
@@ -32,8 +30,6 @@ enum Design {
         static let control: CGFloat = 6
         /// An icon tile of `size` points: 5 at 20, 5 at 24, 11 at 48.
         static func tile(_ size: CGFloat) -> CGFloat { (size * 0.225).rounded() }
-        /// A shape inside another keeps its center: the outer radius less the padding between them.
-        static func nested(in outer: CGFloat, padding: CGFloat) -> CGFloat { max(0, outer - padding) }
     }
 
     // MARK: Fills. Surfaces separate by fill, not by strokes.

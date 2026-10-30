@@ -13,13 +13,10 @@ struct AppearancePane: View {
             Section { PaneHeader(pane: .appearance) }
             Section {
                 AppearancePreviewView(settings: model.settings, dark: colorScheme == .dark, preview: model.preview)
+                AccentPicker()
+                // The overview's glass style (appearance:glass), once it exists, goes here as a VisualPicker over Design.Glass.
             } footer: {
                 Text("The canvas as you set it. The overview shows each change right away.").settingsFooter()
-            }
-            Section("Theme") {
-                AccentPicker()
-                // Slot: the "Glass style" picker (appearance:glass, Liquid or Frosted) from
-                // feat/on-screen-indicators goes here, as a VisualPicker over Design.Glass.
             }
             Section("Background") {
                 Toggle("Show the desktop picture", isOn: model.flag("wallpaper"))
@@ -88,7 +85,7 @@ struct AccentPicker: View {
                     guard let c = c.usingColorSpace(.sRGB) else { return }
                     model.set("navigator:accent", .text(hexString(RGB(Double(c.redComponent), Double(c.greenComponent), Double(c.blueComponent)))))
                 }
-                .frame(width: 44, height: 22)
+                .fixedSize() // its own size: macOS 26 draws it wider than 15 does
                 .help("Choose any color")
             }
             HStack(spacing: 0) {
