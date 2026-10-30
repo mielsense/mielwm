@@ -203,6 +203,10 @@ until_state "not s['overview']" || fail "back did not close the overview"
 
 step "tiles: after several workspace switches, the overview still draws"
 "$BIN" layout floating >/dev/null # the focused window floats, so the other workspace has one to show
+# Flights, as you'd see them, and live pictures stopped: they linger 3 s after the overlay
+# hides. Nothing reports the streams, so this one waits by the clock.
+echo '{"layout:default": "tiles", "animation:enabled": true}' > "$MIELWM_CONFIG_DIR/config.json"
+sleep 4
 for n in $other_ws $first_ws $other_ws $first_ws $other_ws $first_ws; do "$BIN" workspace "$n" >/dev/null; until_state "s.get('workspace') == $n and s['settled']" || fail "workspace $n"; done
 drawn=$(state "s['framesDrawn']")
 "$BIN" overview >/dev/null
@@ -212,6 +216,7 @@ drawn=$(state "s['framesDrawn']")
 until_state "s['framesDrawn'] > $drawn" 3 || fail "the overview stopped drawing while panning"
 "$BIN" back >/dev/null
 until_state "not s['overview'] and s['settled']" || fail "back did not close the overview"
+echo '{"layout:default": "tiles", "animation:enabled": false}' > "$MIELWM_CONFIG_DIR/config.json"
 floating=$(state "[x['number'] for x in s['windows'] if x.get('workspace') is None][0]")
 "$AEROSPACE" focus --window-id "$floating" >/dev/null # a workspace switch focuses a window on that workspace
 until_state "[x['number'] for x in s['windows'] if x['id'] == s['focused']] == [$floating]" || fail "focus did not land on the floating window"
