@@ -169,7 +169,7 @@ final class Controller {
         let registry = registry!, capture = capture, layoutURL = layoutURL
         let applied = registry.perform(commands) // on main: the registry's app list is main-only
         DispatchQueue.global(qos: .userInitiated).async {
-            let answered = applied.wait(timeout: .now() + 2) == .success
+            let answered = applied.wait(timeout: 2)
             if !answered { log("some windows did not answer in time") }
             if !answered, let parked { // the crash watcher unparks them once mielwm exits
                 do { try parked.save(to: layoutURL) } catch { log("cannot save the layout: \(error)") }

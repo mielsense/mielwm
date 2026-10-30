@@ -105,27 +105,23 @@ public final class WindowRegistry {
         onEvent(.screensChanged(now))
     }
 
-    /// Fire and forget. Commands for one app run in order on its queue. The
-    /// group finishes once every app has applied them; wait on it from any
-    /// thread (quit and unpark, where the process may exit next).
+    /// Fire and forget. Commands for one app run in order on its queue. Wait
+    /// on the result from any thread (quit and unpark, where the process may exit next).
     @discardableResult
-    public func perform(_ commands: [WindowCommand]) -> DispatchGroup {
-        let group = DispatchGroup()
+    public func perform(_ commands: [WindowCommand]) -> Applied {
+        let applied = Applied()
         for (tracker, batch) in batches(commands) {
-            group.enter()
-            tracker.queue.async {
-                tracker.run(batch)
-                group.leave()
-            }
+            applied.group.enter()
+            tracker.queue.async { applied.finish(answered: tracker.run(batch)) }
         }
-        return group
+        return applied
     }
 
     /// `perform`, then blocks until every app has applied the commands, at
-    /// most `timeout` seconds. Returns false if some app did not finish in time.
+    /// most `timeout` seconds. See `Applied.wait` for when it returns false.
     @discardableResult
     public func performAndWait(_ commands: [WindowCommand], timeout: TimeInterval = 2) -> Bool {
-        perform(commands).wait(timeout: .now() + timeout) == .success
+        perform(commands).wait(timeout: timeout)
     }
 
     // MARK: - Private
@@ -200,6 +196,25 @@ public final class WindowRegistry {
     /// Per app, in the order given; apps run concurrently, so their order does not matter.
     private func batches(_ commands: [WindowCommand]) -> [(AppTracker, [WindowCommand])] {
         Dictionary(grouping: commands, by: \.window.pid).compactMap { pid, batch in trackers[pid].map { ($0, batch) } }
+    }
+}
+
+/// What `perform` sent. Thread-safe.
+public final class Applied: @unchecked Sendable {
+    fileprivate let group = DispatchGroup()
+    private let lock = NSLock()
+    private var unanswered = false
+
+    fileprivate func finish(answered: Bool) {
+        lock.withLock { if !answered { unanswered = true } }
+        group.leave()
+    }
+
+    /// Blocks until every app has run its commands, at most `timeout` seconds.
+    /// False if some app did not finish in time or did not answer a write: a
+    /// hung app times each one out quickly, without moving anything.
+    public func wait(timeout: TimeInterval) -> Bool {
+        group.wait(timeout: .now() + timeout) == .success && lock.withLock { !unanswered }
     }
 }
 
@@ -381,28 +396,31 @@ final class AppTracker {
         queue.async { self.postFocus() }
     }
 
-    func run(_ batch: [WindowCommand]) {
+    /// False if the app did not answer some frame write in time.
+    func run(_ batch: [WindowCommand]) -> Bool {
         // With it on (VoiceOver, some automation tools), apps animate and
         // fight programmatic frame changes. It is per app: once per batch.
         let moves = batch.contains { if case .setFrame = $0 { true } else { false } }
         let enhanced = moves && app.value("AXEnhancedUserInterface") as? Bool == true
         if enhanced { app.set("AXEnhancedUserInterface", kCFBooleanFalse) }
-        batch.forEach(run)
+        let answered = batch.map(run).allSatisfy { $0 }
         if enhanced { app.set("AXEnhancedUserInterface", kCFBooleanTrue) }
+        return answered
     }
 
-    private func run(_ command: WindowCommand) {
+    private func run(_ command: WindowCommand) -> Bool {
         switch command {
         case .setFrame(let id, let frame):
             // Core may have sent it before hearing the window went full screen.
-            guard !fullScreen.contains(id), let window = element(id) else { return }
+            guard !fullScreen.contains(id), let window = element(id) else { return true }
             // Size first so a move onto a smaller display is not clamped,
             // size again in case the old position limited the first one.
-            window.set(kAXSizeAttribute, axValue(frame.size))
-            window.set(kAXPositionAttribute, axValue(frame.origin))
-            window.set(kAXSizeAttribute, axValue(frame.size))
+            let results = [window.set(kAXSizeAttribute, axValue(frame.size)),
+                           window.set(kAXPositionAttribute, axValue(frame.origin)),
+                           window.set(kAXSizeAttribute, axValue(frame.size))]
+            return !results.contains(.cannotComplete) // what a timeout returns; a refused size is an answer
         case .focus(let id):
-            guard let window = element(id) else { return }
+            guard let window = element(id) else { return true }
             if window.value(kAXMinimizedAttribute) as? Bool == true { window.set(kAXMinimizedAttribute, kCFBooleanFalse) }
             AXUIElementPerformAction(window, kAXRaiseAction as CFString)
             window.set(kAXMainAttribute, kCFBooleanTrue)
@@ -410,6 +428,7 @@ final class AppTracker {
             app.set(kAXFrontmostAttribute, kCFBooleanTrue)
             let pid = pid
             DispatchQueue.main.async { NSRunningApplication(processIdentifier: pid)?.activate() }
+            return true // nobody waits on focus
         }
     }
 

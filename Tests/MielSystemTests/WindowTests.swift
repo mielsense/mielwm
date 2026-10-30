@@ -341,6 +341,21 @@ struct WindowTests {
         #expect(await s.until { seen.closed == [hidden] })
     }
 
+    /// A hung app (stopped here) times out every write in well under the
+    /// wait, without moving anything: that must not count as answered.
+    @Test func writesAHungAppTimesOutDoNotCountAsApplied() async throws {
+        let start = CGRect(x: 300, y: 240, width: 400, height: 280)
+        let s = try Session([start], options: ["--still"])
+        defer { s.end() }
+        let id = try #require(try await s.start(count: 1).first).id
+        kill(s.pid, SIGSTOP)
+        defer { kill(s.pid, SIGCONT) }
+        let began = Date()
+        let answered = s.performAndWait([.setFrame(id, start.offsetBy(dx: 120, dy: 60))])
+        #expect(Date().timeIntervalSince(began) < 2, "the writes time out on their own, before the wait does")
+        #expect(!answered)
+    }
+
     @Test func stillOfAParkedWindow() async throws {
         let start = CGRect(x: 300, y: 220, width: 480, height: 320)
         let s = try Session([start])
