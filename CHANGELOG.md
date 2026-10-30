@@ -9,6 +9,7 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 - Switching workspaces shows the workspace numbers at the bottom of the display for a moment, with the current one filled. Turn it off in General settings.
 - Going to a stack, or bringing another of its windows to the front, shows a strip at the top with each window's icon and title and where you are, like "2 of 4".
 - Stacks can show the edges of the windows behind the front one. Set Peek edges in Layout & workspaces settings.
+- A glass style in Appearance settings. Liquid glass, the default on macOS 26, is clear and bends the edges of what is behind every panel, from the search panel to the notices. Frosted keeps the blur of earlier versions.
 - VoiceOver says the workspace you switch to and the app selected in the `⌥Tab` switcher.
 - The `⌥Tab` switcher's highlight follows the panel's rounded corners, and its arrows to more windows are drawn chevrons.
 

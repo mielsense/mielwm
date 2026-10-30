@@ -75,7 +75,8 @@ extension Renderer {
                 let r = panel.offsetBy(dx: layer.rect.minX, dy: layer.rect.minY + dy)
                 var m = MaterialUniforms(rect: SIMD4(r), map: map, size: SIMD2(Float(pxSize.width), Float(pxSize.height)),
                                          radius: Float(layer.radius), distort: Float(lens.distort), contrast: Float(lens.contrast),
-                                         alpha: Float(alpha * opacity * ease), blur: Float(24 * scale))
+                                         alpha: Float(alpha * opacity * ease), blur: Float((scene.look.liquid ? 5 : 24) * scale),
+                                         liquid: scene.look.liquid ? 1 : 0, scale: Float(scale), dark: scene.look.dark ? 1 : 0)
                 enc.setRenderPipelineState(pipelines.material)
                 enc.setFragmentBytes(&m, length: MemoryLayout<MaterialUniforms>.stride, index: 0)
                 enc.setFragmentTexture(world, index: 0)

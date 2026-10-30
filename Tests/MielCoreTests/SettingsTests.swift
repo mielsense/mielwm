@@ -306,3 +306,16 @@ func tempDir() throws -> URL {
     settings.bindings["ctrl+shift+left"] = "pan left" // not an overview chord
     #expect(settings.warmModifiers == [[.command, .shift]])
 }
+
+@Test func glassStyleIsLiquidOrFrostedAndReduceTransparencyWins() {
+    var s = Settings()
+    #expect(s.set(.text("Frosted"), forKey: "appearance:glass") == nil)
+    #expect(s.look.glass == .frosted && s.value(forKey: "appearance:glass") == .text("frosted"))
+    #expect(s.set(.text("shiny"), forKey: "appearance:glass") != nil)
+    #expect(s.look.glass == .frosted) // a bad value changes nothing
+    s.set(.text("liquid"), forKey: "appearance:glass")
+    #expect(s.look.liquid)
+    s.look.reduceTransparency = true
+    #expect(!s.look.liquid)
+    #expect(Settings.keys.contains("appearance:glass"))
+}

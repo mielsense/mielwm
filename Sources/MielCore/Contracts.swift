@@ -250,6 +250,16 @@ public struct RGB: Hashable, Codable, Sendable {
     }
 }
 
+/// What floating panels are made of: Liquid Glass, which bends the edges of
+/// what is behind it, or the frosted blur of earlier macOS versions.
+public enum GlassStyle: String, Hashable, Codable, Sendable, CaseIterable {
+    case liquid, frosted
+
+    /// Liquid where macOS itself uses it (26 and later), frosted before.
+    public static let standard: GlassStyle =
+        ProcessInfo.processInfo.isOperatingSystemAtLeast(OperatingSystemVersion(majorVersion: 26, minorVersion: 0, patchVersion: 0)) ? .liquid : .frosted
+}
+
 public struct Look: Hashable, Codable, Sendable {
     // Lens (distortion.*)
     public var lensEnabled = true
@@ -300,6 +310,8 @@ public struct Look: Hashable, Codable, Sendable {
     public var rowHeight = 44.0
     public var rounding = 8.0 // rows and pills; panels add 6
     public var panelOpacity = 0.8
+    /// appearance:glass: every panel the overview and the notices draw.
+    public var glass = GlassStyle.standard
     var uppercase = false // no longer drawn; kept so old configs load
     var letterSpacing = 0.0 // no longer drawn; kept so old configs load
     public var querySize = 24.0
@@ -322,6 +334,9 @@ public struct Look: Hashable, Codable, Sendable {
     public var increaseContrast = false
 
     public init() {}
+
+    /// Liquid glass, unless Reduce Transparency asks for solid panels.
+    public var liquid: Bool { glass == .liquid && !reduceTransparency }
 }
 
 /// macOS's accessibility display options that change how the overview looks and moves.

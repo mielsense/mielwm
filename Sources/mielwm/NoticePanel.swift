@@ -2,14 +2,14 @@ import AppKit
 import MielCore
 import MielSystem
 
-/// What a notice panel is made of: Liquid Glass on macOS 26, the HUD
-/// material before that, and a solid fill with Reduce Transparency.
+/// What a notice panel is made of: Liquid Glass (macOS 26 and later), the
+/// frosted HUD material, or a solid fill with Reduce Transparency.
 enum NoticeMaterial: Equatable {
     case glass, hud, solid
 
-    static func current(reduceTransparency: Bool) -> NoticeMaterial {
-        if reduceTransparency { return .solid }
-        if #available(macOS 26, *) { return .glass }
+    static func current(_ look: Look) -> NoticeMaterial {
+        if look.reduceTransparency { return .solid }
+        if look.liquid, #available(macOS 26, *) { return .glass }
         return .hud
     }
 }
@@ -186,7 +186,7 @@ final class NoticeBoard {
         }
         let a = state.accessibility
         let key = NoticePanel.Drawn(content: wrap(notice.content), screenID: notice.screenID, accent: state.look.accent,
-                                    increaseContrast: a.increaseContrast, material: NoticeMaterial.current(reduceTransparency: a.reduceTransparency))
+                                    increaseContrast: a.increaseContrast, material: NoticeMaterial.current(state.look))
         if panel.drawn != key {
             let drawing = noticeDrawing(key.content, accent: key.accent, increaseContrast: key.increaseContrast, maxWidth: screen.visibleFrame.width - 48)
             let p = position(notice.content, screen.frame, screen.visibleFrame, drawing.size)

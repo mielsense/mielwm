@@ -38,6 +38,7 @@ Every shortcut, grouped by what it does, with a recorder for each. [Keyboard](ke
 Appearance starts with a live preview of the overview, drawn by the same renderer, so every change shows as you make it.
 
 - The accent color. Automatic follows System Settings, or pick a preset or any color.
+- The glass style of every panel mielwm draws: the search panel, the pills and tags, the shortcuts sheet, the minimap, the `⌥Tab` switcher and the notices over the desktop. Liquid glass is clear and bends the edges of what is behind it, like macOS 26. Frosted blurs it, like earlier macOS versions. Liquid glass needs macOS 26 and is the default there. With Reduce Transparency on, every panel is solid.
 - The lens, its strength and magnification.
 - The background: your desktop picture, how much it dims, and blur.
 - The grid on the canvas, dots or lines, and how strong it is.

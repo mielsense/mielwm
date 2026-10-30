@@ -161,7 +161,9 @@ struct Theme {
         accent = rgba(a.r, a.g, a.b)
         accentRGBA = SIMD4(Float(a.r), Float(a.g), Float(a.b), 1)
         onAccent = a.wantsDarkText ? rgba(0, 0, 0, 0.85) : rgba(1, 1, 1)
-        let alpha = look.reduceTransparency ? 1 : min(max(look.panelOpacity, 0), 1)
+        // Liquid glass shows more of what is behind it: a lighter tint over a lighter blur.
+        // Light panels keep more tint, so dark text holds its contrast over a dark desktop.
+        let alpha = look.reduceTransparency ? 1 : min(max(look.panelOpacity, 0), 1) * (look.liquid ? (look.dark ? 0.65 : 0.8) : 1)
         let contrast = look.increaseContrast ? 2.5 : 1.0 // Increase Contrast: stronger hairlines and secondary text
         if look.dark {
             panel = rgba(30 / 255, 30 / 255, 32 / 255, alpha)

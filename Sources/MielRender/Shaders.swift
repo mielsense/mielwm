@@ -262,6 +262,10 @@ struct Lens {
     int focused;
     float opacity;
     int workspaceCount; // outlines in `windows` after the window markers
+    float liquid;       // 1: Liquid glass, 0: frosted
+    float pad0;
+    float pad1;
+    float pad2;
 };
 
 constant float GOLDEN_ANGLE = 2.39996323;
@@ -302,6 +306,31 @@ float3 frosted(texture2d<float> tex, float2 point, float2 size, float distort, f
     return sum / float(MATERIAL_TAPS);
 }
 
+// What is behind a Liquid glass panel: a light blur, bent inward near the
+// rim as by the curved edge of a lens, and a little brighter there.
+constant int LIQUID_TAPS = 16;
+
+float3 liquid(texture2d<float> tex, float2 point, float4 rect, float radius, float2 size, float distort, float contrast,
+              float blur, float scale, float4 map) {
+    constexpr sampler s(filter::linear, address::clamp_to_edge);
+    float d = rounded_distance(point, rect, radius);
+    float2 e = float2(1.0, 0.0);
+    float2 n = float2(rounded_distance(point + e.xy, rect, radius) - rounded_distance(point - e.xy, rect, radius),
+                      rounded_distance(point + e.yx, rect, radius) - rounded_distance(point - e.yx, rect, radius));
+    n = length(n) > 0.0001 ? normalize(n) : float2(0.0);
+    float band = max(min(radius, 0.5 * min(rect.z, rect.w)), 10.0 * scale); // the bevel, as wide as the corner
+    float rim = 1.0 - clamp(-d / band, 0.0, 1.0); // 1 at the edge, 0 in the flat middle
+    float2 q = point - n * rim * rim * band * 0.6; // outward normal: sample further in
+    float3 sum = float3(0.0);
+    for (int i = 0; i < LIQUID_TAPS; ++i) {
+        float t = (float(i) + 0.5) / float(LIQUID_TAPS);
+        float angle = float(i) * GOLDEN_ANGLE;
+        float2 p = q + float2(cos(angle), sin(angle)) * sqrt(t) * blur;
+        sum += tex.sample(s, world_uv(lens_uv(p, size, distort, contrast), map)).rgb;
+    }
+    return mix(sum / float(LIQUID_TAPS), float3(1.0), 0.1 * rim * rim);
+}
+
 float4 compose_minimap(float4 base, float2 point, constant Lens& L, texture2d<float> tex,
                        constant float4* windows, constant float* dims) {
     if (((L.panel.z <= 0.0 || L.panel.w <= 0.0) && (L.button.z <= 0.0 || L.button.w <= 0.0)) || L.minimapTransition <= 0.001)
@@ -319,8 +348,20 @@ float4 compose_minimap(float4 base, float2 point, constant Lens& L, texture2d<fl
         return base;
 
     // Material: the canvas behind, blurred, under the panel tint.
-    color = blend_overlay(color, frosted(tex, point, L.size, L.distort, L.contrast, 16.0 * ps, L.map), t * material);
-    color = blend_overlay(color, L.panelColor.rgb, L.minimapOpacity * t * material);
+    if (L.liquid > 0.5) {
+        float4 r = panelMask >= buttonMask ? L.panel : L.button;
+        float3 behind = liquid(tex, point, r, panelMask >= buttonMask ? panelRadius : buttonRadius, L.size, L.distort, L.contrast, 4.0 * ps, ps, L.map);
+        color = blend_overlay(color, behind, t * material);
+        color = blend_overlay(color, L.panelColor.rgb, L.minimapOpacity * 0.45 * t * material);
+        // Light from above catches the top of the rim.
+        float2 c = r.xy + r.zw * 0.5;
+        float top = clamp((c.y - point.y) / (r.w * 0.5), 0.0, 1.0);
+        float ring = rounded_border_mask(point, r, panelMask >= buttonMask ? panelRadius : buttonRadius, 1.0 * ps);
+        color = blend_overlay(color, float3(1.0), (0.12 + 0.4 * top) * t * ring);
+    } else {
+        color = blend_overlay(color, frosted(tex, point, L.size, L.distort, L.contrast, 16.0 * ps, L.map), t * material);
+        color = blend_overlay(color, L.panelColor.rgb, L.minimapOpacity * t * material);
+    }
 
     if (panelMask > 0.0) {
         for (int i = L.count; i < L.count + L.workspaceCount; ++i) {
@@ -421,7 +462,11 @@ struct Material {
     float contrast;
     float alpha;
     float blur;    // px
-    float pad;
+    float liquid;  // 1: Liquid glass, 0: frosted
+    float scale;   // px per point
+    float dark;    // 1: dark glass dims what is behind it, 0: light glass lifts it
+    float pad1;
+    float pad2;
 };
 
 fragment float4 material_fragment(VOut in [[stage_in]], constant Material& m [[buffer(0)]], texture2d<float> tex [[texture(0)]]) {
@@ -429,6 +474,13 @@ fragment float4 material_fragment(VOut in [[stage_in]], constant Material& m [[b
     float mask = rounded_mask(p, m.rect, m.radius) * m.alpha;
     if (mask <= 0.0)
         return float4(0.0);
+    if (m.liquid > 0.5) {
+        float3 c = liquid(tex, p, m.rect, m.radius, m.size, m.distort, m.contrast, m.blur, m.scale, m.map);
+        // Squeeze what is behind toward the panel's own shade, so text on the tint keeps its contrast
+        // over a white window or a dark photo while the shapes behind still show.
+        c = m.dark > 0.5 ? c * 0.55 : mix(c, float3(1.0), 0.35);
+        return float4(c, 1.0) * mask;
+    }
     return float4(frosted(tex, p, m.size, m.distort, m.contrast, m.blur, m.map), 1.0) * mask;
 }
 """#

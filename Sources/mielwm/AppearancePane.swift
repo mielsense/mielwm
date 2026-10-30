@@ -5,6 +5,7 @@ import SwiftUI
 
 struct AppearancePane: View {
     @EnvironmentObject var model: SettingsModel
+    private let liquidGlassAvailable = ProcessInfo.processInfo.isOperatingSystemAtLeast(OperatingSystemVersion(majorVersion: 26, minorVersion: 0, patchVersion: 0))
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
@@ -13,6 +14,14 @@ struct AppearancePane: View {
             Section {
                 AppearancePreviewView(settings: model.settings, dark: colorScheme == .dark, preview: model.preview)
                 AccentPicker()
+                Picker(selection: model.text("appearance:glass")) {
+                    Text("Liquid glass").tag(GlassStyle.liquid.rawValue)
+                    Text("Frosted").tag(GlassStyle.frosted.rawValue)
+                } label: {
+                    Text("Glass style")
+                    if !liquidGlassAvailable { Text("Liquid glass needs macOS 26.") }
+                }
+                .disabled(!liquidGlassAvailable)
             } footer: {
                 Text("The canvas as you set it. The overview shows the change right away.").settingsFooter()
             }

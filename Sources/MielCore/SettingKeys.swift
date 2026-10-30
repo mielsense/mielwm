@@ -127,7 +127,7 @@ public extension Settings {
     /// Every setting name config.json accepts, besides `keys:<chord>`.
     static var keys: [String] {
         (Array(settingPaths.keys) + ["canvas:grid_style", "animation:curve", "navigator:search_border_color",
-                                     "layout:default", "layout:orientation"]).sorted()
+                                     "layout:default", "layout:orientation", "appearance:glass"]).sorted()
     }
 
     /// What config.json holds for `key` to give `value`: nil (no entry) when it is the default.
@@ -143,6 +143,7 @@ public extension Settings {
         case "animation:curve": return .text(animationCurve.rawValue)
         case "layout:default": return .text(defaultLayout.rawValue)
         case "layout:orientation": return .text(orientation.rawValue)
+        case "appearance:glass": return .text(look.glass.rawValue)
         case "navigator:search_border_color": return .text(look.searchBorderColor.map(hexString) ?? "accent")
         default: break
         }
@@ -185,6 +186,12 @@ public extension Settings {
                 return "'\(key)' takes \"auto\", \"horizontal\" or \"vertical\""
             }
             orientation = o
+            return nil
+        case "appearance:glass":
+            guard case let .text(t) = value, let style = GlassStyle(rawValue: t.lowercased()) else {
+                return "'\(key)' takes \"liquid\" or \"frosted\""
+            }
+            look.glass = style
             return nil
         case "navigator:search_border_color":
             guard case let .text(s) = value else { return wrongType }
