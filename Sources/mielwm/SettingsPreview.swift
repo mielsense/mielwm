@@ -92,12 +92,19 @@ func settingsPreview(_ args: [String]) -> Never {
                 pump(0.4)
                 savePNG(settings.window, to: out.appendingPathComponent(file + "-end.png"))
             }
-            // The glass style picker sits where the first view ends: a view of it on its own.
+            // The glass style picker sits where the first view ends: a view of it on its own, taken from the screen.
             if pane == .appearance, let scroll = detailScrollView(in: settings.window.contentView), let doc = scroll.documentView {
                 let y = 420.0
                 doc.scroll(NSPoint(x: 0, y: doc.isFlipped ? y : doc.frame.height - y - scroll.contentView.bounds.height))
                 pump(0.4)
-                savePNG(settings.window, to: out.appendingPathComponent(file + "-glass.png"))
+                // From the screen: Liquid glass renders only there, not in an offscreen copy of the view.
+                settings.window.orderFrontRegardless()
+                pump(0.4)
+                let shot = Process()
+                shot.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+                shot.arguments = ["-x", "-o", "-l", String(settings.window.windowNumber), out.appendingPathComponent(file + "-glass.png").path]
+                try? shot.run()
+                shot.waitUntilExit()
             }
         }
         // The AeroSpace import, as the AeroSpace & Barik pane asks about it.
