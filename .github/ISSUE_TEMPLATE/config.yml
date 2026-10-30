@@ -1,5 +1,11 @@
 blank_issues_enabled: false
 contact_links:
   - name: Documentation
-    url: https://github.com/mielsense/mielwm/tree/main/docs
+    url: https://wm.miel.my/docs
     about: How mielwm works, every key and every setting.
+  - name: Troubleshooting
+    url: https://wm.miel.my/docs/troubleshooting
+    about: Permissions, stuck windows and the other common problems.
+  - name: Security problem
+    url: https://github.com/mielsense/mielwm/security/advisories/new
+    about: Report it privately, never in a public issue.

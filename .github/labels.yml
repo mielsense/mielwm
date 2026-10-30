@@ -1,0 +1,60 @@
+# Every label mielwm uses. The Labels workflow makes GitHub match this file
+# when it changes on main. It renames and updates labels, and never deletes one.
+# CONTRIBUTING.md, under Labels, says how they're used.
+
+# Type: one per issue or pull request.
+- name: bug
+  color: "#d73a4a"
+  description: Something doesn't work the way it should
+- name: feature
+  color: "#1d76db"
+  description: Something new mielwm could do
+- name: docs
+  color: "#0075ca"
+  description: The user docs, the contributor docs or the website's text
+- name: perf
+  color: "#fbca04"
+  description: CPU, memory or speed
+- name: chore
+  color: "#cfd3d7"
+  description: Build, CI, dependencies and cleanup that users won't notice
+- name: question
+  color: "#d876e3"
+  description: How do I, or why does it
+
+# Area: the part of mielwm it touches, one or more.
+- name: "area: core"
+  color: "#c5def5"
+  description: "MielCore: workspaces, tiling, the camera, settings, the config file"
+- name: "area: render"
+  color: "#c5def5"
+  description: "MielRender: the overview's Metal drawing"
+- name: "area: system"
+  color: "#c5def5"
+  description: "MielSystem: Accessibility, shortcuts, swipes, window pictures, displays"
+- name: "area: app"
+  color: "#c5def5"
+  description: "The app: overlays, notices, the menu bar item, the mielwm command"
+- name: "area: settings"
+  color: "#c5def5"
+  description: The Settings window and onboarding
+- name: "area: aerospace"
+  color: "#c5def5"
+  description: AeroSpace import, the aerospace command and AeroSpace-compatible status bars
+- name: "area: website"
+  color: "#c5def5"
+  description: The site at wm.miel.my
+
+# Status: only while it applies.
+- name: needs repro
+  color: "#fef2c0"
+  description: Waiting for steps that make the bug happen again
+- name: good first issue
+  color: "#7057ff"
+  description: A small, well-understood change for a first contribution
+- name: help wanted
+  color: "#008672"
+  description: The maintainer would welcome a pull request for this
+- name: skip changelog
+  color: "#ededed"
+  description: Changes the app's code, but users won't notice, so no changelog line

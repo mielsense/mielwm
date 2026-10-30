@@ -76,16 +76,16 @@
 .dark {
 	--color-strong: #ededed;
 	--color-default: #b4b4b4;
-	--color-subtle: #858585;
-	--color-selected: #1d1d1d;
-	--color-page: #0e0e0e;
-	--color-plate: #161616;
-	--color-frame: #2a2a2a;
+	--color-subtle: #8f8f8f;
+	--color-selected: #282828;
+	--color-page: #1a1a1a;
+	--color-plate: #212121;
+	--color-frame: #353535;
 
 	/* Mielui's own .dark block re-sets these, so they are repeated here */
 	--color-background: var(--color-page);
 	--color-card: var(--color-plate);
-	--color-panel: #1a1a1a;
+	--color-panel: #242424;
 	--color-secondary: var(--color-selected);
 	--color-foreground: var(--color-strong);
 	--color-foreground-muted: var(--color-subtle);
@@ -93,11 +93,20 @@
 	--color-field: var(--color-plate);
 	--color-primary: var(--color-strong);
 	--color-primary-stroke: transparent;
-	--color-border: #232323;
-	--color-border-strong: #2e2e2e;
-	--color-input: #2a2a2a;
+	--color-border: #2d2d2d;
+	--color-border-strong: #393939;
+	--color-input: #353535;
 	--color-primary-hover: color-mix(in srgb, var(--color-strong) 88%, black);
 	--color-on-primary: #141414;
+}
+
+/* Every card's edge, from miel.my: a hairline, a 3px rim a shade off the page, and a fainter outer
+   hairline. Spread shadows, so it costs no markup and stays concentric with any radius. */
+:root {
+	--card-edge:
+		0 0 0 1px var(--color-border),
+		0 0 0 4px color-mix(in oklab, var(--color-strong) 3%, var(--color-page)),
+		0 0 0 5px color-mix(in oklab, var(--color-strong) 8%, transparent);
 }
 
 @layer base {
@@ -255,9 +264,7 @@
 @utility tile {
 	border-radius: 24px;
 	background-color: var(--color-plate);
-	box-shadow:
-		0 0 0 1px var(--color-border),
-		0 1px 2px rgb(0 0 0 / 0.03);
+	box-shadow: var(--card-edge);
 }
 
 /* The double-bordered card, from madebyhex.com: a faint rim holding a white sheet.
@@ -720,8 +727,8 @@ html:not(.dark) .only-dark {
 	/* tables scroll sideways on their own when the column is narrow */
 	& .table-scroll {
 		overflow-x: auto;
-		border: 1px solid var(--color-border);
 		border-radius: 12px;
+		box-shadow: var(--card-edge);
 		background-color: var(--color-plate);
 	}
 
@@ -730,6 +737,11 @@ html:not(.dark) .only-dark {
 		border-collapse: collapse;
 		font-size: var(--text-base);
 		line-height: 1.55;
+	}
+
+	/* four columns and more keep room for the last one and scroll sideways on a phone */
+	& table:has(th:nth-child(4)) {
+		min-width: 40rem;
 	}
 
 	& th {
@@ -750,10 +762,114 @@ html:not(.dark) .only-dark {
 		background-color: color-mix(in oklab, var(--color-strong) 3%, transparent);
 	}
 
-	/* the first column is usually the keys; keep each cell on one line */
-	& td:first-child {
+	/* a config key or value breaks only between words, never inside one */
+	& td code {
+		overflow-wrap: normal;
 		white-space: nowrap;
 	}
+
+	/* the first column is usually the keys; keep a cell of keys on one line */
+	& td:first-child:has(kbd) {
+		white-space: nowrap;
+	}
+
+	/* an index of pages, like ui.miel.my's introduction: one row per page with its lead and a chevron */
+	& ul.rows {
+		overflow: hidden;
+		padding: 0;
+		border-radius: 14px;
+		background-color: var(--color-plate);
+		box-shadow: var(--card-edge);
+		list-style: none;
+		font-size: var(--text-sm);
+		line-height: 1.5;
+
+		& li + li {
+			margin-top: 0;
+			border-top: 1px solid var(--color-border);
+		}
+
+		& a {
+			display: flex;
+			align-items: center;
+			gap: 1rem;
+			padding: 0.75rem 1rem;
+			color: var(--color-default);
+			text-decoration: none;
+			transition: background-color var(--motion-duration-hover) ease;
+
+			&:hover {
+				background-color: color-mix(in oklab, var(--color-strong) 4%, transparent);
+			}
+
+			&:focus-visible {
+				outline: none;
+				box-shadow: inset var(--focus-ring);
+			}
+		}
+
+		& .row-title {
+			flex-shrink: 0;
+			width: 12rem;
+			color: var(--color-strong);
+			font-weight: 500;
+		}
+
+		& .row-lead {
+			flex: 1;
+			min-width: 0;
+		}
+
+		& .row-chevron {
+			flex-shrink: 0;
+			color: var(--color-subtle);
+			transition: transform var(--motion-duration-hover) ease;
+		}
+
+		& a:hover .row-chevron {
+			color: var(--color-strong);
+			transform: translateX(2px);
+		}
+
+		/* narrow: the lead goes under the title */
+		@media (width < 40rem) {
+			& a {
+				flex-wrap: wrap;
+				gap: 0.15rem 1rem;
+			}
+
+			& .row-title {
+				width: auto;
+				flex: 1 1 calc(100% - 2rem);
+			}
+
+			& .row-lead {
+				order: 3;
+				flex-basis: 100%;
+			}
+		}
+	}
+}
+
+/* The footer's last word: the name set huge in a faint ink, cut off by the card's bottom edge. */
+.footer-mark {
+	font-size: clamp(5rem, 22vw, 17rem);
+	font-weight: 600;
+	line-height: 0.8;
+	letter-spacing: -0.06em;
+	color: color-mix(in oklab, var(--color-strong) 6%, transparent);
+	/* past the card's bottom padding, so its edge cuts the letters */
+	margin-bottom: -0.34em;
+}
+
+/* The homepage hero: the overview's lavender as a glow that fades into the page from the top. */
+.hero-glow {
+	background: radial-gradient(60% 70% at 50% 0%, #b8b4ff 0, transparent 70%);
+	opacity: 0.5;
+}
+
+.dark .hero-glow {
+	opacity: 0.2;
 }
 
 /* Docs: a panel of the page group's tint behind the title, rounded at both top corners and fading

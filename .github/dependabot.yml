@@ -1,13 +1,17 @@
+# The Swift package isn't listed: its one dependency, TOMLDecoder, is test-only
+# and pinned to the exact version Barik uses, so the tests read configs as Barik does.
 version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
+    labels: [chore]
   - package-ecosystem: npm
     directory: /website
     schedule:
       interval: monthly
+    labels: [chore, "area: website"]
     groups:
       website:
         patterns: ["*"]

@@ -3,14 +3,18 @@
 	import { Button } from '@mielui/svelte/components/button';
 	import { CodeBlock } from '@mielui/svelte/components/code-block';
 	import Icon from '@/components/Icon.svelte';
+	import LensShot from '@/components/LensShot.svelte';
 	import Shot from '@/components/Shot.svelte';
 	import Sticker from '@/components/Sticker.svelte';
 	import { ArrowUpRightIcon, BookIcon, ChartIcon, ChevronLeftIcon, ChevronRightIcon, CommandIcon, DownloadIcon, GithubIcon, LayersIcon, SearchIcon, SparkleIcon, TerminalIcon, WrenchIcon, type IconData } from '@/icons';
 	import { mesh } from '@/mesh';
 	import { site } from '@/site';
 
+	let { data } = $props();
+
 	// screenshot sizes, from the source files in scripts/images.sh
-	const wide = { width: 3600, height: 2338 };
+	const wide = { width: 3600, height: 2188 };
+	const desktop = { width: 3600, height: 2338 };
 	const settings = { width: 1430, height: 1280 };
 
 	const keys = [
@@ -66,37 +70,45 @@ scripts/build-app.sh --install`;
 {/snippet}
 
 <main>
-	<!-- hero -->
-	<section class="group/section wrap flex flex-col gap-12 pt-12 pb-16 sm:gap-16 sm:pt-20 sm:pb-20">
-		<div class="stagger flex max-w-[46rem] flex-col gap-5">
-			<img src="/icon-128.png" alt="" width="64" height="64" class="size-16 rounded-[15px] shadow-[0_4px_14px_rgb(0_0_0/0.18)]" />
-			<h1 class="display text-5xl sm:text-6xl lg:text-7xl">Every window on one <span class="accent">endless</span> canvas</h1>
-			<p class="max-w-[38rem] text-lg leading-relaxed text-subtle">
+	<!-- hero: centred over a lavender glow, the overview rising out of it -->
+	<section class="group/section relative isolate flex flex-col gap-12 pt-12 pb-16 sm:gap-16 sm:pt-20 sm:pb-24">
+		<div class="hero-glow pointer-events-none absolute inset-x-0 -top-28 -z-10 h-[44rem]" aria-hidden="true"></div>
+		<div class="wrap stagger flex flex-col items-center gap-6 text-center">
+			{#if data.latest}
+				<a
+					href="/download"
+					class="group press flex h-8 items-center gap-2 rounded-full bg-plate ps-1.5 pe-3 text-sm text-strong shadow-[var(--card-edge)] focus-visible:shadow-[var(--focus-ring)] focus-visible:outline-none"
+				>
+					<Sticker icon={SparkleIcon} bg={mesh.violet} size={20} />
+					mielwm {data.latest.version} is out
+					<Icon icon={ChevronRightIcon} size={13} class="text-subtle {lean}" />
+				</a>
+			{/if}
+			<h1 class="display max-w-[14ch] text-5xl text-balance sm:text-6xl lg:text-7xl">Every window on one <span class="accent">endless</span> canvas</h1>
+			<p class="max-w-[36rem] text-lg leading-relaxed text-default">
 				mielwm is a tiling window manager for macOS. Workspaces tile the way AeroSpace does, and when you lose track of something, the
 				view pulls back to show every window at once.
 			</p>
-			<div class="flex flex-wrap items-center gap-2">
-				<Button href={site.download} size="lg" class="ps-4">
+			<div class="flex flex-wrap items-center justify-center gap-2">
+				<Button href="/download" size="lg" class="ps-4">
 					<Icon icon={DownloadIcon} size={16} />
 					Download for macOS
 				</Button>
-				<Button href="/docs/getting-started" variant="glow" size="lg" class="glow-plain ps-4">
+				<Button href="/docs" variant="glow" size="lg" class="glow-plain ps-4">
 					<Icon icon={BookIcon} size={15} />
 					Read the docs
 				</Button>
 			</div>
-			<p class="text-sm text-subtle">Free and open source. macOS 15 or later, Apple silicon.</p>
+			<p class="text-sm text-default">Free and open source. macOS 15 or later, Apple silicon.</p>
 		</div>
-		<!-- the lavender mesh drifts slowly behind the overview -->
-		<div class="grain dusk rounded-[24px] p-3 sm:p-8 lg:p-12" data-rise>
-			<div class="overflow-hidden rounded-[12px] shadow-[0_0_0_1px_rgb(0_0_0/0.14),0_30px_70px_-20px_rgb(20_10_80/0.55)]">
-				<Shot name="overview" widths={[2200, 1200]} {...wide} priority sizes="(min-width: 88rem) 77rem, (min-width: 64rem) calc(100vw - 11rem), (min-width: 40rem) calc(100vw - 8rem), calc(100vw - 4rem)" alt="The overview: windows from every workspace laid out on the canvas, the focused one outlined, a search field on top." />
-			</div>
+		<!-- the overview through mielwm's own lens, flattening as the page scrolls -->
+		<div class="wrap" data-rise>
+			<LensShot name="overview" widths={[2200, 1200]} {...wide} priority sizes="(min-width: 88rem) 83rem, (min-width: 64rem) calc(100vw - 5rem), (min-width: 40rem) calc(100vw - 4rem), calc(100vw - 2.5rem)" alt="The overview: windows from every workspace laid out on the canvas, the focused one outlined, the capsule search field on top." />
 		</div>
 	</section>
 
 	<!-- the features: quiet cards, a wide one, then pairs of uneven widths -->
-	<div class="wrap grid grid-cols-[minmax(0,1fr)] gap-3 sm:gap-4 lg:grid-cols-12">
+	<div class="wrap grid grid-cols-[minmax(0,1fr)] gap-4 sm:gap-5 lg:grid-cols-12">
 		<section class="tile group/section grid grid-cols-[minmax(0,1fr)] gap-2 p-2 lg:col-span-12 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]" aria-labelledby="workspaces">
 			<div class="{copy} justify-center lg:p-8">
 				{@render label('Workspaces', LayersIcon, mesh.violet)}
@@ -110,9 +122,15 @@ scripts/build-app.sh --install`;
 					<li class="flex items-center gap-3"><kbd class="key">⌥,</kbd><span>A stack shows one window at a time</span></li>
 					<li class="flex items-center gap-3"><kbd class="key">⌥.</kbd><span>Floating keeps its size and place</span></li>
 				</ul>
-				{@render more('/docs/workspaces', 'Workspaces and layouts')}
+				<div class="flex flex-col gap-2">
+					<div class="w-full max-w-[21rem] overflow-hidden rounded-[12px]">
+						<Shot name="strip" widths={[840]} width={840} height={170} sizes="21rem" alt="The stack strip: four app icons, the front window's title, and 2 of 4." />
+					</div>
+					<p class="text-sm text-subtle">Go to a stack and a strip at its top shows its windows and which one is in front.</p>
+				</div>
+				{@render more('/docs/workspaces', 'Workspaces')}
 			</div>
-			<Shot stage={mesh.sky} name="desktop" widths={[1600, 900]} {...wide} sizes="(min-width: 88rem) 44rem, (min-width: 64rem) 50vw, calc(100vw - 5rem)" alt="Two windows tiled side by side: a browser and a terminal." />
+			<Shot stage={mesh.sky} name="desktop" widths={[1600, 900]} {...desktop} sizes="(min-width: 88rem) 44rem, (min-width: 64rem) 50vw, calc(100vw - 5rem)" alt="Two windows tiled side by side: a browser and a terminal." />
 		</section>
 
 		<section class="tile group/section flex flex-col p-2 lg:col-span-7" aria-labelledby="overview">
@@ -124,10 +142,13 @@ scripts/build-app.sh --install`;
 					canvas. Type a few letters of a title or an app and press <kbd class="key">Return</kbd> to go there, or
 					<kbd class="key">⇧Return</kbd> to bring it to you.
 				</p>
-				<p class="text-base leading-relaxed text-subtle">It draws with Metal from ScreenCaptureKit pictures, and your windows stay ordinary macOS windows the whole time.</p>
+				<p class="text-base leading-relaxed text-subtle">
+					The search field is a capsule of Liquid glass, like Spotlight. The canvas draws with Metal from ScreenCaptureKit pictures, and your
+					windows stay ordinary macOS windows the whole time.
+				</p>
 				{@render more('/docs/overview', 'The overview')}
 			</div>
-			<Shot stage={mesh.pink} class="flex-1" name="search" widths={[1600, 900]} {...wide} sizes="(min-width: 88rem) 43rem, (min-width: 64rem) 49vw, calc(100vw - 5rem)" alt="The overview with a search for “te”, listing a terminal, TextEdit and Notes, with how far each window is." />
+			<Shot stage={mesh.pink} class="flex-1" name="search" widths={[1600, 900]} {...wide} sizes="(min-width: 88rem) 43rem, (min-width: 64rem) 49vw, calc(100vw - 5rem)" alt="The overview with a search for e, listing Terminal, Code, Notes, TextEdit, Safari and Mail windows, with how far away each one is." />
 		</section>
 
 		<section class="tile group/section flex flex-col p-2 lg:col-span-5" aria-labelledby="swipes">
@@ -135,14 +156,14 @@ scripts/build-app.sh --install`;
 				{@render label('Trackpad', SparkleIcon, mesh.teal)}
 				<h2 id="swipes" class={title}>Three fingers to the next workspace</h2>
 				<p class="text-base leading-relaxed">
-					Swipe left or right and the trackpad clicks under your fingers as the workspace changes. The menu bar shows the workspaces that
-					have windows, with the current one filled.
+					Swipe left or right and the trackpad clicks under your fingers as the workspace changes. A pill at the bottom of the display shows
+					where you landed.
 				</p>
 				<div class="flex items-center gap-4">
-					<div class="w-32 shrink-0 overflow-hidden rounded-[10px]">
-						<Shot name="menubar" widths={[350]} width={350} height={256} sizes="8rem" alt="The menu bar item: workspace numbers with the current one filled, and the mielwm icon." />
+					<div class="w-40 shrink-0 overflow-hidden rounded-[10px]">
+						<Shot name="pill" widths={[460]} width={460} height={160} sizes="10rem" alt="The workspace pill: 1, 2, 3, 5 and 9, with 3 filled." />
 					</div>
-					<p class="text-sm text-subtle">The menu bar item, in its four states. Turn the numbers off and you get the mielwm icon instead.</p>
+					<p class="text-sm text-subtle">The workspaces that have windows, the current one filled. The menu bar item can show the same numbers.</p>
 				</div>
 				{@render more('/docs/trackpad', 'Trackpad and mouse')}
 			</div>
@@ -175,12 +196,12 @@ scripts/build-app.sh --install`;
 				{@render label('Settings', WrenchIcon, mesh.sun)}
 				<h2 id="settings" class={title}>A real Settings window</h2>
 				<p class="text-base leading-relaxed">
-					Click a shortcut and press the new keys. If they belong to another action, or macOS already uses them for Mission Control, the
-					row says so and offers to take them. Changes reach the canvas right away.
+					Eleven panes, grouped the way System Settings groups them. The search field in the sidebar finds any setting by name, the gaps
+					redraw on a small desktop as you type, and every change reaches your windows right away.
 				</p>
-				{@render more('/docs/settings', 'Settings and the menu bar')}
+				{@render more('/docs/settings', 'Every setting')}
 			</div>
-			<Shot stage={mesh.orange} class="flex-1" name="keyboard" widths={[1000]} {...settings} sizes="(min-width: 88rem) 28rem, 90vw" alt="Settings, Keyboard pane: recording a new focus shortcut, with a warning that the keys already switch workspaces." />
+			<Shot stage={mesh.orange} class="flex-1" name="settings" widths={[1000]} {...settings} sizes="(min-width: 88rem) 28rem, 90vw" alt="Settings, Layout pane: pictures to pick the layout and orientation of new windows, and the Peek edges slider for stacks." />
 		</section>
 
 		<section class="tile group/section flex flex-col p-2 lg:col-span-7" aria-labelledby="aerospace">
@@ -193,46 +214,46 @@ scripts/build-app.sh --install`;
 					gaps, the layout, the app rules and the key bindings, after showing you what it found.
 				</p>
 				<div class="flex flex-col gap-1.5 border-s-2 border-border ps-3.5">
-					<span class="flex items-center gap-2 text-base text-strong">Barik <Badge variant="secondary">New</Badge></span>
-					<span class="text-sm text-subtle">Barik's workspace widget shows mielwm's workspaces and switches on click, with no change to Barik. Turn it on in Settings.</span>
+					<span class="flex items-center gap-2 text-base text-strong">Your menu bar app <Badge variant="secondary">New</Badge></span>
+					<span class="text-sm text-subtle">Any AeroSpace-compatible menu bar shows mielwm's workspaces and switches on click, with no plugin to install.</span>
 				</div>
-				{@render more('/docs/aerospace', 'AeroSpace and Barik')}
+				{@render more('/docs/aerospace', 'Coming from AeroSpace')}
 			</div>
 			<div class="grain flex flex-1 items-center justify-center rounded-[16px] px-6 py-10" style:background={mesh.coral}>
 				<div class="w-full max-w-[18rem] overflow-hidden rounded-[10px] shadow-[0_0_0_1px_rgb(0_0_0/0.12),0_18px_40px_-12px_rgb(0_0_0/0.45)]">
-					<Shot name="import" widths={[520]} width={520} height={640} sizes="18rem" alt="The Import from AeroSpace sheet, listing the gaps, layout and rules it found." />
+					<Shot name="import" widths={[520]} width={520} height={736} sizes="18rem" alt="The Import from AeroSpace sheet, listing the gaps, layout and rules it found." />
 				</div>
+			</div>
+		</section>
+
+		<!-- keyboard: one wide card, the keys beside the switcher -->
+		<section class="tile group/section grid grid-cols-[minmax(0,1fr)] gap-2 p-2 lg:col-span-12 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]" aria-labelledby="keys">
+			<div class="{copy} justify-center lg:p-8">
+				{@render label('Keyboard first', CommandIcon, mesh.lime)}
+				<h2 id="keys" class={title}>Your hands stay on the keys</h2>
+				<p class="text-base leading-relaxed">Everything has a shortcut, and every shortcut can be changed in Settings. These are the ones you'll use most.</p>
+				<ul class="flex flex-col divide-y divide-border">
+					{#each keys as row (row.does)}
+						<li class="flex items-center gap-4 py-2.5">
+							<span class="flex w-28 shrink-0 items-center gap-1.5 text-subtle">
+								<kbd class="key text-base">{row.keys[0]}</kbd>
+								{#if row.keys[1]}<span aria-label="to">…</span><kbd class="key text-base">{row.keys[1]}</kbd>{/if}
+							</span>
+							<span class="text-base text-strong">{row.does}</span>
+						</li>
+					{/each}
+				</ul>
+				{@render more('/docs/keyboard', 'Every key')}
+			</div>
+			<div class="flex flex-col gap-3">
+				<Shot stage={mesh.lime} class="flex-1" name="switcher" widths={[1600, 900]} {...wide} sizes="(min-width: 88rem) 48rem, (min-width: 64rem) 55vw, calc(100vw - 5rem)" alt="The window switcher over two tiled windows: a row of app icons with Terminal selected and its window's title below." />
+				<p class="px-4 pb-3 text-sm text-subtle">Hold <kbd class="key">⌥</kbd> and tap <kbd class="key">Tab</kbd> for the switcher. Let go to switch.</p>
 			</div>
 		</section>
 	</div>
 
-	<!-- keyboard -->
-	<section class="group/section wrap grid grid-cols-[minmax(0,1fr)] items-center gap-10 py-16 sm:py-24 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16" aria-labelledby="keys">
-		<div class="flex flex-col gap-4">
-			{@render label('Keyboard first', CommandIcon, mesh.lime)}
-			<h2 id="keys" class={title}>Your hands stay on the keys</h2>
-			<p class="text-base leading-relaxed">Everything has a shortcut, and every shortcut can be changed in Settings. These are the ones you'll use most.</p>
-			<ul class="flex flex-col">
-				{#each keys as row (row.does)}
-					<li class="flex items-center gap-4 border-t border-border py-2.5 first:border-t-0">
-						<span class="flex w-28 shrink-0 items-center gap-1.5 text-subtle">
-							<kbd class="key text-base">{row.keys[0]}</kbd>
-							{#if row.keys[1]}<span aria-label="to">…</span><kbd class="key text-base">{row.keys[1]}</kbd>{/if}
-						</span>
-						<span class="text-base text-strong">{row.does}</span>
-					</li>
-				{/each}
-			</ul>
-			{@render more('/docs/keyboard', 'Every key')}
-		</div>
-		<div class="flex flex-col gap-3">
-			<Shot stage={mesh.lime} name="switcher" widths={[1600, 900]} {...wide} sizes="(min-width: 88rem) 42rem, (min-width: 64rem) 48vw, calc(100vw - 4rem)" alt="The window switcher over two tiled windows: a row of app icons with the terminal selected." />
-			<p class="text-sm text-subtle">Hold <kbd class="key">⌥</kbd> and tap <kbd class="key">Tab</kbd> for the switcher. Let go to switch.</p>
-		</div>
-	</section>
-
 	<!-- performance -->
-	<section class="group/section wrap flex flex-col gap-8 pb-16 sm:pb-24" aria-labelledby="performance">
+	<section class="group/section wrap flex flex-col gap-8 pt-16 pb-16 sm:pt-24 sm:pb-24" aria-labelledby="performance">
 		<div class="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
 			<div class="flex max-w-[40rem] flex-col gap-4">
 				{@render label('Performance', ChartIcon, mesh.sky)}
@@ -265,8 +286,8 @@ scripts/build-app.sh --install`;
 					<h2 id="get" class="text-5xl leading-[1.02] font-medium tracking-[-0.035em] text-balance text-[#2b1000]">Get mielwm</h2>
 					<p class="text-base text-[#3b1600]">Free and MIT licensed. Quitting it puts every window back on screen.</p>
 				</div>
-				<Button variant="glow" href={site.download} class="group glow-white h-12 w-full justify-between rounded-[12px] ps-4 pe-3.5 text-base">
-					<span class="flex items-center gap-2"><Icon icon={DownloadIcon} size={16} />Download mielwm.dmg</span>
+				<Button variant="glow" href="/download" class="group glow-white h-12 w-full justify-between rounded-[12px] ps-4 pe-3.5 text-base">
+					<span class="flex items-center gap-2"><Icon icon={DownloadIcon} size={16} />Download mielwm</span>
 					<span class="hidden text-sm text-[#5d5d5d] sm:inline">macOS 15+, Apple silicon</span>
 				</Button>
 				<div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">

@@ -21,11 +21,11 @@ Most windows sit still most of the time, so the first row is what you'll see day
 
 When you close the overview, the live pictures turn into small stills. mielwm keeps those so the overview opens with pictures right away next time. Within a minute it's back to about 0.01% CPU and about 145 MB, and the stills of windows you haven't seen for a few minutes shrink further.
 
-## With Barik
+## With AeroSpace-compatible apps
 
-With [Work with Barik](aerospace.md#barik) on, Barik asks mielwm for your workspaces on a timer. How often depends on the Barik you use.
+A menu bar app pointed at mielwm, as [AeroSpace-compatible apps](compatible-apps.md) describes, asks for your workspaces on a timer. How often depends on the app.
 
-Barik Enhanced asks every 5 seconds, which costs nothing you'd notice. The original Barik asks ten times a second. Each answer is cheap, but at that pace the `aerospace` command adds up to about a seventh of a CPU core, plus whatever Barik spends on its side. If that matters to you, Barik Enhanced is the better pairing.
+An app that asks every 5 seconds costs nothing you'd notice. One that asks ten times a second runs the `aerospace` command that often. Each answer is cheap, but at that pace it adds up to about a seventh of a CPU core, plus whatever the app spends on its side. If that matters to you, pick an app or a version that asks less often.
 
 ## Check it yourself
 

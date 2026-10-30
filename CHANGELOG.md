@@ -74,6 +74,8 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 
 ### Performance
 
+- mielwm uses about 40 MB less memory at rest. It keeps the desktop picture once instead of twice.
+- The `aerospace` command that status bars run many times a second uses about a third less CPU per call.
 - The overview uses about half the CPU while your windows sit still, and switching workspaces uses less too.
 - Holding `⌃⌥` to drag a window no longer starts the overview's window pictures. With the default `⌃⌥G`, the overview can take up to 0.12 seconds longer to open while it gets fresh pictures.
 

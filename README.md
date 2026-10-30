@@ -23,7 +23,7 @@ It's a menu bar app, and your windows stay ordinary macOS windows. At rest it us
 
 Download `mielwm.dmg` from the [latest release](https://github.com/mielsense/mielwm/releases/latest) and drag mielwm into Applications. It needs macOS 15 or later on Apple silicon. It's signed but not notarized, so the first time, open it once and then allow it in System Settings > Privacy & Security > Open Anyway.
 
-[Getting started](docs/getting-started.md) covers the two permissions it asks for, and building it yourself.
+[Install](docs/install.md) covers updating and building it yourself, and [First steps](docs/first-steps.md) the two permissions it asks for.
 
 ## A few keys
 
@@ -41,16 +41,10 @@ They follow AeroSpace's defaults, and Settings changes any of them. [Keyboard](d
 
 The docs are also on [wm.miel.my](https://wm.miel.my/docs), with search.
 
-- [Getting started](docs/getting-started.md)
-- [Workspaces and layouts](docs/workspaces.md)
-- [The overview](docs/overview.md)
-- [Keyboard](docs/keyboard.md)
-- [Trackpad and mouse](docs/trackpad.md)
-- [Settings and the menu bar](docs/settings.md)
-- [Configuration file](docs/configuration.md)
-- [Command line](docs/command-line.md)
-- [AeroSpace and Barik](docs/aerospace.md)
-- [Performance](docs/performance.md)
+- Get started: [Introduction](docs/introduction.md), [Install](docs/install.md), [First steps](docs/first-steps.md)
+- Using mielwm: [Workspaces](docs/workspaces.md), [Layouts and gaps](docs/layouts.md), [Stacks](docs/stacks.md), [Floating windows](docs/floating.md), [Focus and switching](docs/focus.md), [The overview](docs/overview.md), [Keyboard](docs/keyboard.md), [Trackpad and mouse](docs/trackpad.md), [Menu bar and indicators](docs/menu-bar.md)
+- Coming from AeroSpace: [Import your config](docs/import.md), [What's different](docs/aerospace.md), [AeroSpace-compatible apps](docs/compatible-apps.md)
+- Reference: [Settings](docs/settings.md), [Configuration file](docs/configuration.md), [Window rules](docs/window-rules.md), [Command line](docs/command-line.md), [Performance](docs/performance.md)
 - [Troubleshooting](docs/troubleshooting.md)
 
 ## Contributing

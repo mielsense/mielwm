@@ -8,6 +8,8 @@ First check that mielwm is turned on under System Settings > Privacy & Security 
 
 Another app may own the same keys. Settings > Keyboard warns when macOS uses a shortcut, and you can move any of mielwm's to other keys there.
 
+If the shortcuts stop for a while and then come back, an app has secure input on. The mielwm menu says "Secure input is on, shortcuts may not work" while it lasts. [Menu bar and indicators](menu-bar.md#secure-input) explains it.
+
 ## The overview shows blank cards
 
 Screen Recording is missing, or you granted it while mielwm was running. macOS applies that permission only after a restart, so quit mielwm and open it again.
@@ -22,7 +24,11 @@ mielwm --unpark
 
 ## Windows are out of place
 
-mielwm puts windows back on its own after the Mac wakes from sleep or a display comes or goes. If windows still don't sit where they should, run `mielwm refresh`. It reads every app's window list again and puts every window back where the canvas says.
+mielwm puts windows back on its own after the Mac wakes from sleep or a display comes or goes, and reads every app's window list again every 10 seconds. If windows still don't sit where they should, run `mielwm refresh`. It reads every app's window list again and puts every window back where the canvas says.
+
+## The top gap is too big or too small
+
+With Settings > Layout > Top edge set to Automatic, mielwm adds the height of a status bar it finds along the top of each display. The line under the setting says what it found on the display the Settings window is on. If it found nothing, or the wrong thing, pick Same as other edges or Custom and set the gap yourself. [Layouts and gaps](layouts.md#the-top-edge) has the details.
 
 ## Windows jump back after you move them
 
@@ -50,13 +56,14 @@ macOS's own three-finger swipe between full-screen apps is still on. Set it to f
 
 "Displays have separate Spaces" is on. Turn it off under System Settings > Desktop & Dock > Mission Control, then log out and back in.
 
-## Barik doesn't show mielwm's workspaces
+## A menu bar app doesn't show mielwm's workspaces
 
-- Check that Work with Barik is on in Settings > AeroSpace & Barik.
-- If the switch asked you to open Barik first, Barik had no config file yet. Open Barik once, quit it, and turn the switch on again.
-- If you moved mielwm.app, quit and reopen mielwm. It points Barik at the new place when it starts.
+- Check that Settings > AeroSpace > Work with AeroSpace-compatible apps is on, or that the app runs mielwm's `aerospace` command.
+- If the switch asked you to open the app first, it had no config file yet. Open it once, quit it, and turn the switch on again.
+- If you moved mielwm.app, quit and reopen mielwm. It points the app at the new place when it starts.
+- Floating windows aren't listed, since they belong to no workspace.
 
-[AeroSpace and Barik](aerospace.md#barik) explains what the switch changes.
+[AeroSpace-compatible apps](compatible-apps.md) explains what the switch changes.
 
 ## The configuration has errors
 

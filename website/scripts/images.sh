@@ -24,11 +24,10 @@ for theme in dark light; do
 	shot search-$theme "$src/search-$theme.png" 1600 900
 	shot switcher-$theme "$src/switcher-$theme.png" 1600 900
 	shot desktop-$theme "$src/desktop-$theme.png" 1600 900
-	shot keyboard-$theme "$src/settings/settings-keyboard-states2-$theme.png" 1000
+	shot settings-$theme "$src/settings/settings-layout-$theme.png" 1000
 	shot import-$theme "$src/settings/import-$theme.png" 520
-	# the menu bar sheet holds two copies side by side; keep the left one
-	magick "$src/settings/menubar-$theme.png" -crop 350x256+0+0 +repage /tmp/mielwm-menubar.png
-	shot menubar-$theme /tmp/mielwm-menubar.png 350
+	shot pill-$theme "$src/pill-$theme.png" 460
+	shot strip-$theme "$src/strip-$theme.png" 840
 done
 
 # the app icon, for the header, the favicon and the share card
@@ -39,4 +38,4 @@ magick "$icon" -resize 180x180 -strip "$out/../apple-touch-icon.png"
 magick "$src/overview-dark.png" -resize 1200x630^ -gravity center -extent 1200x630 \
 	\( "$icon" -resize 120x120 \) -gravity southwest -geometry +48+48 -composite \
 	-strip -quality 85 "$out/../og.jpg"
-rm -f /tmp/mielwm-shot.png /tmp/mielwm-menubar.png
+rm -f /tmp/mielwm-shot.png

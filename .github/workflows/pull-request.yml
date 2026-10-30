@@ -1,0 +1,72 @@
+name: Pull request
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: pull-request-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  GH_TOKEN: ${{ github.token }}
+  REPO: ${{ github.repository }}
+  PR: ${{ github.event.pull_request.number }}
+
+jobs:
+  commits:
+    name: Commit messages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Conventional commits, no attribution
+        # The rules are in CONTRIBUTING.md, under Commits. Merge commits are skipped.
+        run: |
+          gh api "repos/$REPO/pulls/$PR/commits" --paginate --jq '.[] | select((.parents | length) == 1)
+            | [.sha[0:7], (.commit.message | split("\n")[0]), (.commit.message | test("(^|\n)co-authored-by:|generated with \\[?(claude|codex|copilot|cursor|chatgpt|gemini)"; "i"))] | @tsv' > "$RUNNER_TEMP/commits.tsv"
+          pattern='^(feat|fix|perf|refactor|test|docs|style|build|ci|chore)(\([a-z0-9-]+\))?!?: [^ ].*[^.]$'
+          failed=0
+          while IFS=$'\t' read -r sha subject attributed; do
+            if ! [[ $subject =~ $pattern || $subject =~ ^Revert\ \" ]]; then
+              echo "::error::$sha \"$subject\" isn't type(scope): what changed"
+              failed=1
+            elif [ "$attributed" = true ]; then
+              echo "::error::$sha has a Co-Authored-By or Generated with line; remove it"
+              failed=1
+            elif [ "${#subject}" -gt 72 ]; then
+              echo "::warning::$sha's subject has ${#subject} characters; keep it to 72"
+            fi
+          done < "$RUNNER_TEMP/commits.tsv"
+          exit "$failed"
+
+  changelog:
+    name: Changelog
+    runs-on: ubuntu-latest
+    steps:
+      - name: A line under Unreleased
+        # A change to the app needs a CHANGELOG.md line, unless the pull request has the skip changelog label.
+        env:
+          SKIP: ${{ contains(github.event.pull_request.labels.*.name, 'skip changelog') }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          # The bullet lines of the Unreleased section of CHANGELOG.md at a commit.
+          unreleased() {
+            gh api "repos/$REPO/contents/CHANGELOG.md?ref=$1" --jq .content | base64 -d \
+              | awk '/^## / { inside = ($0 ~ /^## Unreleased/) } inside && /^- /' | sort
+          }
+          # The files API, not gh pr diff, which fails on very large diffs.
+          gh api "repos/$REPO/pulls/$PR/files" --paginate --jq '.[].filename' > "$RUNNER_TEMP/files.txt"
+          if ! grep -qE '^(Sources|Resources)/' "$RUNNER_TEMP/files.txt"; then
+            echo "The app doesn't change, so no changelog line is needed."
+          elif comm -13 <(unreleased "$BASE_SHA") <(unreleased "$HEAD_SHA") | grep -q .; then
+            echo "CHANGELOG.md has a new line under Unreleased."
+          elif [ "$SKIP" = true ]; then
+            echo "The app changes, and the skip changelog label says users won't notice."
+          else
+            echo "::error file=CHANGELOG.md::This changes the app but not CHANGELOG.md. Add a line under Unreleased, or the skip changelog label if users won't notice."
+            exit 1
+          fi
