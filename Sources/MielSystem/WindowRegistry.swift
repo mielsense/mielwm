@@ -49,6 +49,11 @@ public final class WindowRegistry {
             self?.untrack(app.processIdentifier)
             self?.checkScreensSoon()
         }
+        // Leaving a full screen Space shows a bar that was hidden there.
+        let spaces = workspace.addObserver(forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.checkScreensSoon()
+        }
+        tokens.append((workspace, spaces))
         observe(workspace, NSWorkspace.didHideApplicationNotification) { [weak self] app in
             self?.deliver(.appHidden(pid: app.processIdentifier, true))
         }
@@ -75,7 +80,7 @@ public final class WindowRegistry {
     }
 
     private func checkScreens() {
-        let now = Displays.screens()
+        let now = Displays.screens(keeping: screens)
         guard now != screens else { return }
         screens = now
         onEvent(.screensChanged(now))

@@ -99,3 +99,17 @@ import Testing
         #expect(both.errors.isEmpty && both.settings.menuBarStyle != .icon, "\(text)")
     }
 }
+
+@Test func aFullScreenSpaceKeepsTheLastBar() {
+    // In a macOS full screen Space a bar hides, and a window fills the whole display.
+    let barik = TopBar(owner: "Barik", height: 40)
+    let video = CGRect(x: 1512, y: 0, width: 1920, height: 1080)
+    #expect(topBar(among: [], on: external, filledBy: [video], previous: barik) == barik)
+    // Without that window the bar is gone for real.
+    #expect(topBar(among: [], on: external, filledBy: [CGRect(x: 1512, y: 25, width: 1920, height: 1055)], previous: barik) == nil)
+    // A window filling another display says nothing about this one.
+    #expect(topBar(among: [], on: external, filledBy: [builtIn.frame], previous: barik) == nil)
+    // A bar found wins over the one kept.
+    let found = (owner: "SketchyBar", frame: CGRect(x: 1512, y: 0, width: 1920, height: 30))
+    #expect(topBar(among: [found], on: external, filledBy: [video], previous: barik)?.owner == "SketchyBar")
+}
