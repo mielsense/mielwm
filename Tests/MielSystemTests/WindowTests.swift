@@ -451,10 +451,14 @@ struct WindowTests {
         #expect(idle <= 3)
     }
 
+    /// Stopping while the tap thread syncs the pointer tap, again and again: nothing crashes or hangs.
     @Test func listenOnlyTapStartsAndStops() {
-        let tap = EventTap { _ in }
-        #expect(tap.start(listenOnly: true))
-        tap.stop()
+        for i in 0 ..< 20 {
+            let tap = EventTap { _ in }
+            #expect(tap.start(listenOnly: true))
+            tap.state.overviewOpen = i.isMultiple(of: 2) // the pointer tap turns on, on the tap thread
+            tap.stop()
+        }
     }
 
     @Test func wallpaperImages() async throws {

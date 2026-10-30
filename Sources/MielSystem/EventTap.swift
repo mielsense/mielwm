@@ -62,15 +62,24 @@ public final class EventTap {
         return true
     }
 
+    /// The taps are switched off and invalidated on their own thread, between
+    /// two callbacks, and this waits for that: no callback can run on a tap
+    /// that is half gone, or after this returns.
     public func stop() {
-        guard let tap, let pointerTap, let thread else { return }
-        for p in [tap, pointerTap] {
-            CGEvent.tapEnable(tap: p, enable: false)
-            CFMachPortInvalidate(p)
+        guard let thread else { return }
+        let ports = [tap, pointerTap].compactMap { $0 }
+        let done = DispatchSemaphore(value: 0)
+        thread.perform {
+            for p in ports {
+                CGEvent.tapEnable(tap: p, enable: false)
+                CFMachPortInvalidate(p)
+            }
+            done.signal()
         }
+        done.wait()
         thread.stop()
-        self.tap = nil
-        self.pointerTap = nil
+        tap = nil
+        pointerTap = nil
         self.thread = nil
     }
 
