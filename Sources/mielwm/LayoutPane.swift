@@ -168,12 +168,8 @@ struct GapField: View {
             }
         }
         // Pointing at a field, or typing in it, lights up its gap in the diagram.
-        .onHover { inside in
-            if inside { focus.key = key } else if focus.key == key, !editing { focus.key = nil }
-        }
-        .onChange(of: editing) { _, now in
-            if now { focus.key = key } else if focus.key == key { focus.key = nil }
-        }
+        .onHover { focus.hover(key, $0) }
+        .onChange(of: editing) { focus.edit(key, $1) }
     }
 }
 

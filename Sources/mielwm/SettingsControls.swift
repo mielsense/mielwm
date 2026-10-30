@@ -54,4 +54,14 @@ final class Hover: ObservableObject {
 /// The gap field being pointed at or typed in, lit up in the gaps diagram.
 final class GapFocus: ObservableObject {
     @Published var key: String?
+    var editing: String? // the field being typed in, lit again when the pointer leaves another
+
+    func hover(_ field: String, _ inside: Bool) {
+        if inside { key = field } else if key == field { key = editing }
+    }
+
+    func edit(_ field: String, _ now: Bool) {
+        if now { editing = field } else if editing == field { editing = nil }
+        key = now ? field : (key == field ? editing : key)
+    }
 }
