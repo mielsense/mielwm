@@ -1,19 +1,19 @@
 import CoreGraphics
 import Foundation
 
-// The HUDModel Render draws, built from the overview machine and the canvas:
-// palette rows, footer, hints, help sheet. Text is
-// sentence case as written; `{...}` in hints and toasts marks a key Render
-// draws as a keycap.
+// The HUDModel the overview's chrome draws, built from the overview machine
+// and the canvas: palette rows, footer, hints, help sheet. Text is sentence
+// case as written; `{...}` in hints and toasts marks a key drawn as a keycap.
 
-/// The search palette's layout in points (times look.hudScale). Render draws
-/// with these and the camera aims below them, so the two agree.
+/// The search palette's layout in points (times look.hudScale). The chrome
+/// draws with these and the camera aims below them, so the two agree.
 public enum PaletteMetrics {
     public static let listInset = 8.0 // above and below the rows, and beside them
     public static let footerHeight = 28.0
     public static let cardGap = 8.0 // between the field and the card of results below it
     public static let helpWidth = 1040.0 // the shortcuts sheet is wider than the field, for three columns
-    public static let cardRadius = 20.0 // the card's corners; its rows' are this minus listInset, so they share a centre
+    public static let cardRadius = 20.0 // the card's corners
+    public static let rowRadius = cardRadius - listInset // a row's, so the two share a centre
 
     /// Height of the field (a capsule) and, with `rows` result rows, the card below it.
     /// The camera keeps the canvas clear of this, so both renderers size the card with `cardHeight`.
@@ -39,9 +39,14 @@ public enum PaletteMetrics {
         max(screenHeight * look.paletteTop, topInset + 12 * look.hudScale)
     }
 
+    /// The palette's width in points: the field's, or the shortcuts sheet's with `help`.
+    public static func width(_ look: Look, help: Bool = false, screenWidth: Double) -> Double {
+        min((help ? max(look.paletteWidth, helpWidth) : look.paletteWidth) * look.hudScale, screenWidth * 0.94)
+    }
+
     /// The search field, the capsule at the top, in points from the screen's top-left.
     public static func fieldFrame(_ look: Look, screenSize: CGSize, topInset: Double) -> CGRect {
-        let width = min(look.paletteWidth * look.hudScale, screenSize.width * 0.94)
+        let width = width(look, screenWidth: screenSize.width)
         return CGRect(x: (screenSize.width - width) / 2, y: top(look, screenHeight: screenSize.height, topInset: topInset),
                       width: width, height: look.searchHeight * look.hudScale)
     }
@@ -140,11 +145,12 @@ public extension CanvasState {
             }
             h.selectedRow = h.rows.isEmpty ? nil : overview.selected - overview.listOffset
             let more = overview.results.count - end
-            if more > 0 { h.footer = "\(more) more \(more == 1 ? "result" : "results"), keep typing or press ↓" }
+            if more > 0 { h.footer = counted(more, "more result") + ", keep typing or press ↓" }
         }
         h.markedText = overview.markedText
         if overview.helpOpen { h.help = helpSections }
-        h.corners = ["", look.cornerLabels ? readout(for: screen) : "", hints, ""]
+        h.readout = look.cornerLabels ? readout(for: screen) : ""
+        h.hints = hints
         return h
     }
 
@@ -158,7 +164,7 @@ public extension CanvasState {
     /// The top-right pill: zoom, window count, display.
     private func readout(for screen: ScreenInfo) -> String {
         let total = windows.count { $0.isShown && $0.pinned == nil }
-        return "\(Int((camera.zoom * 100).rounded()))%  ·  \(total) \(total == 1 ? "window" : "windows")  ·  \(screen.name)"
+        return "\(Int((camera.zoom * 100).rounded()))%  ·  \(counted(total, "window"))  ·  \(screen.name)"
     }
 
     /// Every key, for ⌘/, as (keys, action), most used first. The last two
@@ -173,7 +179,7 @@ public extension CanvasState {
         return [
             HelpSection(title: "Search", entries: [
                 ("Type", "Search windows"), ("↑ ↓ ⇥ ⇧⇥", "Next, previous result"), ("↩", "Go to the window"), ("⇧↩", "Bring it here"),
-                ("⌘1–9", "Go to that result"), ("esc", "Clear, then go back"),
+                ("⌘1-9", "Go to that result"), ("esc", "Clear, then go back"),
             ]),
             HelpSection(title: "Mouse and trackpad", entries: mouse),
             HelpSection(title: "Canvas", entries: [
@@ -227,7 +233,7 @@ public extension CanvasState {
             }
             for (mods, keys) in runs.sorted(by: { $0.key.rawValue < $1.key.rawValue }) {
                 let prefix = String(KeyChord(modifiers: mods, key: "a").symbol.dropLast())
-                if Set(keys) == arrows { plain.append(prefix + "←→↑↓") } else if Set(keys) == digits { plain.append(prefix + "1–9") } else {
+                if Set(keys) == arrows { plain.append(prefix + "←→↑↓") } else if Set(keys) == digits { plain.append(prefix + "1-9") } else {
                     plain.append(keys.map { KeyChord(modifiers: mods, key: $0).symbol }.joined(separator: " "))
                 }
             }

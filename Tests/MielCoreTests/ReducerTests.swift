@@ -2,7 +2,7 @@ import CoreGraphics
 @testable import MielCore
 import Testing
 
-// Rules (a)-(h) of the reducer, against the user's two-display desk.
+// The reducer's rules for what windows and screens report, against the user's two-display desk.
 
 let onBuiltIn = CGRect(x: 100, y: 100, width: 800, height: 600)
 
@@ -91,6 +91,21 @@ func panDesk(_ s: inout CanvasState, dx: CGFloat) -> [WindowCommand] {
     #expect(isHiddenFrame(parked, screens: s.screens))
 }
 
+/// A window waiting to be parked again is retried on time, also while a later tick is due.
+@Test func aRetryIsDueOnTimeBeforeALaterDeadline() throws {
+    var s = focusedState()
+    let slot = try #require(moves(panDesk(&s, dx: -3000))[wid(1)])
+    _ = s.send(.system(.windowFrameChanged(wid(1), slot)))
+    for _ in 0 ..< 3 { _ = s.run(.system(.windowFrameChanged(wid(1), CGRect(x: 200, y: 200, width: 800, height: 600))),
+                                 .system(.windowFrameChanged(wid(1), slot))) }
+    let retry = try #require(s.nextRetry)
+    s.graceUntil = retry + 5 // the screens settling, say
+    #expect(s.tickPlan(overlayShown: false) == .once(at: retry))
+    #expect(s.tickPlan(overlayShown: true) == .once(at: retry))
+    s.graceUntil = nil
+    #expect(s.tickPlan(overlayShown: false) == .once(at: retry))
+}
+
 @Test func parkedWindowPulledBackIsReparkedTwiceThenRetriedLater() throws {
     var s = focusedState()
     let slot = try #require(moves(panDesk(&s, dx: -3000))[wid(1)])
@@ -105,7 +120,7 @@ func panDesk(_ s: inout CanvasState, dx: CGFloat) -> [WindowCommand] {
     #expect(s.send(.system(.windowFrameChanged(wid(1), pulled))).isEmpty)
     #expect(s.window(wid(1))?.parked == true)
     #expect(s.canvasFrame(1) == onBuiltIn)
-    #expect(s.nextWake != nil)
+    #expect(s.nextRetry != nil)
     #expect(moves(s.advance(1.1))[wid(1)] == slot)
     // Each try the app undoes waits twice as long as the last.
     _ = s.run(.system(.windowFrameChanged(wid(1), slot)), .system(.windowFrameChanged(wid(1), pulled)))

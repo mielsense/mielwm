@@ -395,7 +395,7 @@ extension CanvasState {
             fills[windows[i].id] = nil
             fullscreens[windows[i].id] = nil
         }
-        showToast("Tidied \(items.count) \(items.count == 1 ? "window" : "windows")" + keyHint(.undo, "Undo"))
+        showToast("Tidied " + counted(items.count, "window") + keyHint(.undo, "Undo"))
         layoutRevision += 1
         if !isOverview { sync() }
     }

@@ -33,14 +33,11 @@ struct WindowUniforms {
     var dimColor = SIMD4<Float>()
     var placeholder = SIMD4<Float>()
     var radius: Float = 0
-    var alpha: Float = 1
     var shadow: Float = 0
     var shadowSigma: Float = 1
     var shadowDrop: Float = 0
     var ringGap: Float = 0
     var ringWidth: Float = 0
-    var glow: Float = 0
-    var glowRadius: Float = 1
     var outline: Float = 0
     var outlineWidth: Float = 0
     var hasTexture: Float = 0
@@ -92,18 +89,6 @@ struct LensUniforms {
     var pad0: Float = 0
     var pad1: Float = 0
     var pad2: Float = 0
-}
-
-struct MaterialUniforms {
-    var rect = SIMD4<Float>()
-    var map = SIMD4<Float>(0, 0, 1, 1)
-    var size = SIMD2<Float>()
-    var radius: Float = 0
-    var distort: Float = 0
-    var contrast: Float = 1
-    var alpha: Float = 1
-    var blur: Float = 0
-    var pad: Float = 0
 }
 
 extension SIMD4 where Scalar == Float {

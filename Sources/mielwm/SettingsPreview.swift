@@ -216,7 +216,8 @@ private func saveMenuPreview(to url: URL) {
                                                                          appName: app.localizedName ?? "", title: "", frame: screen.insetBy(dx: 100, dy: 100)))))
     }
     _ = controller.state.send(.action(.workspace(1)))
-    let menu = AppDelegate(mode: .normal).previewMenu(controller)
+    let delegate = AppDelegate(mode: .normal) // the menu items' target, which they hold weakly
+    let menu = delegate.previewMenu(controller)
     guard let screen = NSScreen.main else { return }
     let at = NSPoint(x: screen.frame.midX - 120, y: screen.frame.midY + 150)
     let rect = "\(Int(at.x) - 12),\(Int(screen.frame.maxY - at.y) - 12),\(Int(menu.size.width) + 24),\(Int(menu.size.height) + 24)"
@@ -226,7 +227,7 @@ private func saveMenuPreview(to url: URL) {
         open.cancelTracking()
     }
     RunLoop.main.add(timer, forMode: .common)
-    menu.popUp(positioning: nil, at: at, in: nil)
+    withExtendedLifetime(delegate) { _ = menu.popUp(positioning: nil, at: at, in: nil) }
 }
 
 /// The workspace indicator and the icon as the menu bar tints them: 2x on the left, 1x (scaled up) on the right.
@@ -269,28 +270,6 @@ private func saveMenuBarPreview(dark: Bool, to url: URL) {
     }
     NSGraphicsContext.restoreGraphicsState()
     try? canvas.representation(using: .png, properties: [:])?.write(to: url)
-}
-
-/// The screen region "x,y,width,height" (points from the primary display's top-left) as a PNG.
-func screencapture(_ region: String, to url: URL) {
-    let shot = Process()
-    shot.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-    shot.arguments = ["-x", "-R", region, url.path]
-    try? shot.run()
-    shot.waitUntilExit()
-}
-
-/// Runs AppKit's event loop for `seconds`, as NSApp.run would: windows
-/// lay out and redraw, monitors see events.
-@MainActor
-func pump(_ seconds: Double) {
-    let end = Date().addingTimeInterval(seconds)
-    while Date() < end {
-        if let event = NSApp.nextEvent(matching: .any, until: min(end, Date().addingTimeInterval(0.02)), inMode: .default, dequeue: true) {
-            NSApp.sendEvent(event)
-        }
-        NSApp.updateWindows()
-    }
 }
 
 /// The detail pane's scroll view (the sidebar has one too).

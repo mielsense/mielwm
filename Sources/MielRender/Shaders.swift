@@ -111,7 +111,7 @@ fragment float4 backdrop_fragment(VOut in [[stage_in]], constant Backdrop& b [[b
     return float4(color, 1.0);
 }
 
-// ---- windows: rounded live image, soft shadow, dim, outlines, accent ring + glow
+// ---- windows: rounded live image, soft shadow, dim, outlines, accent ring
 
 struct Window {
     float4 rect;        // content px
@@ -119,14 +119,11 @@ struct Window {
     float4 dimColor;    // rgb, dim alpha
     float4 placeholder; // premultiplied color without an image
     float radius;
-    float alpha;
     float shadow;
     float shadowSigma;
     float shadowDrop;
     float ringGap;
     float ringWidth;
-    float glow;
-    float glowRadius;
     float outline;
     float outlineWidth;
     float hasTexture;
@@ -171,11 +168,6 @@ fragment float4 window_fragment(VOut in [[stage_in]], constant Window& w [[buffe
     float ringRadius = w.radius + w.ringGap;
     float4 ringRect = float4(w.rect.xy - w.ringGap, w.rect.zw + 2.0 * w.ringGap);
     float dr = rounded_distance(p, ringRect, ringRadius);
-    if (w.glow > 0.0) {
-        float g = w.glow * exp(-max(dr, 0.0) / max(w.glowRadius, 0.5)) * smoothstep(-0.5, 0.5, d);
-        result = float4(w.accent.rgb * g, g) + result * (1.0 - g);
-    }
-
     float inside = 1.0 - smoothstep(-0.5, 0.5, d);
     if (inside > 0.0) {
         float4 c = w.hasTexture > 0.5 ? sample_window(tex, uv, dx, dy) : w.placeholder;
@@ -195,10 +187,10 @@ fragment float4 window_fragment(VOut in [[stage_in]], constant Window& w [[buffe
         float a = w.accent.a * band;
         result = float4(w.accent.rgb * a, a) + result * (1.0 - a);
     }
-    return result * w.alpha;
+    return result;
 }
 
-// ---- flat pieces: drop indicator, caret
+// ---- flat pieces: drop indicator, workspace frames
 
 struct Solid {
     float4 rect;
@@ -220,7 +212,7 @@ fragment float4 solid_fragment(VOut in [[stage_in]], constant Solid& s [[buffer(
     return c;
 }
 
-// ---- premultiplied textures: labels and HUD layers
+// ---- premultiplied textures: the tags
 
 struct Textured {
     float alpha;
@@ -450,27 +442,5 @@ fragment float4 lens_fragment(VOut in [[stage_in]], constant Lens& L [[buffer(0)
     }
 
     return compose_minimap(color, point, L, tex, windows, dims) * L.opacity;
-}
-
-// ---- material: the blurred world behind a HUD panel, drawn before the panel's tint
-
-struct Material {
-    float4 rect;   // panel px
-    float4 map;    // as Lens.map
-    float2 size;   // target px
-    float radius;
-    float distort;
-    float contrast;
-    float alpha;
-    float blur;    // px
-    float pad;
-};
-
-fragment float4 material_fragment(VOut in [[stage_in]], constant Material& m [[buffer(0)]], texture2d<float> tex [[texture(0)]]) {
-    float2 p = in.position.xy;
-    float mask = rounded_mask(p, m.rect, m.radius) * m.alpha;
-    if (mask <= 0.0)
-        return float4(0.0);
-    return float4(frosted(tex, p, m.size, m.distort, m.contrast, m.blur, m.map), 1.0) * mask;
 }
 """#

@@ -46,6 +46,11 @@ extension CanvasState {
         return out
     }
 
+    /// Every window reports the frame it was last sent, as an obliging app does.
+    mutating func confirmMoves() {
+        for w in windows { _ = send(.system(.windowFrameChanged(w.id, w.frame))) }
+    }
+
     func canvasFrame(_ n: UInt32) -> CGRect? { window(wid(n))?.frame }
 }
 

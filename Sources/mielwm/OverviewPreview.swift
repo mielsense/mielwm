@@ -63,10 +63,7 @@ func overviewPreview(_ args: [String]) -> Never {
                 var state = CanvasState(screens: [screen], settings: settings, ownPID: getpid(), now: 0, savedLayout: layout)
                 for w in windows { _ = state.send(.system(.windowAppeared(w))) }
                 if let first = windows.first { _ = state.send(.system(.windowFocused(first.id))) }
-                state.systemAccent = Controller.systemAccent()
-                state.systemDark = dark
-                state.accessibility = access
-                state.liquidGlassAvailable = Controller.liquidGlassAvailable
+                Controller.applySystemLook(to: &state, dark: dark, accessibility: access)
                 state.activeScreenID = screen.id
                 let desk = state.scene(for: screen, time: 0)
                 for a in actions { _ = state.send(.action(a)) }

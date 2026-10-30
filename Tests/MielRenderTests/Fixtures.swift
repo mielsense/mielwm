@@ -50,87 +50,31 @@ enum Fixture {
                      viewport: camera.toCanvas(desk, deskCenter: desk.center))
     }
 
-    static let corners = [
-        "",
-        "42%  ·  12 windows  ·  Built-in Retina Display",
-        "{↩} Go  {⇥} Next  {⇧↩} Bring here  {F1} Shortcuts  {esc} Back",
-        "",
-    ]
-
     /// Two workspace frames around the Retina panel's windows and one stack.
     static let workspaces = [
-        SceneWorkspace(number: 1, canvasFrame: CGRect(x: -2200, y: -620, width: 2420, height: 1960), mode: .tiles, isCurrent: true, windowCount: 5),
-        SceneWorkspace(number: 2, canvasFrame: CGRect(x: 380, y: -640, width: 1960, height: 2140), mode: .stack, windowCount: 3),
+        SceneWorkspace(number: 1, canvasFrame: CGRect(x: -2200, y: -620, width: 2420, height: 1960), mode: .tiles, isCurrent: true),
+        SceneWorkspace(number: 2, canvasFrame: CGRect(x: 380, y: -640, width: 1960, height: 2140), mode: .stack),
     ]
 
-    /// Character ranges of `query`'s words in `title`, case-insensitive.
-    static func highlights(_ title: String, _ query: String) -> [Range<Int>] {
-        let lower = Array(title.lowercased()), q = Array(query.lowercased())
-        guard !q.isEmpty, lower.count >= q.count else { return [] }
-        for i in 0...(lower.count - q.count) where Array(lower[i..<(i + q.count)]) == q { return [i..<(i + q.count)] }
-        return []
-    }
-
-    static func overview(_ screen: ScreenInfo, look: Look = Look(), hud: HUDModel = HUDModel(), windows: [SceneWindow] = canvasWindows,
-                         selected: WindowID? = WindowID(pid: 106, number: 6), wallpaper: Bool = true) -> Scene {
+    static func overview(_ screen: ScreenInfo, look: Look = Look(), windows: [SceneWindow] = canvasWindows,
+                         selected: WindowID? = WindowID(pid: 106, number: 6)) -> Scene {
         var windows = windows
         for i in windows.indices {
             windows[i].isSelected = windows[i].id == selected
             windows[i].isFocused = windows[i].id == WindowID(pid: 102, number: 2)
         }
         let focused = windows.firstIndex { $0.isSelected }
-        var scene = Scene(screen: screen, desk: desk, camera: overviewCamera, transition: 1, windows: windows, look: look,
-                          minimap: minimap(windows, camera: overviewCamera, focused: focused), hud: hud, time: 0.2)
-        scene.searching = hud.mode == .search && !hud.query.isEmpty // as Core's scene(for:) sets it
-        return scene
+        return Scene(screen: screen, desk: desk, camera: overviewCamera, transition: 1, windows: windows, look: look,
+                     minimap: minimap(windows, camera: overviewCamera, focused: focused), time: 0.2)
     }
 
-    static func searchHUD() -> (HUDModel, [SceneWindow]) {
-        let query = "mielwm"
-        var hud = HUDModel()
-        hud.mode = .search
-        hud.query = query
-        var windows = canvasWindows
-        var rows: [HUDRow] = []
-        for i in windows.indices {
-            let hits = highlights(windows[i].title, query)
-            windows[i].dim = hits.isEmpty ? 1 : 0
-            if !hits.isEmpty {
-                rows.append(HUDRow(title: windows[i].title, detail: "\(windows[i].appName) · ← 1.\(rows.count + 2) screens away",
-                                   bundleID: windows[i].bundleID, trailing: "⌃\(rows.count + 1)", highlights: hits))
-            }
+    /// The canvas windows with those that don't match `query` dimmed, as a search leaves them.
+    static func searchWindows(_ query: String) -> [SceneWindow] {
+        canvasWindows.map { w in
+            var w = w
+            w.dim = w.title.localizedCaseInsensitiveContains(query) ? 0 : 1
+            return w
         }
-        rows.append(HUDRow(title: "mielwm-testwindows", detail: "Terminal · on screen", bundleID: "com.apple.Terminal",
-                           trailing: "⌃4", highlights: [0..<9]))
-        hud.rows = rows
-        hud.selectedRow = 0
-        hud.corners = corners
-        return (hud, windows)
-    }
-
-    static func switcherHUD() -> HUDModel {
-        var hud = HUDModel()
-        hud.mode = .switcher
-        hud.rows = canvasWindows.prefix(8).map { HUDRow(title: $0.title, detail: $0.appName, bundleID: $0.bundleID) }
-        hud.selectedRow = 1
-        return hud
-    }
-
-    static func helpHUD() -> HUDModel {
-        var hud = HUDModel()
-        hud.mode = .help
-        hud.help = [
-            HelpSection(title: "Search", entries: [("Type", "Search"), ("↑ ↓", "Move in results"), ("⇥ ⇧⇥", "Next / prev"), ("⌃1-9", "Jump to result"),
-                                                 ("↩", "Go to window"), ("⇧↩", "Bring it here"), ("⎋", "Clear, then back")]),
-            HelpSection(title: "Mouse", entries: [("Click", "Go to window"), ("Drag", "Move or pan"), ("Wheel", "Zoom"), ("Minimap", "Jump")]),
-            HelpSection(title: "Canvas", entries: [("←→↑↓", "Nearest that way"), ("⌃←→↑↓", "Pan"), ("⌃+ ⌃−", "Zoom"), ("⌃0", "Fit everything"),
-                                                 ("⌃F", "Frame selection")]),
-            HelpSection(title: "Arrange", entries: [("⇧←→↑↓", "Nudge window"), ("⌃A", "Tidy all"), ("⌃Z ⌃⇧Z", "Undo / redo")]),
-            HelpSection(title: "Anywhere", entries: [("⌥⇥", "Recent windows"), ("⌥←→↑↓", "Focus that way"), ("⌥T", "Fill the screen"),
-                                                     ("⌃,", "Tune the look")]),
-        ]
-        hud.corners = corners
-        return hud
     }
 
     /// A deep blue-violet desktop picture with soft light, so parallax and

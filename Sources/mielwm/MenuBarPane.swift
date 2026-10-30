@@ -25,7 +25,7 @@ struct MenuBarPane: View {
 
     private var note: String {
         if model.settings.barik, model.settings.menuBarStyle != .icon {
-            return "Barik shows your workspaces too. Icon keeps them from showing twice."
+            return "Another menu bar shows your workspaces too. Icon keeps them from showing twice."
         }
         switch model.settings.menuBarStyle {
         case .all: return "The numbers of the workspaces that have windows, with the current one filled."

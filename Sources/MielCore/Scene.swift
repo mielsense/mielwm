@@ -18,7 +18,7 @@ public extension CanvasState {
         scene.searching = scene.hud.mode == .search && !scene.hud.query.isEmpty
         scene.workspaces = workspaces.map {
             var ws = SceneWorkspace(number: $0.number, canvasFrame: workspaceFrame($0.slot), mode: $0.mode,
-                                    isCurrent: $0.slot == currentWorkspace, windowCount: $0.members.count)
+                                    isCurrent: $0.slot == currentWorkspace)
             if $0.members.isEmpty { ws.emptyMessage = emptyMessage($0.slot) }
             return ws
         }

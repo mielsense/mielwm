@@ -33,7 +33,7 @@ final class Controller {
     /// The displays changed, or a status bar on one came or went.
     var onScreens: (() -> Void)?
     /// The menu bar's workspace numbers changed.
-    var onWorkspaces: ((WorkspaceStatus) -> Void)?
+    var onWorkspaces: (() -> Void)?
     var reportedWorkspaces: WorkspaceStatus?
     /// While the Settings window records a shortcut, every key reaches it.
     var bindingsSuspended = false {
@@ -72,9 +72,7 @@ final class Controller {
     var tickTimer: Timer?
     var rescanTimer: Timer?
     var rescanPauses: Set<String> = [] // "displays" asleep, "session" inactive
-    var tickTimerDeadline: Double? // a one-shot tick timer's deadline; nil while it ticks every frame
-    var wakeTimer: Timer? // one tick at `wakeAt`
-    var wakeAt: Double?
+    var tickPlan = CanvasState.TickPlan.none // what tickTimer does
     var keyCaptureFallback = false
 
     /// MIELWM_TIMINGS: logs how long each action's moves take, from the action to the last move confirmed.
@@ -108,10 +106,7 @@ final class Controller {
         let saved = mode == .normal ? LayoutSnapshot.load(from: layoutURL) : nil
         state = CanvasState(screens: Displays.screens(), settings: loaded.settings, ownPID: getpid(),
                             now: CACurrentMediaTime(), savedLayout: saved)
-        state.systemAccent = Self.systemAccent()
-        state.systemDark = Self.systemDark()
-        state.accessibility = Self.accessibility()
-        state.liquidGlassAvailable = Self.liquidGlassAvailable
+        Self.applySystemLook(to: &state)
         state.stopwords = Self.stopwords()
         savedLayoutRevision = state.layoutRevision
         configStamp = paths.configModified
@@ -165,15 +160,13 @@ final class Controller {
         tap = nil
         swipes.stop()
         configWatcher?.stop()
-        tickTimer?.invalidate()
-        tickTimer = nil
         rescanTimer?.invalidate()
         rescanTimer = nil
-        wakeTimer?.invalidate()
-        wakeTimer = nil
         gate?.timeout.cancel()
         gate = nil
         hideOverlays()
+        tickTimer?.invalidate() // after hideOverlays, which schedules ticks: none may come while windows go back
+        (tickTimer, tickPlan) = (nil, .none)
         notices.hideAll()
         for o in overlays.values { o.close() }
         overlays = [:]
@@ -314,8 +307,8 @@ final class Controller {
             } else if overlayShown, restingSince == nil, fadeStart == nil {
                 restingSince = state.now
             }
+            notices.update(state) // ticks too: a notice fades a little every tick
         }
-        if renderer != nil { notices.update(state) } // ticks too: a notice fades a little every tick
         if let t = timing, let first = t.firstMove, !state.movesInFlight, state.animator.isSettled {
             timing = nil
             let ms = { (end: Double) in String(format: "%.0f ms", (end - t.start) * 1000) }

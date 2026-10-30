@@ -1,7 +1,17 @@
 @testable import MielCore
 import Testing
 
-// Which window has focus, as window keys see it.
+// Which window has focus, as window keys see it, and closing and minimizing it.
+
+@Test func closeAndMinimizeAskSystemForTheFocusedWindow() {
+    var s = focusedState()
+    #expect(s.send(.action(.close)) == [.close(wid(1))])
+    #expect(s.send(.action(.minimize)) == [.minimize(wid(1))])
+    _ = s.send(.system(.unmanagedFocus(pid: 200))) // the desktop: nothing to close
+    #expect(s.send(.action(.close)).isEmpty && s.send(.action(.minimize)).isEmpty)
+    var none = makeState([])
+    #expect(none.send(.action(.close)).isEmpty && none.send(.action(.minimize)).isEmpty)
+}
 
 @Test func focusOnSomethingUnmanagedLeavesNoWindowForTheKeys() {
     var s = focusedState()

@@ -46,7 +46,7 @@ public extension Settings {
 }
 
 /// Actions bound one per digit or arrow key under the same modifiers, which
-/// the Settings window edits as one shortcut ("⌥1–9").
+/// the Settings window edits as one shortcut ("⌥1-9").
 public enum ShortcutFamily: CaseIterable, Sendable {
     case workspace, moveToWorkspace, focus, nudge
 

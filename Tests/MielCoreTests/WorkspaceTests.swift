@@ -23,7 +23,7 @@ func tilingState(_ windows: [WindowSnapshot] = [], settings: Settings = testSett
 func twoTiles() -> CanvasState {
     var s = tilingState([snapshot(1, onBuiltIn), snapshot(2, onBuiltIn.offsetBy(dx: 40, dy: 40))])
     _ = s.send(.system(.windowFocused(wid(1))))
-    for w in s.windows { _ = s.send(.system(.windowFrameChanged(w.id, w.frame))) }
+    s.confirmMoves()
     return s
 }
 
@@ -458,7 +458,7 @@ extension CanvasState {
     _ = s.send(.action(.layoutStack))
     _ = s.send(.action(.toggleOverview))
     let scene = s.scene(for: builtIn)
-    #expect(scene.workspaces == [SceneWorkspace(number: 1, canvasFrame: builtIn.frame, mode: .stack, isCurrent: true, windowCount: 2)])
+    #expect(scene.workspaces == [SceneWorkspace(number: 1, canvasFrame: builtIn.frame, mode: .stack, isCurrent: true)])
     #expect(scene.windows.last?.id == wid(1) && scene.windows.last?.canvasFrame == area) // the selection, in front
     let behind = area.insetBy(dx: 24, dy: 0).offsetBy(dx: 0, dy: -14) // peeking out above, a little narrower
     #expect(scene.windows.first { $0.id == wid(2) }?.canvasFrame == behind)

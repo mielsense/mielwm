@@ -65,6 +65,8 @@ public struct WindowSnapshot: Hashable, Codable, Sendable {
     public var isMovable: Bool
     /// In macOS full screen, in a Space of its own.
     public var isFullScreen: Bool
+    /// What mielwm moves: standard windows that can move.
+    public var isManageable: Bool { isStandard && isMovable }
 
     public init(id: WindowID, bundleID: String?, appName: String, title: String, frame: CGRect,
                 isMinimized: Bool = false, isStandard: Bool = true,
@@ -124,8 +126,9 @@ public func isUserDrag(buttonDown: Bool, sinceMouseDown: Double, sinceDrag: Doub
 /// What Core asks System to do. System runs these off the main thread, one
 /// serial queue per app, and never blocks the caller.
 public enum WindowCommand: Sendable, Equatable {
-    /// Global frame. System applies size, position, size (so moves between
-    /// displays of different sizes land right) and switches
+    /// Global frame. System sets the size, the position and the size again
+    /// (so moves between displays of different sizes land right), or only the
+    /// position when the size is the one it last set, and switches
     /// AXEnhancedUserInterface off around the change.
     case setFrame(WindowID, CGRect)
     /// Raise the window, make it main and key, activate its app.
@@ -140,7 +143,7 @@ public enum WindowCommand: Sendable, Equatable {
 
 public enum WindowFrame: @unchecked Sendable {
     case pixelBuffer(CVPixelBuffer) // live ScreenCaptureKit frame, IOSurface-backed
-    case image(CGImage) // still, for parked windows
+    case image(CGImage) // still: parked windows, windows past the live stream limit, frames gone quiet
 }
 
 /// Implemented by System's capture manager, read by Render every frame.
@@ -341,8 +344,8 @@ public struct Look: Hashable, Codable, Sendable {
     public var paletteTop = 0.1 // fraction of the screen height
     public var paletteRows = 6
     public var rowHeight = 44.0
-    public var rounding = 8.0 // rows and pills; panels add 6
-    public var panelOpacity = 0.8
+    var rounding = 8.0 // no longer drawn; kept so old configs load
+    var panelOpacity = 0.8 // no longer drawn; kept so old configs load
     /// appearance:glass: every panel the overview and the notices draw.
     public var glass = GlassStyle.liquid
     var uppercase = false // no longer drawn; kept so old configs load
@@ -400,11 +403,10 @@ public struct SceneWindow: Hashable, Sendable {
     public var isSelected: Bool
     public var isFocused: Bool
     public var isPinned: Bool // pinned windows ignore the camera: canvasFrame is a desk frame
-    public var alpha: Double
 
     public init(id: WindowID, canvasFrame: CGRect, title: String, appName: String,
                 bundleID: String? = nil, dim: Double = 0, isSelected: Bool = false,
-                isFocused: Bool = false, isPinned: Bool = false, alpha: Double = 1) {
+                isFocused: Bool = false, isPinned: Bool = false) {
         self.id = id
         self.canvasFrame = canvasFrame
         self.title = title
@@ -414,7 +416,6 @@ public struct SceneWindow: Hashable, Sendable {
         self.isSelected = isSelected
         self.isFocused = isFocused
         self.isPinned = isPinned
-        self.alpha = alpha
     }
 }
 
@@ -424,16 +425,14 @@ public struct SceneWorkspace: Hashable, Sendable {
     public var canvasFrame: CGRect
     public var mode: LayoutMode // .tiles or .stack
     public var isCurrent: Bool // the one the camera rests on (or last rested on)
-    public var windowCount: Int
     /// Shown in an empty workspace, `{...}` as keycaps ("Workspace 4 is empty  {⌥⇧4} Move a window here").
     public var emptyMessage = ""
 
-    public init(number: Int?, canvasFrame: CGRect, mode: LayoutMode, isCurrent: Bool = false, windowCount: Int = 0) {
+    public init(number: Int?, canvasFrame: CGRect, mode: LayoutMode, isCurrent: Bool = false) {
         self.number = number
         self.canvasFrame = canvasFrame
         self.mode = mode
         self.isCurrent = isCurrent
-        self.windowCount = windowCount
     }
 }
 
@@ -483,7 +482,8 @@ public struct HUDModel: Hashable, Sendable {
     public var rows: [HUDRow] = [] // search results or switcher entries
     public var selectedRow: Int?
     public var footer = "" // search: how many more results
-    public var corners = ["", "", "", ""] // top-left, top-right, bottom-left, bottom-right
+    public var readout = "" // top right: zoom, window count, display
+    public var hints = "" // bottom: the keys that work now
     public var help: [HelpSection] = []
     public var toast: String? // short notice, e.g. "Tidied 12 windows"
 
@@ -529,10 +529,10 @@ public struct Scene: Equatable, Sendable {
     public var minimap: MinimapModel?
     public var hud: HUDModel
     public var dropIndicator: CGRect? // canvas rect where a dragged window will land
-    public var time: Double // seconds, for the caret blink and small animations
+    public var time: Double // seconds, for the window names' fades
     public var workspaces: [SceneWorkspace] = [] // drawn behind the windows, with the transition
-    /// A search is on: windows that match get an outline. Its own field, so a
-    /// HUD drawn elsewhere (the overlay's native views) leaves it in place.
+    /// A search is on: windows that match get an outline. Its own field, since
+    /// the HUD is drawn elsewhere (the overlay's native views).
     public var searching = false
 
     public init(screen: ScreenInfo, desk: CGRect, camera: Camera, transition: Double,
