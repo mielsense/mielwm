@@ -72,9 +72,7 @@ final class Controller {
     var tickTimer: Timer?
     var rescanTimer: Timer?
     var rescanPauses: Set<String> = [] // "displays" asleep, "session" inactive
-    var tickTimerDeadline: Double? // a one-shot tick timer's deadline; nil while it ticks every frame
-    var wakeTimer: Timer? // one tick at `wakeAt`
-    var wakeAt: Double?
+    var tickPlan = CanvasState.TickPlan.none // what tickTimer does
     var keyCaptureFallback = false
 
     /// MIELWM_TIMINGS: logs how long each action's moves take, from the action to the last move confirmed.
@@ -169,8 +167,6 @@ final class Controller {
         tickTimer = nil
         rescanTimer?.invalidate()
         rescanTimer = nil
-        wakeTimer?.invalidate()
-        wakeTimer = nil
         gate?.timeout.cancel()
         gate = nil
         hideOverlays()

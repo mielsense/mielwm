@@ -91,6 +91,21 @@ func panDesk(_ s: inout CanvasState, dx: CGFloat) -> [WindowCommand] {
     #expect(isHiddenFrame(parked, screens: s.screens))
 }
 
+/// A window waiting to be parked again is retried on time, also while a later tick is due.
+@Test func aRetryIsDueOnTimeBeforeALaterDeadline() throws {
+    var s = focusedState()
+    let slot = try #require(moves(panDesk(&s, dx: -3000))[wid(1)])
+    _ = s.send(.system(.windowFrameChanged(wid(1), slot)))
+    for _ in 0 ..< 3 { _ = s.run(.system(.windowFrameChanged(wid(1), CGRect(x: 200, y: 200, width: 800, height: 600))),
+                                 .system(.windowFrameChanged(wid(1), slot))) }
+    let retry = try #require(s.nextWake)
+    s.graceUntil = retry + 5 // the screens settling, say
+    #expect(s.tickPlan(overlayShown: false) == .once(at: retry))
+    #expect(s.tickPlan(overlayShown: true) == .once(at: retry))
+    s.graceUntil = nil
+    #expect(s.tickPlan(overlayShown: false) == .once(at: retry))
+}
+
 @Test func parkedWindowPulledBackIsReparkedTwiceThenRetriedLater() throws {
     var s = focusedState()
     let slot = try #require(moves(panDesk(&s, dx: -3000))[wid(1)])

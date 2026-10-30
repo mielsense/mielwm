@@ -144,50 +144,34 @@ extension Controller {
         for o in overlays.values { o.wake() }
     }
 
-    /// Ticks without an overlay (moves awaiting confirmation, the switcher's delay):
-    /// 60 a second while something animates, else one at the earliest deadline.
+    /// The ticks Core needs that no overlay frame sends (moves awaiting confirmation,
+    /// the switcher's delay, a window waiting to be parked again).
     func scheduleTicks() {
-        let wanted = !overlayShown && state.needsTicks
-        scheduleWake(wanted ? nil : state.nextWake)
-        let deadline = wanted ? state.tickDeadline : nil
-        let keep = switch (tickTimerDeadline, deadline) {
-        case (nil, nil): true
-        case let (due?, needed?): due <= needed // a tick that comes early only finds nothing to do
+        let plan = state.tickPlan(overlayShown: overlayShown)
+        let keep = switch (tickPlan, plan) {
+        case (.none, .none), (.everyFrame, .everyFrame): true
+        case let (.once(due), .once(needed)): due <= needed // a tick that comes early only finds nothing to do
         default: false
         }
-        if wanted, tickTimer != nil, keep { return }
+        if tickTimer != nil || tickPlan == .none, keep { return }
         tickTimer?.invalidate()
         tickTimer = nil
-        guard wanted else { return }
+        tickPlan = plan
         let tick: @Sendable (Timer) -> Void = { [weak self] _ in
             MainActor.assumeIsolated {
                 guard let self else { return }
-                if self.tickTimerDeadline != nil { self.tickTimer = nil } // a one-shot, done: replaced timers never fire
+                if case .once = self.tickPlan { (self.tickTimer, self.tickPlan) = (nil, .none) } // a one-shot, done: replaced timers never fire
                 self.input(.tick(CACurrentMediaTime()))
             }
         }
-        tickTimerDeadline = deadline
-        let t = deadline.map { Timer(timeInterval: max(0, $0 - CACurrentMediaTime()) + 0.002, repeats: false, block: tick) }
-            ?? Timer(timeInterval: 1.0 / 60, repeats: true, block: tick)
-        RunLoop.main.add(t, forMode: .common)
-        tickTimer = t
-    }
-
-    /// A window waiting to be parked again needs one tick then, not sixty a second meanwhile,
-    /// and it must not keep the overview's frames awake while it waits.
-    private func scheduleWake(_ wake: Double?) {
-        guard wake != wakeAt else { return }
-        wakeTimer?.invalidate()
-        wakeTimer = nil
-        wakeAt = wake
-        guard let wake else { return }
-        wakeTimer = Timer(timeInterval: max(0, wake - CACurrentMediaTime()), repeats: false) { [weak self] _ in
-            MainActor.assumeIsolated {
-                self?.wakeAt = nil
-                self?.input(.tick(CACurrentMediaTime()))
-            }
+        let timer: Timer
+        switch plan {
+        case .none: return
+        case .everyFrame: timer = Timer(timeInterval: 1.0 / 60, repeats: true, block: tick)
+        case let .once(at): timer = Timer(timeInterval: max(0, at - CACurrentMediaTime()) + 0.002, repeats: false, block: tick)
         }
-        RunLoop.main.add(wakeTimer!, forMode: .common)
+        RunLoop.main.add(timer, forMode: .common)
+        tickTimer = timer
     }
 
     func didOpenOverview() {

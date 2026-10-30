@@ -92,8 +92,20 @@ public extension CanvasState {
         isOverview || isPanning || !animator.isSettled || overview.switcherRevealed(now: now)
     }
 
-    /// When a tick is next due while `needsTicks` is false: a window waits to go back where it belongs.
+    /// When a window waits to go back where it belongs. Not a reason to
+    /// tick meanwhile, nor to keep the overview's frames awake.
     var nextWake: Double? { windows.compactMap(\.retryAt).min() }
+
+    enum TickPlan: Equatable { case none, everyFrame, once(at: Double) }
+
+    /// The ticks the app sends without an overlay's frames: every frame while
+    /// something animates, else one at the earliest deadline. A shown overlay
+    /// ticks with its frames, which pause when only a retry is left.
+    func tickPlan(overlayShown: Bool) -> TickPlan {
+        if !overlayShown, needsTicks, tickDeadline == nil { return .everyFrame }
+        let due = [overlayShown ? nil : tickDeadline, nextWake].compactMap { $0 }.min()
+        return due.map { .once(at: $0) } ?? .none
+    }
 
     /// Some setFrame we sent is not confirmed yet (the landing fade waits for it).
     var movesInFlight: Bool { windows.contains { $0.expected != nil } }
