@@ -39,7 +39,7 @@ extension Controller {
     }
 
     /// Liquid glass came with macOS 26.
-    static var liquidGlassAvailable: Bool {
+    nonisolated static var liquidGlassAvailable: Bool {
         if #available(macOS 26, *) { return true }
         return false
     }

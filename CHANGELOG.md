@@ -6,15 +6,34 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 
 ### On screen
 
-- Switching workspaces shows the workspace numbers at the bottom of the display for a moment, with the current one filled. Turn it off in General settings.
+- Switching workspaces shows the workspace numbers at the bottom of the display for a moment, with the current one filled. Turn it off in Settings > Menu bar.
 - Going to a stack, or bringing another of its windows to the front, shows a strip at the top with each window's icon and title and where you are, like "2 of 4".
-- Stacks can show the edges of the windows behind the front one. Set Peek edges in Layout & workspaces settings.
+- Stacks can show the edges of the windows behind the front one. Set Peek edges in Settings > Layout.
 - A glass style in Appearance settings. Liquid glass, the default on macOS 26, is clear and bends the edges of what is behind every panel, from the search panel to the notices. Frosted keeps the blur of earlier versions.
 - VoiceOver says the workspace you switch to, the app selected in the `⌥Tab` switcher, messages like "Tidied 4 windows", and in the overview the selected window, its app and its place among the search results.
 - The overview's search field, results, shortcuts sheet, key hints, toasts and the `⌥Tab` switcher are drawn by macOS itself, so Liquid glass is Apple's own and bends the canvas behind it.
 - The overview's search field is a capsule, like Spotlight, with the results in their own card just below it.
 - The overview's panels have the continuous corners of macOS, keys show as light capsules, and the shortcuts sheet has semibold headings.
 - The `⌥Tab` switcher's highlight follows the panel's rounded corners, and its arrows to more windows are drawn chevrons.
+
+### Workspaces and layouts
+
+- The top gap leaves room for a status bar such as Barik or SketchyBar only on displays that have one. Without one, external displays get the same 12 point top gap as the built-in display instead of 54. Settings > Layout > Top edge also offers Same as other edges and Custom, and a number already in your config keeps working as Custom.
+
+### Settings and the menu bar
+
+- The menu bar item can show all workspaces, the current one only, or the icon. Turning on Work with Barik switches All workspaces to the icon.
+- The menu lists each workspace with windows, with its apps' icons and a check on the current one. Click one to go there.
+- The menu warns when secure input is on, since mielwm's shortcuts don't work while it is.
+- Settings > Advanced links to the Configuration file page for the settings that exist only in the file.
+- The Settings window looks and reads like System Settings: a search field in the sidebar that finds panes and settings, panes in groups, a header on each pane, and pictures to click for the layout, the orientation, the grid style and the menu bar item.
+- Settings has new panes, so each setting is where you'd look for it: Windows, Overview, Trackpad & mouse, Menu bar, AeroSpace & Barik and About. Every setting keeps its name in the config file.
+- The gaps diagram is a small desktop that redraws as you type. Pointing at a gap's field lights up that gap with its size.
+- Shortcuts show as light key caps instead of boxes, and a search field in Settings > Keyboard finds one by name.
+- Settings > Trackpad & mouse sets the keys you hold to move and resize windows, and how fast the overview pans and zooms. These were in the config file only.
+- On macOS 26 and later, mielwm's windows use the system's current look, with the new sidebar, grouped rows and controls.
+- About mielwm in the menu opens Settings > About, with the version and links to the website, docs, changelog and source.
+- The welcome window lists its two permissions the way Privacy & Security does, with a badge on each one you allowed.
 
 ### Fixes
 

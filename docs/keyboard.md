@@ -52,7 +52,7 @@ The `⌃` versions, like `⌃0` and `⌃Z`, work too, and so does `F1` for the k
 
 ## Changing shortcuts
 
-Open Settings > Keyboard. Click a shortcut and press the new keys. `Esc` cancels and `Delete` removes it. The arrow next to a changed row restores its default, and Restore defaults does every row.
+Open Settings > Keyboard. Click a shortcut and press the new keys. `Esc` cancels and `Delete` removes it. The arrow next to a changed row restores its default, and Restore defaults does every row. The search field at the top finds a shortcut by name.
 
 ![The Keyboard pane in Settings](images/settings-keyboard-dark.png)
 

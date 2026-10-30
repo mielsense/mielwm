@@ -30,6 +30,8 @@ final class Controller {
     var onChange: (() -> Void)?
     /// The settings action (a shortcut or `mielwm settings`): the app opens its window.
     var onSettings: ((SettingsPane?) -> Void)? // nil: the last pane
+    /// The displays changed, or a status bar on one came or went.
+    var onScreens: (() -> Void)?
     /// The menu bar's workspace numbers changed.
     var onWorkspaces: ((WorkspaceStatus) -> Void)?
     var reportedWorkspaces: WorkspaceStatus?

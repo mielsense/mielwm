@@ -32,8 +32,8 @@ If the file isn't valid JSON, mielwm keeps its defaults and shows the error in t
 | `gaps:inner_horizontal` | `8` | Points between tiles side by side. |
 | `gaps:inner_vertical` | `8` | Points between tiles above each other. |
 | `gaps:outer_left`, `gaps:outer_right`, `gaps:outer_bottom` | `12` | Points between the tiles and the screen edge. |
-| `gaps:outer_top` | `12` | The top gap on the built-in display. |
-| `gaps:outer_top_external` | `54` | The top gap on other displays, with room for a status bar. |
+| `gaps:outer_top` | `12` | The top gap. In Custom, only on the built-in display. |
+| `gaps:outer_top_external` | `"auto"` | The top edge. `"auto"` adds the height of a status bar found along the top, `"same"` uses only `gaps:outer_top`, and a number is Custom: the top gap on every display but the built-in one. |
 | `canvas:gap` | `12` | How far Fill (`⌥T`) stays from the screen edges. |
 
 ## Input
@@ -108,7 +108,7 @@ If the file isn't valid JSON, mielwm keeps its defaults and shows the error in t
 | `animation:enabled` | `true` | Camera flights. Off, mielwm cuts. |
 | `animation:speed` | `1` | 1 flies in 0.8 seconds, 2 in 0.4. |
 | `animation:curve` | `"spring"` | `spring` or `bezier`. |
-| `menubar:workspaces` | `true` | Workspace numbers in the menu bar instead of the icon. |
+| `menubar:style` | `"all"` | What the menu bar item shows: `all` workspaces with windows, the `current` one only, or the `icon`. The older `menubar:workspaces: false` still means `icon`. |
 | `notices:workspace` | `true` | The workspace numbers show at the bottom of the display for a moment after you switch. |
 | `integrations:barik` | `false` | [Barik](aerospace.md#barik) shows mielwm's workspaces. Turn it on in Settings, which also edits Barik's config. |
 

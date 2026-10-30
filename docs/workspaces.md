@@ -21,7 +21,7 @@ A workspace is a screen-sized area of the canvas. Workspaces 1 to 9 sit side by 
 | `⌃←`, `⌃→` | The previous or next workspace that has windows. They stop at the first and last. |
 | Three fingers left, right | The same, from the trackpad. See [Trackpad and mouse](trackpad.md). |
 
-Switching is instant, with no animation. The menu bar shows the numbers of the workspaces that have windows, with the current one filled. The same numbers show at the bottom of the display for 0.7 seconds after each switch, which helps when the menu bar is on another display. Turn this off with Show workspace on switch in General settings.
+Switching is instant, with no animation. The menu bar shows the numbers of the workspaces that have windows, with the current one filled. The same numbers show at the bottom of the display for 0.7 seconds after each switch, which helps when the menu bar is on another display. Turn this off with Show workspace on switch in Settings > Menu bar.
 
 ## Layouts
 
@@ -29,7 +29,7 @@ A workspace lays its windows out one of two ways, and any window can float inste
 
 ### Tiles
 
-Tiles split the screen between the workspace's windows, side by side on a wide display and above each other on a tall one. The gaps come from Settings > Layout & workspaces, and match AeroSpace's by default: 8 points between windows and 12 around the edge.
+Tiles split the screen between the workspace's windows, side by side on a wide display and above each other on a tall one. The gaps come from Settings > Layout, and match AeroSpace's by default: 8 points between windows and 12 around the edge.
 
 A tiled window can't be dragged smaller than its tile. Drag the edge between two tiles to move it, or use `⌥=` and `⌥-` to grow and shrink the focused tile. `⌥⇧` with an arrow swaps a window with its neighbour, and past the last tile it moves to the next workspace.
 
@@ -41,7 +41,7 @@ A stack shows one window at a time at full size, like AeroSpace's accordion. `�
 
 When you go to a stack, or another of its windows comes to the front, a strip at the top of the stack shows its windows in order: each app's icon and the window's title, the front one highlighted, and where it sits, like "2 of 4". It goes after 0.7 seconds and never takes space from the windows. When the titles don't fit, the strip shows only the front window's title.
 
-Peek edges, in Layout & workspaces settings, move the windows behind the front one aside by up to 16 points, so you can see that they are there. The window before the front one shows its left edge and the one after it shows its right edge, like the padding in AeroSpace's accordion. It's off by default.
+Peek edges, in Settings > Layout, move the windows behind the front one aside by up to 16 points, so you can see that they are there. The window before the front one shows its left edge and the one after it shows its right edge, like the padding in AeroSpace's accordion. It's off by default.
 
 ### Floating
 
@@ -51,7 +51,7 @@ Some apps always float, because their windows don't make sense as tiles: System 
 
 ## New windows
 
-A new window joins the workspace you're on, next to the focused window. It takes the workspace's layout, which is tiles unless you change it in Settings > Layout & workspaces.
+A new window joins the workspace you're on, next to the focused window. It takes the workspace's layout, which is tiles unless you change it in Settings > Layout.
 
 Workspace rules send an app's windows to a fixed workspace, so Spotify can always open on 2 and Discord on 1. Add them in Settings, or import your AeroSpace `on-window-detected` rules ([AeroSpace and Barik](aerospace.md)).
 
@@ -64,3 +64,13 @@ When mielwm starts, every window that's already open gets a workspace of its own
 ## More than one display
 
 The workspace you go to lands on the display under the pointer. The other displays keep showing whatever part of the canvas sits there. Gaps can differ on the built-in display and the others, for a menu bar that only covers one of them.
+
+## A status bar at the top
+
+Settings > Layout > Top edge decides how much room the tiles leave at the top of each display.
+
+- Automatic, the default, finds a status bar such as Barik or SketchyBar along the top of each display and adds its height to the top gap. A display without one gets the top gap alone. Next to the setting you see what it found on the display the Settings window is on, like "Barik, 40 pt". mielwm looks again when an app opens or quits and when displays change.
+- Same as other edges uses the top gap alone on every display.
+- Custom keeps the top gap for the built-in display and takes your own number for the others.
+
+A menu bar that hides itself needs nothing. macOS already leaves its room when it shows.

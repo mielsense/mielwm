@@ -71,7 +71,7 @@ private struct Palette: View {
         let list = hud.mode == .search && (!hud.rows.isEmpty || !hud.query.isEmpty)
         let width = min((help ? max(look.paletteWidth, PaletteMetrics.helpWidth) : look.paletteWidth) * s, content.size.width * 0.94)
         VStack(spacing: PaletteMetrics.cardGap * s) {
-            SearchField(hud: hud, look: look)
+            QueryField(hud: hud, look: look)
                 .frame(width: width, height: look.searchHeight * s)
                 .chromeMaterial(Capsule(), look: look)
             if list || help {
@@ -86,7 +86,7 @@ private struct Palette: View {
 }
 
 /// Spotlight's field: a magnifying glass, then the query in the biggest size.
-private struct SearchField: View {
+private struct QueryField: View {
     let hud: HUDModel
     let look: Look
 

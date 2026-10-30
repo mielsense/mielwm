@@ -32,9 +32,10 @@ public struct ScreenInfo: Hashable, Codable, Sendable {
     public var scale: CGFloat // backing scale factor
     public var safeAreaTop: CGFloat // notch height, 0 without one
     public var isBuiltIn: Bool
+    public var topBar: TopBar? // a status bar under the menu bar, for the Automatic top gap
 
     public init(id: UInt32, name: String, frame: CGRect, visibleFrame: CGRect,
-                scale: CGFloat, safeAreaTop: CGFloat = 0, isBuiltIn: Bool = false) {
+                scale: CGFloat, safeAreaTop: CGFloat = 0, isBuiltIn: Bool = false, topBar: TopBar? = nil) {
         self.id = id
         self.name = name
         self.frame = frame
@@ -42,6 +43,7 @@ public struct ScreenInfo: Hashable, Codable, Sendable {
         self.scale = scale
         self.safeAreaTop = safeAreaTop
         self.isBuiltIn = isBuiltIn
+        self.topBar = topBar
     }
 
     /// Room the notch or the menu bar takes at the top, and the Dock at the bottom, in points.

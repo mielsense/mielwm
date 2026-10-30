@@ -8,7 +8,10 @@ extension Controller {
     func system(_ event: SystemEvent) {
         if case let .windowClosed(id) = event { capture.stop([id], dropFrames: true) }
         input(.system(event))
-        if case .screensChanged = event { rebuildOverlays() }
+        if case .screensChanged = event {
+            rebuildOverlays()
+            onScreens?()
+        }
     }
 
     func updateTap() {

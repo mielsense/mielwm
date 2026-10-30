@@ -44,7 +44,9 @@ func parseSettings(config: Data?, configName: String = "config.json") -> LoadedS
             result.errors.append("\(name): expected an object at the top")
             return
         }
-        for (key, raw) in flatten(dict) {
+        let entries = flatten(dict), names = Set(entries.map(\.0))
+        for (key, raw) in entries {
+            if key == "menubar:workspaces", names.contains("menubar:style") { continue } // the newer key decides
             if key.hasPrefix("keys:") {
                 let chord = String(key.dropFirst(5))
                 guard let command = raw as? String else { result.errors.append("\(name): binding '\(chord)' needs an action string"); continue }

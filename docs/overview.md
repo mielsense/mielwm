@@ -46,15 +46,15 @@ The `⌃` versions of these keys, like `⌃0` and `⌃Z`, work too, and so does 
 
 Click a window to go to it, or drag it somewhere else, onto another workspace too. Scroll with two fingers or drag the empty canvas to pan, and pinch or `⌘`-scroll to zoom. Hovering a window selects it and shows its name.
 
-If you'd rather drive the overview by keyboard only, turn off "Use the pointer" in Settings > General.
+If you'd rather drive the overview by keyboard only, turn off "Use the pointer in the overview" in Settings > Trackpad & mouse.
 
 ## The minimap
 
-The minimap in the corner shows the whole canvas, your workspaces and the part you're looking at. Click it to jump there. The button next to it tidies your floating windows. Settings > Appearance turns the minimap off.
+The minimap in the corner shows the whole canvas, your workspaces and the part you're looking at. Click it to jump there. The button next to it tidies your floating windows. Settings > Overview turns the minimap off.
 
 ## The lens
 
-The bend at the edges is the lens. It's there so the windows around the edge stay in view without shrinking everything else. Settings > Appearance sets its strength and how far the canvas extends under it, or turns it off.
+The bend at the edges is the lens. It's there so the windows around the edge stay in view without shrinking everything else. Settings > Overview sets its strength and how far the canvas extends under it, or turns it off.
 
 With Reduce Motion on in System Settings > Accessibility, mielwm cuts between views instead of flying.
 
