@@ -183,7 +183,7 @@ final class Controller {
         let commands = state.send(.unparkAll)
         saveNow()
         ipc?.stop()
-        let registry = registry!, capture = capture, layoutURL = layoutURL
+        let registry = registry!, capture = capture, layoutURL = layoutURL, savesLayout = mode == .normal
         let applied = registry.perform(commands) // on main: the registry's app list is main-only
         DispatchQueue.global(qos: .userInitiated).async {
             let answered = applied.wait(timeout: 2)
@@ -195,6 +195,7 @@ final class Controller {
             RunLoop.main.perform(inModes: [.default, .modalPanel]) {
                 registry.stop()
                 capture.stop(dropFrames: true)
+                if !savesLayout { try? FileManager.default.removeItem(at: layoutURL.deletingLastPathComponent()) } // a test copy's scratch
                 done(answered)
             }
             CFRunLoopWakeUp(CFRunLoopGetMain())
