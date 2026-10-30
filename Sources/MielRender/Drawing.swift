@@ -1,12 +1,12 @@
-// CPU drawing for the tags and synthetic windows: a y-down bitmap context,
-// the theme (macOS's dark and light materials), SF Pro and app icons.
-
 import AppKit
 import CoreText
 import Metal
 import MielCore
 
-let sRGB = CGColorSpace(name: CGColorSpace.sRGB)!
+// CPU drawing for the tags and synthetic windows: a y-down bitmap context,
+// the theme (macOS's dark and light materials), SF Pro and app icons.
+
+let sRGB = CGColorSpace(name: CGColorSpace.sRGB)! // built into macOS: never nil
 
 func rgba(_ r: Double, _ g: Double, _ b: Double, _ a: Double = 1) -> CGColor {
     CGColor(colorSpace: sRGB, components: [r, g, b, a])!
@@ -77,7 +77,7 @@ final class Bitmap {
         return texture
     }
 
-    // MARK: shapes
+    // MARK: - Shapes
 
     func roundedPath(_ r: CGRect, _ radius: CGFloat) -> CGPath {
         continuousRoundedPath(r, radius)
@@ -116,7 +116,7 @@ final class Bitmap {
         ctx.restoreGState()
     }
 
-    // MARK: text
+    // MARK: - Text
 
     /// Draws a line with its cap height centered on `cy`. Returns its width.
     @discardableResult
@@ -183,11 +183,14 @@ struct Theme {
 
 // MARK: - Fonts and text
 
+/// The weights canvas text uses.
 enum FontWeight: Hashable { case regular, medium, semibold } // semibold: titles
 
+/// How a run of canvas text is set: its size, weight and tracking.
 struct TextStyle {
     var size: CGFloat
     var weight: FontWeight = .regular
+    var tracking: CGFloat = 0 // extra space after each character, in pixels
 }
 
 /// SF Pro, the system UI font, with its tabular digits so numbers do not
@@ -203,7 +206,12 @@ final class Typesetter {
     func font(_ style: TextStyle) -> CTFont {
         let key = FontKey(size: (style.size * 4).rounded() / 4, weight: style.weight)
         if let f = fonts[key] { return f }
-        let font = NSFont.monospacedDigitSystemFont(ofSize: max(key.size, 1), weight: [.regular: .regular, .medium: .medium, .semibold: .semibold][style.weight]!) as CTFont
+        let weight: NSFont.Weight = switch style.weight {
+        case .regular: .regular
+        case .medium: .medium
+        case .semibold: .semibold
+        }
+        let font = NSFont.monospacedDigitSystemFont(ofSize: max(key.size, 1), weight: weight) as CTFont
         fonts[key] = font
         return font
     }
@@ -214,6 +222,7 @@ final class Typesetter {
         CTLineCreateWithAttributedString(NSAttributedString(string: text, attributes: [
             NSAttributedString.Key(kCTFontAttributeName as String): font(style),
             NSAttributedString.Key(kCTForegroundColorAttributeName as String): color,
+            NSAttributedString.Key(kCTKernAttributeName as String): style.tracking,
         ]))
     }
 
@@ -226,6 +235,7 @@ final class Typesetter {
 
 // MARK: - App icons
 
+/// App icons for window tags, read once per app and size.
 final class IconCache {
     private var icons: [String: CGImage?] = [:]
 

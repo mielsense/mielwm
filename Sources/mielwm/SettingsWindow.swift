@@ -129,6 +129,7 @@ final class SettingsWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
 }
 
 /// The first view of `type` in `view`'s tree, depth first.
+@MainActor
 func firstView<T: NSView>(_ type: T.Type, in view: NSView) -> T? {
     if let found = view as? T { return found }
     for sub in view.subviews { if let found = firstView(type, in: sub) { return found } }
@@ -144,6 +145,7 @@ final class SeamlessSplitView: NSSplitView {
     }
 }
 
+/// The Settings window's sidebar: its search field and the panes in groups.
 struct SettingsSidebar: View {
     @EnvironmentObject var model: SettingsModel
 
@@ -191,6 +193,7 @@ struct SettingsSidebar: View {
     }
 }
 
+/// The pane the sidebar chose.
 struct SettingsDetail: View {
     @EnvironmentObject var model: SettingsModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion

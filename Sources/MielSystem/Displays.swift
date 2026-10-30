@@ -1,6 +1,7 @@
 import AppKit
 import MielCore
 
+/// The displays macOS reports, as Core's `ScreenInfo`.
 public enum Displays {
     /// Every display in global y-down points, with the status bar on each.
     /// A display in a full screen Space keeps its bar from `previous`.

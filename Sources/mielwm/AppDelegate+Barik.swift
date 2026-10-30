@@ -19,10 +19,6 @@ extension AppDelegate {
             _ = Self.barikMoveFirstAlert().runModal()
             return
         }
-        if on, barik.config == nil {
-            _ = Self.barikNoConfigAlert().runModal()
-            return
-        }
         guard Self.barikAlert(on: on, config: barik.config, icon: on && model.settings.menuBarStyle == .all).runModal() == .alertFirstButtonReturn else { return }
         do {
             try on ? barik.turnOn() : barik.turnOff()
@@ -36,35 +32,26 @@ extension AppDelegate {
         }
     }
 
+    /// `config`: Barik's config, which mielwm edits when there is one.
     /// `icon`: turning on also sets mielwm's menu bar item to its icon.
     static func barikAlert(on: Bool, config: URL?, icon: Bool = false) -> NSAlert {
         let alert = NSAlert.mielwm()
-        let file = config.map { ($0.path as NSString).abbreviatingWithTildeInPath } ?? "the menu bar's config"
+        let file = config.map { ($0.path as NSString).abbreviatingWithTildeInPath }
         if on {
             alert.messageText = "Work with AeroSpace-compatible apps?"
-            alert.informativeText = """
-                mielwm will start a hidden helper called AeroSpace, so menu bars and tools made for AeroSpace \
-                show mielwm's workspaces. It sets aerospace.path in \(file) to its own aerospace command, after \
-                saving a copy next to it, and relaunches the app that reads it.
-                """ + (icon ? " mielwm's own menu bar item changes to its icon, so the workspaces don't show twice." : "")
+            alert.informativeText = "mielwm will start a hidden helper called AeroSpace, so menu bars and tools made for AeroSpace "
+                + "show mielwm's workspaces through its aerospace command."
+                + (file.map { " It sets aerospace.path in \($0) to that command, after saving a copy next to it, and relaunches the app that reads it." } ?? "")
+                + (icon ? " mielwm's own menu bar item changes to its icon, so the workspaces don't show twice." : "")
             alert.addButton(withTitle: "Turn on")
         } else {
             alert.messageText = "Stop working with AeroSpace-compatible apps?"
-            alert.informativeText = """
-                mielwm will put the old aerospace.path back in \(file), quit its AeroSpace helper and \
-                relaunch the app that reads it.
-                """
+            alert.informativeText = file.map {
+                "mielwm will put the old aerospace.path back in \($0), quit its AeroSpace helper and relaunch the app that reads it."
+            } ?? "mielwm will quit its AeroSpace helper."
             alert.addButton(withTitle: "Turn off")
         }
         alert.addButton(withTitle: "Cancel")
-        return alert
-    }
-
-    static func barikNoConfigAlert() -> NSAlert {
-        let alert = NSAlert.mielwm()
-        alert.messageText = "Open your menu bar app once first"
-        alert.informativeText = "mielwm points the app's config at its aerospace command, and an app like Barik makes its config the first time it runs. Open it, then turn this on again."
-        alert.addButton(withTitle: "OK")
         return alert
     }
 

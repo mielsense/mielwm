@@ -35,23 +35,13 @@ struct Expectation: Hashable, Sendable {
     var resent = false
 }
 
+/// A window mielwm made fill the screen, and where it goes back to.
 struct FullscreenEntry: Hashable, Sendable {
     var before: CGRect // canvas frame to go back to
     var suspended = false // ⌃⌥G took the screen back; landing on it again goes fullscreen again
 }
 
 /// What undo puts back: frames and the workspaces.
-struct UndoEntry: Sendable {
-    var frames: [WindowID: CGRect]
-    var workspaces: [Workspace]
-}
-
-struct Checkpoint: Hashable, Sendable {
-    var kind: String
-    var window: WindowID?
-    var time: Double
-}
-
 /// Everything Core knows. Change it only through `send` / `reduce`.
 public struct CanvasState: Sendable {
     static let expectationLifetime = 1.0 // seconds a setFrame has to show up
@@ -175,7 +165,7 @@ public struct CanvasState: Sendable {
         }
     }
 
-    // MARK: Reading
+    // MARK: - Reading
 
     public var deskCenter: CGPoint { MielCore.deskCenter(screens) }
     public var camera: Camera { animator.camera }
@@ -211,7 +201,7 @@ public struct CanvasState: Sendable {
 
     var hudShown: Bool { isOverview && overview.isOpen && settings.navigatorEnabled }
 
-    // MARK: Cameras
+    // MARK: - Cameras
 
     func roundedAtRest(_ c: Camera) -> Camera {
         let d = deskCenter
@@ -239,7 +229,7 @@ public struct CanvasState: Sendable {
         return roundedAtRest(camera(showing: target, at: v.center, zoom: 1))
     }
 
-    // MARK: Overview cameras
+    // MARK: - Overview cameras
 
     static let overviewMargin: CGFloat = 32 // free area to the screen's sides and to the palette and hints
     static let labelRoom: CGFloat = 36 // above a workspace for its number pill, below a window for its name
@@ -341,7 +331,7 @@ public struct CanvasState: Sendable {
         return camera(fitting: deskCamera.toCanvas(activeScreen.frame, deskCenter: deskCenter), maxZoom: settings.initialZoom)
     }
 
-    // MARK: Laying out the real windows
+    // MARK: - Laying out the real windows
 
     /// Where the window really goes for `deskCamera`: on screen if any of it
     /// shows (kept below the menu bar), else a park slot.

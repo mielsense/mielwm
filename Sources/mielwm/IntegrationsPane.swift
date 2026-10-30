@@ -2,6 +2,7 @@ import AppKit
 import MielCore
 import SwiftUI
 
+/// Settings > AeroSpace: working with AeroSpace-compatible apps, and the import.
 struct IntegrationsPane: View {
     @EnvironmentObject var model: SettingsModel
     private let aeroSpaceURL = AeroSpaceImport.standardURL()
@@ -11,7 +12,7 @@ struct IntegrationsPane: View {
             Section { PaneHeader(pane: .integrations) }
             Section {
                 SettingsRow("Work with AeroSpace-compatible apps",
-                            subtitle: model.barikAvailable ? "Runs a small helper named AeroSpace and the aerospace command, so menu bars and tools made for AeroSpace, like Barik, show mielwm's workspaces. mielwm asks before it edits an app's config."
+                            subtitle: model.barikAvailable ? "Runs a small helper named AeroSpace, so menu bars and tools made for AeroSpace show mielwm's workspaces through its aerospace command. For a menu bar like Barik, mielwm also points its config at that command, after asking."
                                 : "Works when mielwm runs from mielwm.app.",
                             icon: IconTile("menubar.dock.rectangle", tint: Design.Tint.graphite)) {
                     Toggle("Work with AeroSpace-compatible apps", isOn: Binding(get: { model.settings.barik }, set: { model.onBarik($0) }))

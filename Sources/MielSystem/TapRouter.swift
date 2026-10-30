@@ -13,6 +13,7 @@ enum TapInput: Equatable {
     case magnify(Double, at: CGPoint)
 }
 
+/// What the router decided: whether to swallow the event, and what to tell the app.
 struct TapOutput: Equatable {
     var consume = false
     var events: [TapEvent] = []

@@ -19,7 +19,7 @@ mielwm draws on four surfaces, with three drawing technologies. They share the v
 | Surface | Drawn with | Code |
 | --- | --- | --- |
 | Settings, onboarding, About, sheets | SwiftUI, from `Design` and the components | `Sources/mielwm/*Pane.swift`, `SettingsWindow.swift`, `Onboarding.swift` |
-| The overview's HUD, live and in `mielwm snapshot` | SwiftUI over the Metal canvas, `Design` values times the HUD scale. Snapshots use the solid material, since Liquid glass only draws on screen. | `Sources/mielwm/ChromeViews.swift`, `OverlayChrome.swift` |
+| The overview's HUD, live and in `mielwm snapshot` | SwiftUI over the Metal canvas, `Design` values times the HUD scale. Snapshots use the solid material, since Liquid glass only draws on screen. | `Sources/mielwm/ChromeViews.swift`, `ChromeSurface.swift`, `OverlayChrome.swift` |
 | Notices over the desktop | AppKit drawing from `Design` values | `Sources/mielwm/NoticeDrawing.swift`, `NoticePanel.swift` |
 | Window names, workspace pills and empty-workspace messages on the canvas | Core Text into Metal textures, after the lens so text never bends | `Sources/MielRender/TagPainter.swift` |
 
@@ -35,7 +35,12 @@ SF Pro only, through `Font.system` and `NSFont.systemFont`. Nothing is ever all 
 | A row's title, body text | 13 pt | regular | `Design.row`, `Design.rowSize` |
 | Text under a row, labels under thumbnails | 11 pt | regular | `Design.secondary`, `Design.secondarySize` |
 
-Regular is the default. Semibold marks a title or the chosen option in a `VisualPicker`. Medium appears only in `StatusBadge` and in the snapshot HUD's key caps. The overview's HUD scales every size by the HUD scale setting.
+Regular is the default, for every line of text you read. Two heavier weights mark something, the way System Settings does:
+
+- Semibold marks a heading or what is chosen: a pane's name, the chosen option in a `VisualPicker`, the shortcuts sheet's title and section names, the letters a search matched, and the current number in the workspace pill.
+- Medium is for small labels that must read at a glance: `StatusBadge`, the size a gap shows in the gaps diagram, window names on the canvas and the front window in the stack strip.
+
+SF Symbols take the weight of the text beside them, or medium inside an icon tile. A small glyph that stands alone, like a disclosure chevron or a link's arrow, is semibold, as in System Settings, so it keeps its shape at 10 or 11 points. Key caps are always regular. The overview's HUD scales every size by the HUD scale setting.
 
 ## Spacing
 
@@ -73,12 +78,15 @@ Surfaces separate by fill, not by strokes. A grouped box, the header card and a 
 
 ## Key caps
 
-Shortcuts look the same everywhere they appear: the Keyboard pane, the menu's hints, onboarding, the notices and the overview's HUD. `Design.KeyCap` holds the recipe and `KeyCaps` draws it.
+Shortcuts look the same everywhere they appear: the Keyboard pane, the overview's HUD, the notices and the messages on the canvas. `KeyCapMetrics` in [Sources/MielCore/KeyCapMetrics.swift](Sources/MielCore/KeyCapMetrics.swift) holds the numbers, so the Metal canvas can use them too. `Design.KeyCap` reads them for the app, and the `KeyCaps` component draws them in SwiftUI. The notices and the canvas draw the same recipe by hand.
 
 - Glyphs are SF Pro 13 pt regular with 1 point of tracking. Modifiers come in the system's order, ⌃⌥⇧⌘, then the key.
 - Text is the primary colour at 85% at rest, and secondary when there's no shortcut ("None").
 - The cap is a continuous rectangle with radius 6, 8 points of padding across and 3 down, at least 22 points tall.
-- The fill is the primary colour at 5% at rest and 9% on hover, with no stroke. On glass the fill is 12%, because 5% disappears against the backdrop.
+- The fill is the primary colour at 5% at rest and 9% on hover, with no stroke. On Liquid glass and frosted panels the fill is 12%, because 5% disappears against the backdrop. `Design.KeyCap.fill(on:)` picks between them, and the overview's panels pass it down to every cap inside them.
+- On a selected search result, the cap is white at 22% under the accent's text colour.
+- With Increase Contrast on, the cap gets the separator edge, like other filled shapes.
+- Smaller text scales every length with it. A cap at 11 pt is 11/13 of each number.
 - While recording, the cap has no fill, a 1.5 point accent ring and a 3 point accent halo at 25%, with "Type shortcut" in secondary.
 
 ## Materials

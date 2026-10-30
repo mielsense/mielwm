@@ -2,6 +2,7 @@ import AppKit
 import MielCore
 import SwiftUI
 
+/// Settings > Trackpad & mouse.
 struct TrackpadPane: View {
     @EnvironmentObject var model: SettingsModel
 

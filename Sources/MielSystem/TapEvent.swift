@@ -1,10 +1,12 @@
 import CoreGraphics
 import MielCore
 
+/// Where a trackpad gesture is: starting, moving or done.
 public enum GesturePhase: Sendable, Equatable {
     case began, changed, ended
 }
 
+/// One key as the event tap read it.
 public struct KeyPress: Sendable, Equatable {
     public var keyCode: UInt16
     public var modifiers: Modifiers

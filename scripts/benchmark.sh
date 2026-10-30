@@ -71,7 +71,7 @@ run() {
     for _ in $(seq 200); do [ "$(managed)" = 8 ] && break; sleep 0.05; done
     t1=$(now)
 }
-# Barik's load (docs/aerospace.md): its four `aerospace` commands every 0.1 s
+# Barik's load (docs/compatible-apps.md): its four `aerospace` commands every 0.1 s
 # for 10 s, 40 calls a second. Prints calls, seconds, median and slowest wall
 # time per call in ms, and the command's own CPU time per call in ms.
 barik_load() {

@@ -1,6 +1,7 @@
 import MielCore
 import SwiftUI
 
+/// Settings > Overview.
 struct OverviewPane: View {
     @EnvironmentObject var model: SettingsModel
 

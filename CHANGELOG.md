@@ -45,6 +45,15 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 
 ### Fixes
 
+- If Restart mielwm in the welcome window can't start the new copy, mielwm stays open instead of quitting for good.
+- Key caps look the same in Settings, the overview, the notices and the canvas. The ones in desktop toasts were too faint on glass, and the canvas drew its own size and weight.
+- Work with AeroSpace-compatible apps turns on without Barik. It starts the AeroSpace helper, and edits Barik's config only when there is one.
+- Pausing or quitting mielwm while you type or click can no longer crash it.
+- A display plugged in, removed or rearranged while mielwm starts is picked up at once, instead of at the next display change.
+- After Esc closes the overview, the window you were on keeps the keyboard, even when macOS reports another app in front for a moment.
+- Settings > Windows shows a workspace rule for a workspace past 9, like `com.x=12` from the config file, and keeps it when you edit another rule. Before, it was hidden and dropped.
+- The menu keeps warning that keyboard shortcuts need the Accessibility permission after the config file changes. Before, any reload dropped the warning.
+- Closing the welcome window no longer leaves the menu stuck on Waiting for permissions. Without Accessibility, mielwm stays paused, and Resume mielwm opens the window again.
 - A window that its app keeps pulling back is parked again on time, even while a message or a display change is still settling.
 - One of something is counted in the singular, like "1 floating app" in the import note.
 - Text in the app uses straight quotes and plain hyphens, like `⌘1-9`.

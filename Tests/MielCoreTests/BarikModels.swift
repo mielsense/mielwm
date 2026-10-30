@@ -1,3 +1,5 @@
+import Foundation
+
 // Barik's own config and AeroSpace models, copied from https://github.com/mocki-toki/barik
 // (Barik/Config/ConfigModels.swift, ConfigManager.swift and Widgets/Spaces/Aerospace/AerospaceModels.swift)
 // so the tests read mielwm's output the way Barik does. Changes: `experimental` is left out of RootToml
@@ -19,8 +21,6 @@
 // EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
 // THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-import Foundation
 
 struct RootToml: Decodable {
     var theme: String?

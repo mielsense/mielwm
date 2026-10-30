@@ -20,7 +20,10 @@ func settingsPreview(_ args: [String]) -> Never {
         ?? fm.temporaryDirectory.appendingPathComponent("mielwm-settings-preview-\(getpid())", isDirectory: true)
     try? fm.createDirectory(at: out, withIntermediateDirectories: true)
     try? fm.createDirectory(at: scratch, withIntermediateDirectories: true)
-    defer { if ownDir == nil { try? fm.removeItem(at: scratch) } }
+    if ownDir == nil { // every way out of here calls exit, which skips a defer
+        previewScratch = scratch
+        atexit { previewScratch.map { try? FileManager.default.removeItem(at: $0) } }
+    }
     let real = ConfigPaths.standard()
     let paths = ConfigPaths(config: scratch.appendingPathComponent("config.json"))
     try? fm.copyItem(at: real.config, to: paths.config)
@@ -279,6 +282,7 @@ private func saveMenuBarPreview(dark: Bool, to url: URL) {
 }
 
 /// The detail pane's scroll view (the sidebar has one too).
+@MainActor
 private func detailScrollView(in view: NSView?) -> NSScrollView? {
     guard let view else { return nil }
     var all: [NSScrollView] = []
@@ -297,3 +301,6 @@ private func savePNG(_ window: NSWindow, to url: URL) {
     view.cacheDisplay(in: view.bounds, to: rep)
     try? rep.representation(using: .png, properties: [:])?.write(to: url)
 }
+
+/// The copy of the config `settingsPreview` works on, removed at exit.
+nonisolated(unsafe) private var previewScratch: URL?

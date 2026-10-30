@@ -3,6 +3,7 @@ import MielCore
 import MielSystem
 import SwiftUI
 
+/// Settings > Layout.
 struct LayoutPane: View {
     @EnvironmentObject var model: SettingsModel
     @StateObject private var gapFocus = GapFocus()
@@ -37,7 +38,7 @@ struct LayoutPane: View {
                 GapField(title: "Left edge", key: "gaps:outer_left", focus: gapFocus)
                 GapField(title: "Right edge", key: "gaps:outer_right", focus: gapFocus)
                 GapField(title: "Bottom edge", key: "gaps:outer_bottom", focus: gapFocus)
-                Picker(selection: Binding(get: { s.topGapMode }, set: setTopGapMode)) {
+                Picker(selection: Binding(get: { s.topGapMode }, set: { setTopGapMode($0) })) {
                     Text("Automatic").tag(TopGapMode.auto)
                     Text("Same as other edges").tag(TopGapMode.same)
                     Text("Custom").tag(TopGapMode.custom)

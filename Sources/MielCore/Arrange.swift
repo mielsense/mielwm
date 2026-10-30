@@ -3,6 +3,7 @@ import Foundation
 
 // Tidy every window up on the grid, grouped by what it is for, with no overlaps.
 
+/// One window as the tidy-up sees it: where it is and what kind of app it belongs to.
 public struct ArrangeItem: Hashable, Sendable {
     public var id: WindowID
     public var frame: CGRect
@@ -35,6 +36,7 @@ func contextTokens(title: String, appName: String, extraStopwords: Set<String> =
     return result
 }
 
+/// The tidy-up's grid, and how far it may resize windows so they line up.
 public struct ArrangeOptions: Hashable, Sendable {
     public var grid: Double = 80
     var sizeSimilarity: Double = 0.12
@@ -92,10 +94,9 @@ public func arrange(_ items: [ArrangeItem], options o: ArrangeOptions, center: C
 
     var grouped: [String: [Int]] = [:]
     for i in items.indices { grouped[groupKey[i], default: []].append(i) }
-    let keys = grouped.keys.sorted()
+    let byKey = grouped.sorted { $0.key < $1.key }
 
-    for key in keys {
-        let indices = grouped[key]!
+    for (_, indices) in byKey {
         var matched = Set<Int>()
         for seed in indices where !matched.contains(seed) {
             var cluster = [seed]
@@ -122,8 +123,7 @@ public func arrange(_ items: [ArrangeItem], options o: ArrangeOptions, center: C
     // Each group is a small grid of its own.
     struct Group { var indices: [Int]; var local: [CGPoint]; var size: CGSize; var packed = CGPoint.zero }
     var groups: [Group] = []
-    for key in keys {
-        let indices = grouped[key]!
+    for (_, indices) in byKey {
         let count = indices.count
         let aspect = indices.reduce(0.0) { $0 + sizes[$1].width / max(1, sizes[$1].height) } / Double(count)
         var columns = count <= 1 ? 1 : Int(Double(count).squareRoot().rounded(.up))

@@ -5,7 +5,8 @@ import SwiftUI
 /// mielwm's design language for its native windows: Settings, onboarding,
 /// About, sheets and alerts. The values follow System Settings on macOS 26.
 enum Design {
-    // MARK: Type. SF Pro only, regular or semibold, never all caps.
+    // MARK: - Type
+    // SF Pro only, never all caps. DESIGN.md lists where each weight goes.
 
     /// The pane's name in its header card.
     static let headerTitle = Font.system(size: 22, weight: .semibold)
@@ -16,14 +17,18 @@ enum Design {
     /// Their sizes, for what AppKit draws and what scales (the overview's chrome, the notices).
     static let rowSize: CGFloat = 13, secondarySize: CGFloat = 11
 
-    // MARK: Spacing, on a 4 pt grid.
+    // MARK: - Spacing
+    // On a 4 pt grid.
 
+    /// Spacing steps.
     enum Space {
         static let xs: CGFloat = 4, s: CGFloat = 8, m: CGFloat = 12, xl: CGFloat = 20, xxl: CGFloat = 24
     }
 
-    // MARK: Radii, all continuous.
+    // MARK: - Radii
+    // All continuous.
 
+    /// Corner radii.
     enum Radius {
         /// A grouped box of rows outside a Form (onboarding's steps).
         static let group: CGFloat = 12
@@ -35,14 +40,15 @@ enum Design {
         static func tile(_ size: CGFloat) -> CGFloat { (size * 0.225).rounded() }
     }
 
-    // MARK: Fills. Surfaces separate by fill, not by strokes.
+    // MARK: - Fills
+    // Surfaces separate by fill, not by strokes.
 
     /// A grouped box of rows outside a Form.
     static let groupFill = Color(nsColor: .quaternarySystemFill)
     /// Increase Contrast draws an edge around filled shapes.
     static func edge(_ contrast: ColorSchemeContrast) -> Color { contrast == .increased ? Color(nsColor: .separatorColor) : .clear }
 
-    // MARK: Icon tiles
+    // MARK: - Icon tiles
 
     /// Apple's tile colors, the same in light and dark.
     enum Tint {
@@ -63,28 +69,26 @@ enum Design {
         static let glyph: CGFloat = 0.62
     }
 
-    // MARK: Key caps
+    // MARK: - Key caps
     //
-    // How shortcuts look wherever they appear: the Keyboard pane, the
-    // overview's chrome and the notices. Over glass the fill is `onGlass`.
-    // MielRender's empty-workspace message copies the radius and the fill.
-    // - Glyphs: SF Pro 13 pt regular, the modifiers in the system's order
-    //   ⌃⌥⇧⌘, then the key, 1 pt of tracking.
-    // - Text: primary at 85% opacity at rest, secondary when empty ("None").
-    // - Capsule: continuous radius 6, 8 pt across, 3 pt down, at least 22 pt
-    //   tall. Fill: primary at 5% at rest, 9% on hover, no stroke.
-    // - Recording: no fill, a 1.5 pt accent ring and a 3 pt accent halo at
-    //   25%, the text "Type shortcut" in secondary.
+    // How shortcuts look wherever they appear: the Keyboard pane, the menu's
+    // hints, onboarding, the overview's HUD, the notices and the canvas. The
+    // numbers are `KeyCapMetrics` in MielCore, so MielRender draws the same.
+    // `KeyCaps` draws them in SwiftUI; the notices and the canvas draw them
+    // by hand from the same values.
 
+    /// The key cap recipe in the app's own types.
     enum KeyCap {
-        static let font = Font.system(size: 13)
-        static let tracking: CGFloat = 1
-        static let radius = Radius.control
-        static let padding = EdgeInsets(top: 3, leading: 8, bottom: 3, trailing: 8)
-        static let minHeight: CGFloat = 22
-        static let rest = 0.05, hover = 0.09
-        /// On glass the backdrop shows through, so 5% vanishes: the cap needs more to keep its shape.
-        static let onGlass = 0.12
+        typealias M = KeyCapMetrics
+        static let textSize = M.textSize, tracking = M.tracking
+        static let radius = M.radius
+        static let padding = EdgeInsets(top: M.paddingDown, leading: M.paddingAcross, bottom: M.paddingDown, trailing: M.paddingAcross)
+        static let minHeight = M.minHeight
+        static let text = M.textOpacity
+        static let rest = M.rest, hover = M.hover, onAccent = M.onAccent
+
+        /// The fill at rest on `material`: more on glass and frosted panels, which let the backdrop through.
+        static func fill(on material: ChromeMaterial) -> Double { material == .solid ? M.rest : M.onGlass }
     }
 
     /// A floating pill with one line in it: a toast in the overview or over the desktop.
@@ -92,14 +96,14 @@ enum Design {
         static let height: CGFloat = 36
     }
 
-    // MARK: Motion
+    // MARK: - Motion
 
     /// Changing pane: a short cross-fade. Controls change instantly.
     static func paneChange(reduceMotion: Bool) -> Animation { .easeOut(duration: reduceMotion ? 0.1 : 0.15) }
     /// A drawing that follows a value, like the gaps diagram. Nothing moves with Reduce Motion.
     static func follow(reduceMotion: Bool) -> Animation? { reduceMotion ? nil : .spring(duration: 0.3, bounce: 0) }
 
-    // MARK: Materials
+    // MARK: - Materials
 
     /// What the overview's chrome and the notices are made of: Liquid glass
     /// (macOS 26 and later), the frosted HUD material, or a solid fill with

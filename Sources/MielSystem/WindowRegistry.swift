@@ -10,7 +10,10 @@ import MielCore
 /// on a private run-loop thread. Events reach `onEvent` on the main queue, in
 /// the order each app reported them. Call the public methods on the main
 /// thread; none of them waits on an app except `performAndWait`.
+@MainActor
 public final class WindowRegistry {
+    /// Seconds after an app starts or quits, or the Space changes, before the screens are read again.
+    private static let screenSettle = 1.5
     /// Only this pid's windows (`--manage-only`, tests), whatever its
     /// activation policy. nil tracks every regular app except our own.
     public let pidFilter: Int32?
@@ -32,13 +35,14 @@ public final class WindowRegistry {
     }
 
     /// Announces every existing window (`windowAppeared`), then the focused
-    /// one, then reports changes as they happen. Screens are not announced:
-    /// read `Displays.screens()`; later changes arrive as `screensChanged`.
+    /// one, then reports changes as they happen. `screens` are the ones the
+    /// caller read from `Displays.screens()`: if they changed since, a
+    /// `screensChanged` comes at once, and later changes as they happen.
     /// Call once; `stop()` ends the registry for good.
-    public func start() {
+    public func start(screens known: [ScreenInfo]? = nil) {
         AXUIElementSetMessagingTimeout(AXUIElementCreateSystemWide(), axTimeout)
         observerThread.startAndWait()
-        screens = Displays.screens()
+        screens = known ?? Displays.screens()
 
         let workspace = NSWorkspace.shared.notificationCenter
         observe(workspace, NSWorkspace.didLaunchApplicationNotification) { [weak self] app in
@@ -51,7 +55,7 @@ public final class WindowRegistry {
         }
         // Leaving a full screen Space shows a bar that was hidden there.
         let spaces = workspace.addObserver(forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
-            self?.checkScreensSoon()
+            MainActor.assumeIsolated { self?.checkScreensSoon() }
         }
         tokens.append((workspace, spaces))
         observe(workspace, NSWorkspace.didHideApplicationNotification) { [weak self] app in
@@ -67,10 +71,13 @@ public final class WindowRegistry {
         let token = NotificationCenter.default.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main
         ) { [weak self] _ in
-            self?.checkScreens()
-            self?.checkScreensSoon() // a status bar moves its window after the change
+            MainActor.assumeIsolated {
+                self?.checkScreens()
+                self?.checkScreensSoon() // a status bar moves its window after the change
+            }
         }
         tokens.append((NotificationCenter.default, token))
+        if known != nil { checkScreens() }
 
         if let pid = pidFilter {
             NSRunningApplication(processIdentifier: pid).map(track)
@@ -89,7 +96,7 @@ public final class WindowRegistry {
         screenCheck?.cancel()
         let work = DispatchWorkItem { [weak self] in self?.checkScreens() }
         screenCheck = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: work)
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.screenSettle, execute: work)
     }
 
     public func stop() {
@@ -99,7 +106,7 @@ public final class WindowRegistry {
         let group = DispatchGroup()
         trackers.values.forEach { $0.stop(group) }
         trackers = [:]
-        group.notify(queue: .global()) { [thread = observerThread] in thread.stop() }
+        group.notify(queue: .global()) { @Sendable [thread = observerThread] in thread.stop() }
     }
 
     /// `rescan`, after picking up apps that became regular after launch.
@@ -153,9 +160,10 @@ public final class WindowRegistry {
     // MARK: - Private
 
     private func observe(_ center: NotificationCenter, _ name: Notification.Name,
-                         _ handler: @escaping (NSRunningApplication) -> Void) {
+                         _ handler: @escaping @MainActor @Sendable (NSRunningApplication) -> Void) {
         let token = center.addObserver(forName: name, object: nil, queue: .main) { note in
-            if let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication { handler(app) }
+            guard let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication else { return }
+            MainActor.assumeIsolated { handler(app) }
         }
         tokens.append((center, token))
     }

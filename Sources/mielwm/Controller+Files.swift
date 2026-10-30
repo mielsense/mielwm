@@ -9,7 +9,7 @@ extension Controller {
         saveWork?.cancel()
         let work = DispatchWorkItem { [weak self] in MainActor.assumeIsolated { self?.saveNow() } }
         saveWork = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: work)
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.saveDelay, execute: work)
     }
 
     /// layout.json, also what the crash watcher unparks from.

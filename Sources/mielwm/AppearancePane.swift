@@ -3,6 +3,7 @@ import MielCore
 import MielSystem
 import SwiftUI
 
+/// Settings > Appearance.
 struct AppearancePane: View {
     @EnvironmentObject var model: SettingsModel
     @Environment(\.colorScheme) private var colorScheme
@@ -144,6 +145,8 @@ struct AccentWell: NSViewRepresentable {
 
     func makeCoordinator() -> Coordinator { Coordinator(changed) }
 
+    /// Passes the colour well's changes to SwiftUI.
+    @MainActor
     final class Coordinator: NSObject {
         var changed: (NSColor) -> Void
         init(_ changed: @escaping (NSColor) -> Void) { self.changed = changed }
@@ -151,6 +154,7 @@ struct AccentWell: NSViewRepresentable {
     }
 }
 
+/// One accent colour to pick, ringed when it is the chosen one, as in System Settings.
 struct Swatch: View {
     let name: String
     var detail: String?

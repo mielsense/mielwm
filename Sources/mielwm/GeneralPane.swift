@@ -3,6 +3,7 @@ import MielCore
 import ServiceManagement
 import SwiftUI
 
+/// Settings > General.
 struct GeneralPane: View {
     @EnvironmentObject var model: SettingsModel
     private let bundled = Bundle.main.bundleURL.pathExtension == "app"
@@ -11,7 +12,7 @@ struct GeneralPane: View {
         Form {
             Section { PaneHeader(pane: .general) }
             Section {
-                Toggle(isOn: Binding(get: { model.loginStatus == .enabled || model.loginStatus == .requiresApproval }, set: setLogin)) {
+                Toggle(isOn: Binding(get: { model.loginStatus == .enabled || model.loginStatus == .requiresApproval }, set: { setLogin($0) })) {
                     Text("Open at login")
                     if !bundled {
                         Text("Works when mielwm runs from mielwm.app.")

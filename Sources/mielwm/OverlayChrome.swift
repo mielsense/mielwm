@@ -25,6 +25,7 @@ extension ChromeContent {
     }
 }
 
+/// The HUD's content for SwiftUI, set on each frame that changes it.
 @MainActor
 final class ChromeModel: ObservableObject {
     @Published var content: ChromeContent

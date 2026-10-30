@@ -7,8 +7,9 @@ import os
 /// buttons, the wheel and gestures only while `TapRouter.wantsPointer`, so
 /// every click, drag and scroll in other apps does not make a round trip
 /// through this process. The callback only routes; handlers run later on
-/// the main queue.
-public final class EventTap {
+/// the main queue. Unchecked Sendable: `state` is behind a lock, and the
+/// rest belongs to the tap thread or is set before it starts.
+public final class EventTap: @unchecked Sendable {
     /// eventSourceUserData of events we post ourselves, so the tap lets them through.
     private static let replayMarker: Int64 = 0x4D49_454C // "MIEL"
 
@@ -21,16 +22,16 @@ public final class EventTap {
     }
 
     private let lockedState = OSAllocatedUnfairLock(initialState: TapState())
-    private let handler: (TapEvent) -> Void
+    private let handler: @MainActor @Sendable (TapEvent) -> Void
     private var router = TapRouter() // tap thread only
     private var middleDown: CGEvent? // tap thread only, replayed if no pan follows
     private var tap: CFMachPort?
     private var pointerTap: CFMachPort?
     private var pointerOn = false // tap thread only
     private var listenOnly = false
-    private var thread: RunLoopThread?
+    private(set) var thread: RunLoopThread? // internal for tests
 
-    public init(handler: @escaping (TapEvent) -> Void) {
+    public init(handler: @escaping @MainActor @Sendable (TapEvent) -> Void) {
         self.handler = handler
     }
 
@@ -62,15 +63,31 @@ public final class EventTap {
         return true
     }
 
+    /// The taps are switched off and invalidated on their own thread, between
+    /// two callbacks, and this waits for that: no callback can run on a tap
+    /// that is half gone, or after this returns.
     public func stop() {
-        guard let tap, let pointerTap, let thread else { return }
-        for p in [tap, pointerTap] {
-            CGEvent.tapEnable(tap: p, enable: false)
-            CFMachPortInvalidate(p)
+        guard let thread else { return }
+        let ports = [tap, pointerTap].compactMap { $0 }
+        let close = {
+            for p in ports {
+                CGEvent.tapEnable(tap: p, enable: false)
+                CFMachPortInvalidate(p)
+            }
+        }
+        if Thread.current === thread {
+            close() // already between callbacks; waiting on its own run loop would never end
+        } else {
+            let done = DispatchSemaphore(value: 0)
+            thread.perform {
+                close()
+                done.signal()
+            }
+            done.wait()
         }
         thread.stop()
-        self.tap = nil
-        self.pointerTap = nil
+        tap = nil
+        pointerTap = nil
         self.thread = nil
     }
 

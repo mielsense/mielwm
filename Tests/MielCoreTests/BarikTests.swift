@@ -6,7 +6,7 @@ import TOMLDecoder
 // Barik: the `aerospace` commands answered from the canvas, and the edit to
 // Barik's config. Both are read back with Barik's own models (BarikModels.swift).
 
-// MARK: Commands
+// MARK: - Commands
 
 private func decoded<T: Decodable>(_ reply: AeroSpaceReply, as: T.Type) throws -> T {
     guard case let .output(json) = reply else { throw CocoaError(.coderInvalidValue) }
@@ -84,7 +84,7 @@ private let windowsAll = ["list-windows", "--all", "--json", "--format", "%{wind
     #expect(try decoded(s.aerospace(["list-windows", "--focused", "--json"]), as: [AeroWindow].self).isEmpty)
 }
 
-// MARK: Config
+// MARK: - Config
 
 private let shim = "/Applications/mielwm.app/Contents/Helpers/aerospace"
 

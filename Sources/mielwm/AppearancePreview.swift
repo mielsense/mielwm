@@ -58,7 +58,7 @@ final class AppearancePreview: ObservableObject {
         let accent = Controller.systemAccent()
         guard let wanted, drawn.map({ $0.settings != wanted.settings || $0.dark != wanted.dark || $0.accent != accent }) ?? true else { return }
         if renderer == nil {
-            renderer = try? Renderer()
+            do { renderer = try Renderer() } catch { log("no renderer for the Appearance preview: \(error)") }
             frames = SyntheticFrames(windows: [], scale: 0.75)
             MielSystem.Wallpaper.image(for: screen) { [weak self] image in
                 MainActor.assumeIsolated {
@@ -86,6 +86,7 @@ final class AppearancePreview: ObservableObject {
     }
 }
 
+/// The Appearance pane's live picture of the overview.
 struct AppearancePreviewView: View {
     let settings: MielCore.Settings
     let dark: Bool

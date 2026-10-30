@@ -3,6 +3,7 @@ import MielCore
 import MielSystem
 import SwiftUI
 
+/// Settings > Advanced.
 struct AdvancedPane: View {
     @EnvironmentObject var model: SettingsModel
 
@@ -73,8 +74,10 @@ struct AdvancedPane: View {
 /// Opens config.json, making an empty one first if needed.
 func openConfigFile(_ url: URL) {
     if !FileManager.default.fileExists(atPath: url.path) {
-        try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-        try? Data("{\n}\n".utf8).write(to: url)
+        do {
+            try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try Data("{\n}\n".utf8).write(to: url)
+        } catch { log("cannot make an empty config file: \(error)") }
     }
     NSWorkspace.shared.open(url)
 }
@@ -84,7 +87,9 @@ func revealConfigFile(_ url: URL) {
     if FileManager.default.fileExists(atPath: url.path) {
         NSWorkspace.shared.activateFileViewerSelecting([url])
     } else {
-        try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        do { try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true) } catch {
+            log("cannot make the config folder: \(error)")
+        }
         NSWorkspace.shared.open(url.deletingLastPathComponent())
     }
 }

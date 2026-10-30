@@ -9,7 +9,7 @@ final class Pipelines {
     let lens: MTLRenderPipelineState
 
     private static let lock = NSLock()
-    private static var shared: [UInt64: Pipelines] = [:]
+    nonisolated(unsafe) private static var shared: [UInt64: Pipelines] = [:] // guarded by `lock`
 
     static func shared(for device: MTLDevice) throws -> Pipelines {
         lock.lock()

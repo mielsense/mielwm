@@ -1,7 +1,7 @@
 import CoreMedia
 import Foundation
 import MielCore
-import ScreenCaptureKit
+@preconcurrency import ScreenCaptureKit
 import VideoToolbox
 
 /// Window images for Render. Live SCStreams for windows that are on screen
@@ -11,6 +11,7 @@ import VideoToolbox
 /// SCK's async overloads resolve to the wrong symbols under the Command Line
 /// Tools, so every call here uses the completion-handler form.
 public final class CaptureManager: NSObject, WindowFrameSource, @unchecked Sendable {
+    /// How often live window pictures update.
     public enum Rate: Sendable {
         case overview // 60 fps
         case linger // 15 fps: the overlay just closed and may open again
@@ -18,10 +19,11 @@ public final class CaptureManager: NSObject, WindowFrameSource, @unchecked Senda
     }
 
     /// Main queue, once per `warm`: the first fresh frame of that window.
-    public var onFirstFrame: ((WindowID) -> Void)?
-    private var wake: (() -> Void)? // see `wakeOnNextPicture`
+    public var onFirstFrame: (@MainActor @Sendable (WindowID) -> Void)?
+    private var wake: (@MainActor @Sendable () -> Void)? // see `wakeOnNextPicture`
     private var storedCount: UInt64 = 0 // new pictures so far
 
+    /// One window's picture, and its stream while it has one.
     private struct Slot {
         var frame: WindowFrame?
         var generation: UInt64 = 0
@@ -46,7 +48,7 @@ public final class CaptureManager: NSObject, WindowFrameSource, @unchecked Senda
 
     override public init() {}
 
-    // MARK: WindowFrameSource
+    // MARK: - WindowFrameSource
 
     public func latestFrame(for id: WindowID) -> WindowFrame? {
         lock.withLock { slots[id]?.frame }
@@ -61,7 +63,7 @@ public final class CaptureManager: NSObject, WindowFrameSource, @unchecked Senda
 
     /// `body` runs once on the main queue at the first new picture after `seen` were stored:
     /// at once if one already was, so one stored while the caller decided to wait still counts.
-    public func wakeOnNextPicture(after seen: UInt64, _ body: @escaping () -> Void) {
+    public func wakeOnNextPicture(after seen: UInt64, _ body: @escaping @MainActor @Sendable () -> Void) {
         let missed: Bool = lock.withLock {
             if storedCount > seen { return true }
             wake = body
@@ -70,7 +72,7 @@ public final class CaptureManager: NSObject, WindowFrameSource, @unchecked Senda
         if missed { DispatchQueue.main.async(execute: body) }
     }
 
-    // MARK: Streams
+    // MARK: - Streams
 
     /// Starts a stream for each window that has none, scaled to fit
     /// `maxPixelSize`, at the current rate.
@@ -91,12 +93,12 @@ public final class CaptureManager: NSObject, WindowFrameSource, @unchecked Senda
         let streams: [(stream: SCStream, config: SCStreamConfiguration)] = lock.withLock {
             guard self.rate != rate else { return [] }
             self.rate = rate
-            return slots.keys.compactMap { id in
-                slots[id]!.sameFrames = 0
-                slots[id]!.quiet = false
-                slots[id]!.live?.config.minimumFrameInterval = Self.interval(rate)
-                return slots[id]!.live
+            for id in slots.keys {
+                slots[id]?.sameFrames = 0
+                slots[id]?.quiet = false
+                slots[id]?.live?.config.minimumFrameInterval = Self.interval(rate)
             }
+            return slots.values.compactMap(\.live)
         }
         for (stream, config) in streams { stream.updateConfiguration(config) { _ in } }
     }
@@ -119,7 +121,8 @@ public final class CaptureManager: NSObject, WindowFrameSource, @unchecked Senda
     /// `scale` of its size, letting go of SCK's full-size buffers.
     public func cool(stillScale scale: CGFloat) {
         stop()
-        let frames: [(WindowID, UInt64, CVPixelBuffer)] = lock.withLock {
+        // Unchecked: the pixel buffers are only read from here on.
+        nonisolated(unsafe) let frames: [(WindowID, UInt64, CVPixelBuffer)] = lock.withLock {
             slots.compactMap { id, slot in
                 if case let .pixelBuffer(buffer)? = slot.frame { (id, slot.generation, buffer) } else { nil }
             }
@@ -131,7 +134,7 @@ public final class CaptureManager: NSObject, WindowFrameSource, @unchecked Senda
                 self.lock.withLock {
                     // A newer picture or a new stream wins.
                     guard self.slots[id]?.generation == generation, self.slots[id]?.live == nil else { return }
-                    if let still { self.slots[id]!.store(.image(still)) } else { self.slots[id]!.frame = nil }
+                    if let still { self.slots[id]?.store(.image(still)) } else { self.slots[id]?.frame = nil }
                 }
             }
         }
@@ -152,7 +155,7 @@ public final class CaptureManager: NSObject, WindowFrameSource, @unchecked Senda
                 guard let small = Self.scaled(image, by: 0.5) else { continue }
                 self.lock.withLock {
                     guard self.slots[id]?.generation == generation else { return } // a newer picture wins
-                    self.slots[id]!.store(.image(small))
+                    self.slots[id]?.store(.image(small))
                 }
             }
         }
@@ -168,8 +171,8 @@ public final class CaptureManager: NSObject, WindowFrameSource, @unchecked Senda
     /// `image` at `scale` of its size, 8-bit BGRA premultiplied in its own color space.
     static func scaled(_ image: CGImage, by scale: CGFloat) -> CGImage? {
         let width = max(1, Int((CGFloat(image.width) * scale).rounded())), height = max(1, Int((CGFloat(image.height) * scale).rounded()))
-        guard let ctx = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
-                                  space: image.colorSpace ?? CGColorSpace(name: CGColorSpace.sRGB)!,
+        guard let space = image.colorSpace ?? CGColorSpace(name: CGColorSpace.sRGB),
+              let ctx = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0, space: space,
                                   bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue)
         else { return nil }
         ctx.interpolationQuality = .medium
@@ -177,12 +180,12 @@ public final class CaptureManager: NSObject, WindowFrameSource, @unchecked Senda
         return ctx.makeImage()
     }
 
-    // MARK: Stills
+    // MARK: - Stills
 
     /// Stills of `ids` at `scale` of their full pixel size (take them at the
     /// size they are drawn: a full 2x still costs ~220 ms), in parallel.
     /// `completion` runs on the main queue after the last one.
-    public func captureStills(_ ids: [WindowID], scale: CGFloat = 1, completion: (() -> Void)? = nil) {
+    public func captureStills(_ ids: [WindowID], scale: CGFloat = 1, completion: (@MainActor @Sendable () -> Void)? = nil) {
         lock.withLock { closed.subtract(ids) } // asked for again: it is back
         withWindows(ids) { windows in
             let group = DispatchGroup()
@@ -195,12 +198,12 @@ public final class CaptureManager: NSObject, WindowFrameSource, @unchecked Senda
                     group.leave()
                 }
             }
-            group.notify(queue: .main) { completion?() }
+            group.notify(queue: .main) { MainActor.assumeIsolated { completion?() } }
         }
     }
 
     /// Re-reads which windows SCK can capture. Runs by itself when an id is unknown.
-    func refreshContent(_ completion: (() -> Void)? = nil) {
+    func refreshContent(_ completion: (@Sendable () -> Void)? = nil) {
         SCShareableContent.getExcludingDesktopWindows(true, onScreenWindowsOnly: false) { content, _ in
             if let content {
                 let windows = Dictionary(content.windows.map { ($0.windowID, $0) }, uniquingKeysWith: { a, _ in a })
@@ -210,10 +213,10 @@ public final class CaptureManager: NSObject, WindowFrameSource, @unchecked Senda
         }
     }
 
-    // MARK: Private
+    // MARK: - Private
 
     func store(_ frame: WindowFrame, for id: WindowID) {
-        var woken: (() -> Void)?
+        var woken: (@MainActor @Sendable () -> Void)?
         lock.withLock {
             guard !closed.contains(id) else { return }
             slots[id, default: Slot()].store(frame)
@@ -223,8 +226,8 @@ public final class CaptureManager: NSObject, WindowFrameSource, @unchecked Senda
         woken.map { DispatchQueue.main.async(execute: $0) }
     }
 
-    private func withWindows(_ ids: [WindowID], _ body: @escaping ([(WindowID, SCWindow)]) -> Void) {
-        let lookup = { self.lock.withLock { ids.compactMap { id in self.scWindows[id.number].map { (id, $0) } } } }
+    private func withWindows(_ ids: [WindowID], _ body: @escaping @Sendable ([(WindowID, SCWindow)]) -> Void) {
+        let lookup = { @Sendable in self.lock.withLock { ids.compactMap { id in self.scWindows[id.number].map { (id, $0) } } } }
         let found = lookup()
         if found.count == ids.count { return body(found) }
         refreshContent { body(lookup()) }
@@ -239,7 +242,7 @@ public final class CaptureManager: NSObject, WindowFrameSource, @unchecked Senda
             guard slots[id]?.live == nil, self.stops == stops else { return false } // cooled meanwhile
             config.minimumFrameInterval = Self.interval(rate)
             slots[id, default: Slot()].live = (stream, config)
-            slots[id]!.waitingForFirstFrame = true
+            slots[id]?.waitingForFirstFrame = true
             return true
         }
         guard started else { return }
@@ -317,17 +320,17 @@ extension CaptureManager: SCStreamOutput, SCStreamDelegate {
         // A frame that says nothing changed would only make Render draw the same picture again.
         let unchanged = (info[.dirtyRects] as? [Any])?.isEmpty ?? false
         guard let (id, stored, checks): (WindowID, CVPixelBuffer?, Int) = lock.withLock({
-            guard let id = slots.first(where: { $0.value.live?.stream === stream })?.key else { return nil }
-            if slots[id]!.waitingForFirstFrame { return (id, nil, 0) }
+            guard let (id, slot) = slots.first(where: { $0.value.live?.stream === stream }) else { return nil }
+            if slot.waitingForFirstFrame { return (id, nil, 0) }
             if unchanged { return nil }
-            guard case let .pixelBuffer(stored)? = slots[id]!.frame else { return (id, nil, 0) }
-            return (id, stored, slots[id]!.sameFrames)
+            guard case let .pixelBuffer(stored)? = slot.frame else { return (id, nil, 0) }
+            return (id, stored, slot.sameFrames)
         }) else { return }
         // Each time the display recomposes, SCK sends the window again with all of it marked
         // dirty (macOS 27): compare the pixels. Outside the lock, which the main thread reads under.
         let same = stored.map { Self.sameRows(pixels, $0, phase: checks) } ?? false
         var slow: (stream: SCStream, config: SCStreamConfiguration)?
-        var woken: (() -> Void)?
+        var woken: (@MainActor @Sendable () -> Void)?
         let first: WindowID? = lock.withLock {
             guard var slot = slots[id], slot.live?.stream === stream else { return nil }
             defer { slots[id] = slot }

@@ -33,7 +33,7 @@ extension Controller {
             let stamp = url.flatMap { $0.pathExtension.lowercased() == "heic" ? nil : "\($0.path) \(date?.timeIntervalSince1970 ?? 0) \(s.frame.size) \(s.scale)" }
             if let stamp, wallpaperStamps[s.id] == stamp { continue }
             wallpaperStamps[s.id] = stamp
-            MielSystem.Wallpaper.image(for: s) { [weak self] image in MainActor.assumeIsolated { self?.setWallpaper(image, on: s) } }
+            MielSystem.Wallpaper.image(for: s) { [weak self] image in self?.setWallpaper(image, on: s) }
         }
     }
 
@@ -126,7 +126,7 @@ extension Controller {
         overlay.chrome.show(ChromeContent(taking: &scene, worldShown: worldShown, toastOpacity: state.notices.toast?.opacity(at: now) ?? 1),
                             transition: scene.transition, opacity: opacity)
         pictureChecks[screenID] = capture.picturesStored // before the look, so a picture landing during it counts as new
-        overlay.draw(scene, renderer: renderer, frames: capture)
+        if overlay.draw(scene, renderer: renderer, frames: capture) { framesDrawn += 1 }
         // Settled with nothing new to draw on any display: no frames (nor ticks, which would
         // wake them) until an input, a state change or a new picture.
         if overlay.idleFrames > Overlay.idleAfter, !state.needsTicks, restingSince == nil, fadeStart == nil,
@@ -134,7 +134,7 @@ extension Controller {
             for o in overlays.values { o.view.link?.isPaused = true }
             framesPaused = true
             let looked = overlays.keys.compactMap { pictureChecks[$0] }.min() ?? 0 // the display that looked longest ago
-            capture.wakeOnNextPicture(after: looked) { [weak self] in MainActor.assumeIsolated { self?.wakeFrames() } }
+            capture.wakeOnNextPicture(after: looked) { [weak self] in self?.wakeFrames() }
         }
     }
 
@@ -150,7 +150,7 @@ extension Controller {
         overlays[state.activeScreen.id]?.show(key: true)
         updateMouse()
         // If macOS refuses to activate us, the tap types for the overview instead.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.activationGrace) { [weak self] in
             MainActor.assumeIsolated {
                 guard let self, self.state.isOverview, !NSApp.isActive else { return }
                 self.keyCaptureFallback = true
@@ -159,10 +159,8 @@ extension Controller {
         }
     }
 
-    func didCloseOverview(focusSent: Bool) {
+    func didCloseOverview() {
         keyCaptureFallback = false
         updateMouse()
-        // Esc lands nowhere: give the keyboard back to the window that had it.
-        if !focusSent, mode == .normal, let f = state.focused { registry.perform([.focus(f)]) }
     }
 }

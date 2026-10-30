@@ -1,9 +1,9 @@
+import CoreGraphics
+import simd
+
 // Swift mirrors of the shader structs in Shaders.swift. Field order and
 // padding match the Metal layout (float4 first, then float2, then scalars);
 // RenderTests checks the sizes.
-
-import CoreGraphics
-import simd
 
 struct QuadUniforms {
     var rect: SIMD4<Float>

@@ -31,6 +31,7 @@ public struct SavedWindow: Hashable, Codable, Sendable {
     }
 }
 
+/// A workspace as layout.json keeps it.
 public struct SavedWorkspace: Hashable, Codable, Sendable {
     public var slot: Int // its number up to 9
     public var mode: LayoutMode

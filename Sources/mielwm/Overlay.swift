@@ -83,18 +83,22 @@ final class Overlay {
         window.orderOut(nil)
     }
 
-    func draw(_ scene: Scene, renderer: Renderer, frames: WindowFrameSource) {
+    /// Draws `scene` if it differs from the last frame. Returns whether it drew.
+    @discardableResult
+    func draw(_ scene: Scene, renderer: Renderer, frames: WindowFrameSource) -> Bool {
         guard renderer.needsDraw(scene, frames: frames) else {
             idleFrames += 1
-            return
+            return false
         }
         idleFrames = 0
-        guard let drawable = view.metal.nextDrawable() else { return }
+        guard let drawable = view.metal.nextDrawable() else { return false }
         renderer.draw(scene, frames: frames, into: drawable)
+        return true
     }
 }
 
-final class OverlayView: NSView, NSTextInputClient {
+/// The overlay's Metal view. It draws on its display link, and takes keys, text and the pointer while the overview is open.
+final class OverlayView: NSView, @preconcurrency NSTextInputClient {
     let screenID: UInt32
     private(set) var metal = CAMetalLayer()
     var link: CADisplayLink?
@@ -153,7 +157,7 @@ final class OverlayView: NSView, NSTextInputClient {
         controller?.frame(screenID: screenID)
     }
 
-    // MARK: Keys
+    // MARK: - Keys
 
     override func keyDown(with event: NSEvent) {
         guard let controller else { return }
@@ -198,7 +202,7 @@ final class OverlayView: NSView, NSTextInputClient {
         return window.convertToScreen(convert(field, to: nil))
     }
 
-    // MARK: Mouse
+    // MARK: - Mouse
 
     private func local(_ event: NSEvent) -> CGPoint { convert(event.locationInWindow, from: nil) }
 

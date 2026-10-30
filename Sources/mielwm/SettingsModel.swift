@@ -10,6 +10,7 @@ import SwiftUI
 /// moment later, so a slider being dragged does not write on every step.
 @MainActor
 final class SettingsModel: ObservableObject {
+    static let writeDelay = 0.25 // seconds after the last change before config.json is written
     let paths: ConfigPaths
     @Published private(set) var settings: MielCore.Settings
     @Published private(set) var errors: [String] // what config.json got wrong
@@ -103,7 +104,7 @@ final class SettingsModel: ObservableObject {
         flushWork?.cancel()
         let work = DispatchWorkItem { [weak self] in MainActor.assumeIsolated { self?.flush() } }
         flushWork = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: work)
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.writeDelay, execute: work)
     }
 
     /// Writes `changes` (and anything waiting) now.
@@ -143,7 +144,7 @@ final class SettingsModel: ObservableObject {
         if info != screen { screen = info }
     }
 
-    // MARK: Bindings for controls
+    // MARK: - Bindings for controls
 
     func flag(_ key: String) -> Binding<Bool> {
         Binding(get: { if case let .flag(b)? = self.settings.value(forKey: key) { b } else { false } },

@@ -57,6 +57,7 @@ struct GapDiagram: View {
         .accessibilityLabel("A display with three windows and the gaps around them, \(Int(topGap)) pt at the top")
     }
 
+    /// One gap the diagram labels: the settings it shows and where its line runs.
     struct Marker {
         let keys: [String]
         let from: CGPoint

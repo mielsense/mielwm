@@ -45,13 +45,13 @@ public struct Settings: Hashable, Codable, Sendable {
     /// "bundle.id=N" pairs, comma separated: windows of that app open on workspace N.
     public var workspaceRules = ""
     /// layout:stack_peek: points each window behind a stack's front one shows of its edge (AeroSpace's accordion padding).
-    public var stackPeek = 0.0
+    var stackPeek = 0.0
     /// `rules:<name>:<field>` entries: windows matched by app name or title (WindowRules.swift).
-    public var windowRules: [String: WindowRule] = [:]
+    var windowRules: [String: WindowRule] = [:]
     /// Going to the workspace you are on goes back to the one before (AeroSpace's --auto-back-and-forth).
-    public var autoBackAndForth = false
+    var autoBackAndForth = false
     /// Focus and move keys go on into the next workspace at its edge, instead of stopping there.
-    public var crossWorkspaces = false
+    var crossWorkspaces = false
 
     // animation:*
     public var animationEnabled = true
@@ -66,9 +66,9 @@ public struct Settings: Hashable, Codable, Sendable {
     public var menuBarStyle = MenuBarStyle.all
 
     /// notices:workspace: switching workspaces shows their numbers at the bottom of the display for a moment.
-    public var workspaceNotice = true
+    var workspaceNotice = true
 
-    /// integrations:barik: Barik's menu bar shows mielwm's workspaces (docs/aerospace.md).
+    /// integrations:barik: Barik's menu bar shows mielwm's workspaces (docs/compatible-apps.md).
     public var barik = false
 
     /// Chord ("opt+ctrl+g") to action command ("overview").
@@ -152,4 +152,25 @@ public func parseHexColor(_ text: String) -> RGB? {
 public func hexString(_ c: RGB) -> String {
     func byte(_ v: Double) -> Int { min(255, max(0, Int((v * 255).rounded()))) }
     return String(format: "#%02x%02x%02x", byte(c.r), byte(c.g), byte(c.b))
+}
+
+// MARK: - App lists
+
+/// "a,b" as ["a", "b"], blanks dropped.
+public func parseAppList(_ text: String) -> [String] {
+    text.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+}
+
+/// "com.a=1,com.b=12" as a dictionary; malformed pairs and numbers below 1 are dropped.
+public func parseWorkspaceRules(_ text: String) -> [String: Int] {
+    var rules: [String: Int] = [:]
+    for pair in parseAppList(text) {
+        let parts = pair.split(separator: "=", maxSplits: 1).map { $0.trimmingCharacters(in: .whitespaces) }
+        if parts.count == 2, let n = Int(parts[1]), n >= 1 { rules[parts[0]] = n }
+    }
+    return rules
+}
+
+public func formatWorkspaceRules(_ rules: [String: Int]) -> String {
+    rules.sorted { $0.key < $1.key }.map { "\($0.key)=\($0.value)" }.joined(separator: ",")
 }

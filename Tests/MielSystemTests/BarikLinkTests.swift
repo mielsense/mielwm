@@ -14,7 +14,7 @@ private final class FakeApps: BarikApps {
 
     func barikLaunched() -> Date? { barik }
     func relaunchBarik() { if barik != nil { relaunched += 1 } }
-    func startHelper(_ url: URL, started: @escaping (Date?) -> Void) {
+    func startHelper(_ url: URL, started: @escaping @MainActor (Date?) -> Void) {
         helperRunning = true
         started(helperStart)
     }
@@ -43,14 +43,19 @@ private func link(_ apps: FakeApps, shim: String = shim) throws -> (BarikLink, h
 
 private func read(_ url: URL) throws -> String { try String(contentsOf: url, encoding: .utf8) }
 
-@MainActor @Test func withoutAConfigNothingIsWrittenOrStarted() throws {
+/// Apps that run the aerospace command need no config of Barik's: the helper starts, no file is written,
+/// and a running Barik is left alone.
+@MainActor @Test func withoutAConfigOnlyTheHelperStarts() throws {
     let apps = FakeApps()
     apps.barik = .distantPast
     let (barik, home) = try link(apps)
     #expect(barik.config == nil)
-    #expect(throws: BarikLink.Problem.noConfig) { try barik.turnOn() }
+    try barik.turnOn()
     #expect(try FileManager.default.contentsOfDirectory(atPath: home.path).isEmpty)
+    #expect(apps.helperRunning && apps.relaunched == 0)
+    try barik.turnOff()
     #expect(!apps.helperRunning && apps.relaunched == 0)
+    #expect(try FileManager.default.contentsOfDirectory(atPath: home.path).isEmpty)
 }
 
 @MainActor @Test func onEditsWithABackupStartsTheHelperAndRelaunchesBarik() throws {

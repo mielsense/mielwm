@@ -4,15 +4,18 @@ import Foundation
 /// written, created, replaced, renamed or deleted, by anything. Kernel
 /// vnode events: no polling, no wakeups while nothing changes. Calls can
 /// come for changes that leave the files as they were; compare before acting.
-public final class FileWatcher {
+/// Unchecked: everything it keeps is read and written on `queue` only.
+public final class FileWatcher: @unchecked Sendable {
+    /// Seconds of quiet that end a burst of writes.
+    private static let burst = 0.1
     private let files: [URL]
     private let queue: DispatchQueue
-    private let onChange: () -> Void
+    private let onChange: @Sendable () -> Void
     private var sources: [DispatchSourceFileSystemObject] = [] // on `queue`
     private var pending: DispatchWorkItem?
     private var stopped = false
 
-    public init(_ files: [URL], queue: DispatchQueue = .main, onChange: @escaping () -> Void) {
+    public init(_ files: [URL], queue: DispatchQueue = .main, onChange: @escaping @Sendable () -> Void) {
         self.files = files
         self.queue = queue
         self.onChange = onChange
@@ -63,6 +66,6 @@ public final class FileWatcher {
             self.onChange()
         }
         pending = work
-        queue.asyncAfter(deadline: .now() + 0.1, execute: work)
+        queue.asyncAfter(deadline: .now() + Self.burst, execute: work)
     }
 }

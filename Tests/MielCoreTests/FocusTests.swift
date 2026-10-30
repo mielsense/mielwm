@@ -97,3 +97,15 @@ import Testing
     _ = s.send(.system(.windowMinimized(wid(2), false)))
     #expect(s.focused == wid(2))
 }
+
+/// Esc lands on no window, so the keyboard goes back to the focused one, as a focus Core asked for and waits on.
+@Test func leavingTheOverviewWithoutLandingFocusesTheFocusedWindow() {
+    for leave in [Action.back, .toggleOverview, .land] {
+        var s = focusedState()
+        _ = s.send(.action(.toggleOverview))
+        _ = s.advance(1) // past any focus asked for before
+        #expect(s.send(.action(leave)).filter { if case .focus = $0 { true } else { false } } == [.focus(wid(1))], "\(leave)")
+        _ = s.send(.system(.unmanagedFocus(pid: 200))) // macOS's own pick while that lands
+        #expect(s.focused == wid(1), "\(leave)")
+    }
+}

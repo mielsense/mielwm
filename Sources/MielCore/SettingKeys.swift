@@ -27,6 +27,7 @@ public enum SettingValue: Hashable, Codable, Sendable {
     }
 }
 
+/// Where a config key's value lives in `Settings`, and the range it is clamped to.
 enum SettingPath: @unchecked Sendable { // key paths are immutable values
     case number(WritableKeyPath<Settings, Double>, ClosedRange<Double>)
     case integer(WritableKeyPath<Settings, Int>, ClosedRange<Double>)

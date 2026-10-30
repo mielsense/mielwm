@@ -1,5 +1,6 @@
 import Foundation
 
+/// Where config.json lives.
 public struct ConfigPaths: Hashable, Sendable {
     public var config: URL
 
@@ -91,6 +92,7 @@ private func jsonErrorDetail(_ error: Error) -> String {
 
 // MARK: - Editing config.json (the Settings window)
 
+/// Why config.json could not be written, in words the Settings window shows.
 public struct ConfigWriteError: Error, CustomStringConvertible {
     public var description: String
 }

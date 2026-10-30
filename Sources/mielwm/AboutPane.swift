@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 
+/// Settings > About: the version, and links to the website, the docs and the source.
 struct AboutPane: View {
     private static let links: [(title: String, symbol: String, tint: Color, url: String)] = [
         ("Website", "globe", Design.Tint.blue, "https://wm.miel.my"),

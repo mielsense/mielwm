@@ -14,6 +14,7 @@ public enum IPC {
     }
 }
 
+/// Why the socket could not be served or reached.
 public enum IPCError: Error, Equatable {
     case pathTooLong
     case alreadyRunning // another server answers on the path
@@ -22,9 +23,10 @@ public enum IPCError: Error, Equatable {
     case badResponse
 }
 
+/// The app's side of the socket: it hands each request to the main actor.
 public final class IPCServer {
-    /// Runs on the main queue. Call `reply` once, from any thread.
-    public typealias Handler = (_ args: [String], _ reply: @escaping (Data) -> Void) -> Void
+    /// Runs on the main actor. Call `reply` once, from any thread.
+    public typealias Handler = @MainActor @Sendable (_ args: [String], _ reply: @escaping @Sendable (Data) -> Void) -> Void
 
     private let path: String
     private let source: DispatchSourceRead
@@ -96,6 +98,7 @@ public final class IPCServer {
     }
 }
 
+/// The `mielwm` command's side of the socket.
 public enum IPCClient {
     /// Sends `args` and returns the app's one-line JSON response.
     /// Throws `.notRunning` when no app listens.

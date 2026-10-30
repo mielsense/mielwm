@@ -26,28 +26,25 @@ let package = Package(
         .target(name: "MielCore"),
         // Metal renderer. Shaders are compiled at runtime from source strings:
         // the Command Line Tools have no `metal` compiler.
-        .target(name: "MielRender", dependencies: ["MielCore"],
-                swiftSettings: [.swiftLanguageMode(.v5)]),
+        .target(name: "MielRender", dependencies: ["MielCore"]),
         // The socket `mielwm <action>` and the `aerospace` command talk over. Foundation only.
-        .target(name: "MielIPC", swiftSettings: [.swiftLanguageMode(.v5)]),
+        .target(name: "MielIPC"),
         // Accessibility, event tap, ScreenCaptureKit, displays.
-        .target(name: "MielSystem", dependencies: ["MielCore"],
-                swiftSettings: [.swiftLanguageMode(.v5)]),
-        .executableTarget(name: "mielwm",
-                          dependencies: ["MielCore", "MielIPC", "MielRender", "MielSystem"],
-                          swiftSettings: [.swiftLanguageMode(.v5)]),
+        .target(name: "MielSystem", dependencies: ["MielCore"]),
+        .executableTarget(name: "mielwm", dependencies: ["MielCore", "MielIPC", "MielRender", "MielSystem"]),
         // Barik's `aerospace` command and the hidden AeroSpace helper app, one small binary
-        // (docs/aerospace.md). Barik runs it up to 40 times a second, so it links no Foundation.
+        // (docs/compatible-apps.md). Barik runs it up to 40 times a second, so it links no Foundation.
         // `os` and `Dispatch` autolink Combine, which loads Foundation: drop what goes unused.
         .executableTarget(name: "mielwm-aerospace", path: "Sources/MielAeroSpace",
                           linkerSettings: [.unsafeFlags(["-Xlinker", "-dead_strip_dylibs"])]),
         // Throwaway windows for system tests, so tests never move real ones.
-        .executableTarget(name: "mielwm-testwindows", path: "Sources/MielTestWindows",
-                          swiftSettings: [.swiftLanguageMode(.v5)]),
+        .executableTarget(name: "mielwm-testwindows", path: "Sources/MielTestWindows"),
         .testTarget(name: "MielCoreTests", dependencies: ["MielCore", .product(name: "TOMLDecoder", package: "TOMLDecoder")],
                     swiftSettings: testing),
         .testTarget(name: "MielRenderTests", dependencies: ["MielRender", "MielCore"], swiftSettings: testing),
-        .testTarget(name: "MielSystemTests", dependencies: ["MielSystem", "MielIPC", "MielCore"],
-                    exclude: ["Fixtures"], swiftSettings: testing),
+        // The app's own logic, from the executable module; nothing here opens windows.
+        .testTarget(name: "mielwmTests", dependencies: ["mielwm", "MielCore", "MielSystem"], swiftSettings: testing),
+        .testTarget(name: "MielIPCTests", dependencies: ["MielIPC"], swiftSettings: testing),
+        .testTarget(name: "MielSystemTests", dependencies: ["MielSystem", "MielCore"], swiftSettings: testing),
     ]
 )

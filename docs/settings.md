@@ -128,7 +128,7 @@ Show your workspaces in apps made for AeroSpace, or bring your AeroSpace setting
 
 | Setting | What it does | Config key |
 | --- | --- | --- |
-| Menu bars and tools > Work with AeroSpace-compatible apps | Points a supported menu bar app at mielwm, so it shows mielwm's workspaces and windows. mielwm asks before it edits the app's config and relaunches it. See [AeroSpace-compatible apps](compatible-apps.md). | `integrations:barik` |
+| Menu bars and tools > Work with AeroSpace-compatible apps | Runs a hidden helper named AeroSpace, so apps made for AeroSpace show mielwm's workspaces and windows through its `aerospace` command. For a menu bar like Barik, mielwm also points its config at that command, after asking, and relaunches it. See [AeroSpace-compatible apps](compatible-apps.md). | `integrations:barik` |
 | AeroSpace > Import from AeroSpace > Import… | Reads your AeroSpace config and shows what it will change before anything is applied. See [Import your config](import.md). | none |
 
 ## Advanced

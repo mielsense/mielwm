@@ -66,6 +66,7 @@ public struct StackNotice: Equatable, Sendable {
     public var position: String { "\(front + 1) of \(entries.count)" }
 }
 
+/// What shows over the desktop, the toast, the workspace pill and the stack strip, and when each fades.
 public struct Notices: Equatable, Sendable {
     static let hold = 0.7 // seconds the workspace and stack notices stay
     public static let fade = 0.15

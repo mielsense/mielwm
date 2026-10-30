@@ -10,7 +10,7 @@ private func object(_ url: URL) throws -> NSDictionary {
     try JSONSerialization.jsonObject(with: Data(contentsOf: url)) as! NSDictionary
 }
 
-// MARK: Writing config.json
+// MARK: - Writing config.json
 
 @Test func writerKeepsWhatItDoesNotTouch() throws {
     let p = paths(try tempDir())
@@ -48,7 +48,7 @@ private func object(_ url: URL) throws -> NSDictionary {
     #expect(Settings.entry("layout:default", .text("tiles")) == nil)
 }
 
-// MARK: Bindings through the writer
+// MARK: - Bindings through the writer
 
 @Test func rebindingRoundTrips() throws {
     let p = paths(try tempDir())
@@ -85,7 +85,7 @@ private func object(_ url: URL) throws -> NSDictionary {
     #expect(Settings.bindingEntry(KeyChord("opt+comma")!, "layout accordion") == nil) // same action, other name
 }
 
-// MARK: Shortcut families
+// MARK: - Shortcut families
 
 @Test func familiesReadAsOneShortcut() {
     var s = Settings()

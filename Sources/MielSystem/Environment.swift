@@ -18,6 +18,7 @@ public enum AeroSpace {
     }
 }
 
+/// The two permissions mielwm needs, and asking for them.
 public enum Permissions {
     /// Accessibility, for moving windows and the event tap. `prompt` shows
     /// the system dialog that leads to System Settings.

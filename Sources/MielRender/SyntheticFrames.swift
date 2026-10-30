@@ -1,10 +1,10 @@
-// Fake but believable window content, so snapshots and tests work without
-// Screen Recording: a title bar with traffic lights, a sidebar, text lines,
-// an image block, tinted per app.
-
 import AppKit
 import CoreText
 import MielCore
+
+// Fake but believable window content, so snapshots and tests work without
+// Screen Recording: a title bar with traffic lights, a sidebar, text lines,
+// an image block, tinted per app.
 
 public final class SyntheticFrames: WindowFrameSource, @unchecked Sendable {
     private let lock = NSLock()

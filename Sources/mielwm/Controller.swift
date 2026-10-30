@@ -2,7 +2,7 @@ import AppKit
 import MielCore
 import MielIPC
 import MielRender
-@preconcurrency import MielSystem
+import MielSystem
 import QuartzCore
 
 /// Owns Core's CanvasState and wires it to System (windows, keys, captures)
@@ -16,16 +16,26 @@ final class Controller {
     static let purgeDelay = 30.0 // seconds after the overlay hides until its GPU memory goes
     static let shrinkDelay = 300.0 // seconds after the overlay hides until parked windows' stills shrink
     static let maxStreams = 12 // windows on screen past this get stills
+    static let stillBudget = 0.4 // seconds a window waits for its still before it parks anyway
+    static let saveDelay = 0.3 // seconds of quiet before layout.json is written
+    static let activationGrace = 0.3 // seconds macOS gets to activate mielwm for the overview's keys
 
     let mode: Mode
-    let paths = ConfigPaths.standard()
+    let paths: ConfigPaths
     let layoutURL: URL
     var state: CanvasState {
         didSet { if framesPaused { wakeFrames() } } // inputs and the appearance alike: the paused overview draws again
     }
     var framesPaused = false // some overlay's display link waits for `wakeFrames`
+    var framesDrawn = 0 // overlay frames drawn, for `mielwm state`
     var pictureChecks: [UInt32: UInt64] = [:] // per display, the pictures stored when it last looked for new ones
+    /// What config.json gets wrong, read again on every reload.
     var configErrors: [String]
+    /// What mielwm found missing when it started, kept until the next start.
+    var permissionProblems: [String] = []
+    /// Everything the menu warns about.
+    var problems: [String] { configErrors + permissionProblems }
+    static let shortcutsNeedAccessibility = "Keyboard shortcuts need the Accessibility permission"
     /// The menu refreshes on this.
     var onChange: (() -> Void)?
     /// The settings action (a shortcut or `mielwm settings`): the app opens its window.
@@ -97,8 +107,9 @@ final class Controller {
     var workspaceTokens: [NSObjectProtocol] = [] // on NSWorkspace's own notification center
     private var appearance: NSKeyValueObservation?
 
-    init(mode: Mode) {
+    init(mode: Mode, paths: ConfigPaths = .standard()) {
         self.mode = mode
+        self.paths = paths
         let loaded = loadSettings(paths)
         configErrors = loaded.errors
         layoutURL = mode == .normal ? LayoutSnapshot.standardURL()
@@ -121,11 +132,11 @@ final class Controller {
         if mode == .normal || ProcessInfo.processInfo.environment["MIELWM_TEST_OVERLAY"] != nil {
             do { renderer = try Renderer() } catch { log("no Metal renderer: \(error)") }
             rebuildOverlays()
-            capture.onFirstFrame = { [weak self] id in MainActor.assumeIsolated { self?.firstFrame(id) } }
+            capture.onFirstFrame = { [weak self] id in self?.firstFrame(id) }
         }
         if mode == .normal {
-            let tap = EventTap { [weak self] event in MainActor.assumeIsolated { self?.tapEvent(event) } }
-            if tap.start() { self.tap = tap } else { configErrors.append("Keyboard shortcuts need the Accessibility permission") }
+            let tap = EventTap { [weak self] event in self?.tapEvent(event) }
+            if tap.start() { self.tap = tap } else { permissionProblems.append(Self.shortcutsNeedAccessibility) }
             updateTap()
             let center = NotificationCenter.default
             tokens.append(center.addObserver(forName: NSColor.systemColorsDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
@@ -135,7 +146,7 @@ final class Controller {
                 forName: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated { self?.state.accessibility = Self.accessibility() }
             })
-            appearance = NSApplication.shared.observe(\.effectiveAppearance) { [weak self] _, _ in
+            appearance = NSApplication.shared.observe(\.effectiveAppearance) { @Sendable [weak self] _, _ in
                 DispatchQueue.main.async { MainActor.assumeIsolated { self?.state.systemDark = Self.systemDark() } }
             }
         }
@@ -143,19 +154,17 @@ final class Controller {
             MainActor.assumeIsolated { self?.checkConfig() }
         }
         do {
-            ipc = try IPCServer() { [weak self] args, reply in
-                MainActor.assumeIsolated { self?.command(args, reply) }
-            }
+            ipc = try IPCServer { [weak self] args, reply in self?.command(args, reply) }
         } catch {
             log("socket: \(error); `mielwm <action>` will not reach this instance")
         }
-        registry.start()
+        registry.start(screens: state.screens)
         startRescans()
     }
 
     /// Quit, toggle off, signals: every window back on a screen, then stop.
     /// `done` gets false when some app did not answer in time.
-    func shutdown(quitting: Bool, _ done: @escaping (Bool) -> Void) {
+    func shutdown(quitting: Bool, _ done: @escaping @MainActor @Sendable (Bool) -> Void) {
         tap?.stop()
         tap = nil
         swipes.stop()
@@ -176,7 +185,7 @@ final class Controller {
         let commands = state.send(.unparkAll)
         saveNow()
         ipc?.stop()
-        let registry = registry!, capture = capture, layoutURL = layoutURL
+        let registry = registry!, capture = capture, layoutURL = layoutURL, savesLayout = mode == .normal
         let applied = registry.perform(commands) // on main: the registry's app list is main-only
         DispatchQueue.global(qos: .userInitiated).async {
             let answered = applied.wait(timeout: 2)
@@ -186,15 +195,18 @@ final class Controller {
             }
             // While quitting, AppKit runs the main run loop in modal-panel mode, which the main queue does not reach.
             RunLoop.main.perform(inModes: [.default, .modalPanel]) {
-                registry.stop()
-                capture.stop(dropFrames: true)
-                done(answered)
+                MainActor.assumeIsolated {
+                    registry.stop()
+                    capture.stop(dropFrames: true)
+                    if !savesLayout { try? FileManager.default.removeItem(at: layoutURL.deletingLastPathComponent()) } // a test copy's scratch
+                    done(answered)
+                }
             }
             CFRunLoopWakeUp(CFRunLoopGetMain())
         }
     }
 
-    // MARK: Input
+    // MARK: - Input
 
     /// Every input goes through here. One that would bring the overlay up
     /// while captures are cold waits (with what follows) until the focused
@@ -208,7 +220,7 @@ final class Controller {
             onSettings?(nil)
             return
         }
-        if gate != nil { gate!.queue.append(input); return }
+        if gate != nil { gate?.queue.append(input); return }
         if renderer != nil, !overlayShown, !streamsLive, mayOpenOverlay(input) {
             var probe = state
             _ = probe.send(input)
@@ -235,9 +247,8 @@ final class Controller {
         let commands = state.send(input)
         if Self.logsTimings { noteTiming(input, commands) }
         perform(commands, before: before)
-        let focusSent = commands.contains { if case .focus = $0 { true } else { false } }
         let tick = if case .tick = input { true } else { false }
-        update(from: before, focusSent: focusSent, tick: tick)
+        update(from: before, tick: tick)
     }
 
     private func perform(_ commands: [WindowCommand], before: CanvasState) {
@@ -278,7 +289,7 @@ final class Controller {
             self.registry.perform(later.filter { self.commandSerial[$0.0] == $0.2 }.map(\.1))
         }
         capture.captureStills(later.map(\.0), scale: stillScale) { MainActor.assumeIsolated { finish() } }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { MainActor.assumeIsolated { finish() } }
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.stillBudget) { MainActor.assumeIsolated { finish() } }
     }
 
     /// MIELWM_TIMINGS: an action starts the clock; the moves it causes, now or when its flight lands, count.
@@ -287,14 +298,14 @@ final class Controller {
         if case .action = input, timing?.firstMove == nil { timing = (now, nil, nil, 0, axCalls.withLock { $0 }) }
         let moves = commands.filter { if case .setFrame = $0 { true } else { false } }.count
         guard moves > 0, timing != nil else { return }
-        timing!.moves += moves
-        if timing!.firstMove == nil { timing!.firstMove = now }
+        timing?.moves += moves
+        if timing?.firstMove == nil { timing?.firstMove = now }
     }
 
     /// What follows every input: overlays, keyboard, tap, files, ticking.
-    private func update(from before: CanvasState, focusSent: Bool, tick: Bool) {
+    private func update(from before: CanvasState, tick: Bool) {
         if state.isOverview != before.isOverview {
-            state.isOverview ? didOpenOverview() : didCloseOverview(focusSent: focusSent)
+            state.isOverview ? didOpenOverview() : didCloseOverview()
         }
         if state.appearanceRequests != before.appearanceRequests { onSettings?(.appearance) }
         if state.overview.switcher, !before.overview.switcher { warmStreams() }

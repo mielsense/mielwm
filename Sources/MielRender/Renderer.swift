@@ -1,21 +1,22 @@
-// Draws one Scene for one display: the world (backdrop, windows) into an
-// offscreen texture, then the lens into the target with the minimap composed
-// after it, then the tags (window names, workspace pills) on top. The
-// overview's chrome is native views over it (Sources/mielwm/ChromeViews.swift),
-// so the Scene's HUD is never drawn here. One Renderer can serve every
-// display; per-display state is keyed by ScreenInfo.id. Use it from one
-// thread (the main thread).
-
 import AppKit
 import CoreVideo
 import Metal
 import MielCore
 import QuartzCore
 
+/// Why the renderer could not start.
 public enum RenderError: Error {
     case noDevice
     case setup(String)
 }
+
+/// Draws one Scene for one display: the world (backdrop, windows) into an
+/// offscreen texture, then the lens into the target with the minimap composed
+/// after it, then the tags (window names, workspace pills) on top. The
+/// overview's chrome is native views over it (Sources/mielwm/ChromeViews.swift),
+/// so the Scene's HUD is never drawn here. One Renderer can serve every
+/// display; per-display state is keyed by ScreenInfo.id. Use it from one
+/// thread, the main thread.
 public final class Renderer {
     /// The pixel format of every target: set it on the CAMetalLayer.
     public static let pixelFormat: MTLPixelFormat = .bgra8Unorm
@@ -123,7 +124,8 @@ public final class Renderer {
         var still = scene
         still.time = 0
         s.drawn = (still, generations(scene, frames))
-        let semaphore = s.inFlight, held = s.retained
+        let semaphore = s.inFlight
+        nonisolated(unsafe) let held = s.retained // kept alive until the GPU is done, never touched
         s.retained = []
         cb.addCompletedHandler { _ in
             withExtendedLifetime(held) {}
@@ -158,7 +160,7 @@ public final class Renderer {
     }
 
     /// Renders offscreen and writes a PNG.
-    public func renderPNG(_ scene: Scene, frames: WindowFrameSource, to url: URL, pixelSize: CGSize? = nil) throws {
+    func renderPNG(_ scene: Scene, frames: WindowFrameSource, to url: URL, pixelSize: CGSize? = nil) throws {
         guard let image = renderImage(scene, frames: frames, pixelSize: pixelSize) else { throw RenderError.setup("render failed") }
         try Renderer.writePNG(image, to: url)
     }
