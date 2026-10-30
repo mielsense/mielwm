@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { TocEntry } from '@/server/docs';
 
-	let { toc, edit }: { toc: TocEntry[]; edit: string } = $props();
+	let { toc }: { toc: TocEntry[] } = $props();
 
 	// the current section is the last heading that has scrolled past the top fifth of the window
 	let active = $state('');
@@ -29,22 +29,25 @@
 	});
 </script>
 
-<nav aria-labelledby="toc-title" class="flex flex-col gap-3">
-	{#if toc.length}
-		<h2 id="toc-title" class="text-xs font-normal text-subtle">On this page</h2>
-		<ul class="flex flex-col border-s border-border">
-			{#each toc as entry (entry.id)}
-				<li>
-					<a
-						href="#{entry.id}"
-						aria-current={active === entry.id ? 'location' : undefined}
-						class="-ms-px block border-s border-transparent py-1 text-sm leading-snug text-subtle transition-colors hover:text-strong aria-[current=location]:border-strong aria-[current=location]:text-strong {entry.depth === 3 ? 'ps-6' : 'ps-3'}"
-					>
-						{entry.text}
-					</a>
-				</li>
-			{/each}
-		</ul>
-	{/if}
-	<a href={edit} target="_blank" rel="noreferrer" class="mt-2 text-sm text-subtle hover:text-strong">Edit this page on GitHub</a>
-</nav>
+<!-- a rail of dashes, one per heading, from ui.miel.my: the current one long and dark, the name of each beside it on hover or focus -->
+{#if toc.length > 1}
+	<nav aria-label="On this page" class="flex flex-col items-end">
+		{#each toc as entry (entry.id)}
+			<a
+				href="#{entry.id}"
+				aria-current={active === entry.id ? 'location' : undefined}
+				class="toc-dash group relative flex h-3.5 w-14 items-center justify-end rounded-[4px] focus-visible:shadow-[var(--focus-ring)] focus-visible:outline-none"
+			>
+				<span
+					class="block h-[1.5px] rounded-full bg-[color-mix(in_oklab,var(--color-strong)_30%,transparent)] transition-[width,background-color] duration-150 ease-out group-hover:w-12 group-hover:bg-strong group-focus-visible:bg-strong group-aria-[current=location]:bg-strong motion-reduce:transition-none
+						{entry.depth === 3 ? 'w-3.5 group-aria-[current=location]:w-6' : 'w-6 group-aria-[current=location]:w-9'}"
+				></span>
+				<span
+					class="pointer-events-none absolute end-[calc(100%+0.5rem)] rounded-[6px] bg-plate px-2 py-1 text-xs font-medium whitespace-nowrap text-strong opacity-0 shadow-[0_0_0_1px_var(--color-border),0_4px_12px_-4px_rgb(0_0_0/0.2)] transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none"
+				>
+					{entry.text}
+				</span>
+			</a>
+		{/each}
+	</nav>
+{/if}

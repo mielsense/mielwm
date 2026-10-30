@@ -6,14 +6,15 @@
 	import Sticker from '@/components/Sticker.svelte';
 	import ThemeToggle from '@/components/ThemeToggle.svelte';
 	import { groupLook, pageIcon } from '@/docs-look';
-	import { BookIcon, ChevronDownIcon, DownloadIcon, GithubIcon, SearchIcon } from '@/icons';
+	import { ChevronDownIcon, DownloadIcon, GithubIcon, SearchIcon } from '@/icons';
 	import { search } from '@/search.svelte';
-	import { site } from '@/site';
+	import { docHref, site } from '@/site';
 
 	let { data, children } = $props();
 
 	const path = $derived(page.url.pathname);
-	const current = $derived(data.groups.flatMap((group) => group.pages).find((p) => path === `/docs/${p.slug}`));
+	const current = $derived([...data.nav.top, ...data.nav.groups.flatMap((group) => group.pages)].find((p) => path === docHref(p.slug)));
+	const here = (slug: string) => (path === docHref(slug) ? 'page' : undefined);
 
 	// on narrow screens the page list folds away behind a button and folds again after a link
 	let menuOpen = $state(false);
@@ -21,22 +22,30 @@
 </script>
 
 {#snippet nav()}
-	<a href="/docs" aria-current={path === '/docs' ? 'page' : undefined} class="nav-item press-soft mb-5 h-8 gap-2.5 px-2.5 text-sm">
-		<Icon icon={BookIcon} size={14} class="opacity-70" />
-		Overview
-	</a>
-	{#each data.groups as group (group.title)}
+	<!-- like ui.miel.my: the index's loose links first, then each group under its sticker with its pages indented -->
+	{#if data.nav.top.length}
+		<ul class="mb-5 flex flex-col gap-px">
+			{#each data.nav.top as item (item.slug)}
+				<li>
+					<a href={docHref(item.slug)} aria-current={here(item.slug)} class="nav-item press-soft h-8 gap-2.5 px-2.5 text-sm">
+						<Icon icon={pageIcon(item.slug)} size={14} class="opacity-70" />
+						{item.title}
+					</a>
+				</li>
+			{/each}
+		</ul>
+	{/if}
+	{#each data.nav.groups as group (group.title)}
 		{@const look = groupLook(group.title)}
 		<section class="group/section mb-5" aria-labelledby="nav-{group.title}">
-			<h2 id="nav-{group.title}" class="mb-1.5 flex items-center gap-2 px-2 text-xs font-medium text-strong">
-				<Sticker icon={look.icon} bg={look.mesh} size={18} />
+			<h2 id="nav-{group.title}" class="mb-1 flex h-8 items-center gap-2.5 px-2 text-sm font-medium text-strong">
+				<Sticker icon={look.icon} bg={look.mesh} size={20} />
 				{group.title}
 			</h2>
 			<ul class="flex flex-col gap-px">
 				{#each group.pages as item (item.slug)}
 					<li>
-						<a href="/docs/{item.slug}" aria-current={path === `/docs/${item.slug}` ? 'page' : undefined} class="nav-item press-soft h-8 gap-2.5 px-2.5 text-sm">
-							<Icon icon={pageIcon(item.slug)} size={14} class="opacity-70" />
+						<a href={docHref(item.slug)} aria-current={here(item.slug)} class="nav-item press-soft h-8 ps-9 pe-2.5 text-sm">
 							{item.title}
 						</a>
 					</li>
@@ -61,7 +70,7 @@
 {/snippet}
 
 {#snippet download()}
-	<Button href={site.download} size="sm" class="w-full">
+	<Button href="/download" size="sm" class="w-full">
 		<Icon icon={DownloadIcon} size={14} />
 		Download mielwm
 	</Button>
@@ -105,7 +114,7 @@
 					onclick={() => (menuOpen = !menuOpen)}
 					class="press flex h-8 max-w-[11rem] items-center gap-1.5 rounded-[9px] px-2.5 text-sm text-strong hover:bg-[color-mix(in_oklab,var(--color-strong)_5%,transparent)]"
 				>
-					<span class="truncate">{current?.title ?? 'Overview'}</span>
+					<span class="truncate">{current?.title ?? 'Docs'}</span>
 					<Icon icon={ChevronDownIcon} size={15} class="text-subtle transition-transform duration-200 {menuOpen ? 'rotate-180' : ''}" />
 				</button>
 			</div>

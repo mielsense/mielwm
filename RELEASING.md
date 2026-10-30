@@ -24,6 +24,8 @@ How a version of mielwm gets from `main` to the download link. Only the maintain
    hdiutil detach /tmp/mielwm-release
    ```
 
+7. Redeploy the website from `main` in Vercel. The download page reads the releases when the site builds, and the last build ran before the tag, so until then it still offers the previous version.
+
 The release workflow finds the section by its heading, whose second word must be the version. Keep `## 0.2.0` exactly like that, with no "v" and nothing after it.
 
 ## What the workflow does

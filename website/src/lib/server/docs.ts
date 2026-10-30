@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Marked, Renderer, type Token, type Tokens } from 'marked';
-import { site } from '@/site';
+import { docHref, site } from '@/site';
 
 const sources = import.meta.glob('../../../../docs/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const imageUrls = import.meta.glob('../../../../docs/images/*.{png,jpg,jpeg,webp,avif,gif,svg}', {
@@ -24,9 +24,11 @@ const images = new Map(Object.entries(imageUrls).map(([path, url]) => [fileName(
 
 export type NavPage = { slug: string; title: string; lead: string };
 export type NavGroup = { title: string; pages: NavPage[] };
+/** The index's links above its first group, then its groups. */
+export type Navigation = { top: NavPage[]; groups: NavGroup[] };
 export type TocEntry = { id: string; text: string; depth: 2 | 3 };
 export type Segment = { kind: 'html'; html: string } | { kind: 'code'; code: string; lang: string };
-export type DocPage = NavPage & { segments: Segment[]; toc: TocEntry[] };
+export type DocPage = NavPage & { segments: Segment[]; toc: TocEntry[]; source: string };
 export type SearchEntry = { href: string; page: string; heading: string; text: string };
 
 const escape = (text: string) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -72,9 +74,23 @@ function dimensions(name: string): { width: number; height: number } | undefined
 // Code text that is only keys (⌥1, ⌃⌥G, ⇧Return, Esc) renders as a key cap instead of code.
 const KEYS = /^(?:[⌘⌥⌃⇧]+(?:[A-Za-z0-9]|F\d{1,2}|Tab|Return|Space|Esc|Delete|[←→↑↓⌫\-=,./;'`[\]])?|Esc|Return|Tab|Space|F\d{1,2}|[←→↑↓]+)$/;
 
-/** The index: `## Group` headings over `- [Title](slug.md)` items, in reading order. Missing pages are left out. */
-export function navigation(): NavGroup[] {
+/** A page's one-line lead, the paragraph after `# Title`, without rendering the page. */
+const leads = new Map<string, string>();
+function leadOf(slug: string): string {
+	let lead = leads.get(slug);
+	if (lead === undefined) {
+		const tokens = new Marked().lexer(markdown.get(slug) ?? '');
+		const next = tokens.slice(tokens.findIndex((t) => t.type === 'heading' && t.depth === 1) + 1).find((t) => t.type !== 'space');
+		lead = next?.type === 'paragraph' ? plain(new Marked().parseInline(next.text) as string) : '';
+		leads.set(slug, lead);
+	}
+	return lead;
+}
+
+/** The index: links above the first heading, then `## Group` headings over `- [Title](slug.md)` items, in reading order. Missing pages are left out. */
+export function navigation(): Navigation {
 	const index = markdown.get('README');
+	const top: NavPage[] = [];
 	const groups: NavGroup[] = [];
 	if (index) {
 		for (const line of index.split('\n')) {
@@ -82,15 +98,12 @@ export function navigation(): NavGroup[] {
 			if (group) groups.push({ title: group[1].trim(), pages: [] });
 			const item = /^\s*[-*]\s+\[([^\]]+)\]\((?:\.\.\/)?([\w-]+)\.md\)/.exec(line);
 			const slug = item && pageFor(item[2]);
-			if (item && slug) {
-				if (!groups.length) groups.push({ title: 'Docs', pages: [] });
-				groups.at(-1)!.pages.push({ slug, title: item[1], lead: page(slug)!.lead });
-			}
+			if (item && slug) (groups.at(-1)?.pages ?? top).push({ slug, title: item[1], lead: leadOf(slug) });
 		}
 	} else {
-		groups.push({ title: 'Docs', pages: slugs().map((slug) => ({ slug, title: page(slug)!.title, lead: page(slug)!.lead })) });
+		groups.push({ title: 'Docs', pages: slugs().map((slug) => ({ slug, title: page(slug)!.title, lead: leadOf(slug) })) });
 	}
-	return groups.filter((group) => group.pages.length);
+	return { top, groups: groups.filter((group) => group.pages.length) };
 }
 
 /** Every page that exists, listed or not, so each one gets a route. */
@@ -115,9 +128,10 @@ function renderer(toc: TocEntry[]) {
 				const doc = /^(\.\.\/|\.\/)?([\w-]+)\.md(#[\w-]*)?$/.exec(href);
 				// ../README.md is the repo's front page, not the docs index
 				const slug = doc && !(doc[1] === '../' && doc[2] === 'README') ? pageFor(doc[2]) : undefined;
-				if (doc && slug) return `<a href="/docs/${slug === 'README' ? '' : slug}${doc[3] ?? ''}">${text}</a>`;
+				if (doc && slug) return `<a href="${slug === 'README' ? '/docs' : docHref(slug)}${doc[3] ?? ''}">${text}</a>`;
 				// a page the lead hasn't written yet reads as plain text instead of a broken link
 				if (doc && doc[1] !== '../') return `<span>${text}</span>`;
+				if (href.startsWith(`${site.url}/`)) return `<a href="${escape(href.slice(site.url.length))}">${text}</a>`;
 				if (/^https?:/.test(href)) return `<a href="${escape(href)}" target="_blank" rel="noreferrer">${text}</a>`;
 				if (/^\.\.\//.test(href)) return `<a href="${site.repo}/blob/main/${escape(href.slice(3))}" target="_blank" rel="noreferrer">${text}</a>`;
 				return false;
@@ -136,6 +150,20 @@ function renderer(toc: TocEntry[]) {
 				const pictures = light !== name && images.has(light) ? `${img(name, ' class="only-dark"')}${img(light, ' class="only-light"')}` : img(name);
 				return `<span class="frame">${pictures}</span>`;
 			},
+			// a list of nothing but links to pages is an index: one row per page, its lead beside its title
+			list(token) {
+				const pages = token.items.map((item) => {
+					const link = /^\[([^\]]+)\]\((?:\.\.\/|\.\/)?([\w-]+)\.md\)$/.exec(item.text.trim());
+					const slug = link && pageFor(link[2]);
+					return slug && slug !== 'README' ? { slug, title: link[1] } : undefined;
+				});
+				if (token.ordered || !pages.length || pages.some((p) => !p)) return false;
+				const rows = pages.map((p) => {
+					const lead = leadOf(p!.slug).split(/(?<=\.)\s/)[0];
+					return `<li><a href="${docHref(p!.slug)}"><span class="row-title">${escape(p!.title)}</span><span class="row-lead">${escape(lead)}</span>${chevron}</a></li>`;
+				});
+				return `<ul class="rows">${rows.join('')}</ul>\n`;
+			},
 			codespan({ text }) {
 				return KEYS.test(text) ? `<kbd>${escape(text)}</kbd>` : false;
 			},
@@ -146,6 +174,8 @@ function renderer(toc: TocEntry[]) {
 	});
 	return marked;
 }
+
+const chevron = '<svg class="row-chevron" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M9.5 6.5 15 12l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 const rendered = new Map<string, DocPage>();
 
@@ -180,7 +210,7 @@ export function page(slug: string): DocPage | undefined {
 		} else run.push(token);
 	}
 	flush();
-	const doc = { slug, title: plain(title), lead, segments, toc };
+	const doc = { slug, title: plain(title), lead, segments, toc, source };
 	rendered.set(slug, doc);
 	return doc;
 }
@@ -190,7 +220,7 @@ export function searchIndex(): SearchEntry[] {
 	const entries: SearchEntry[] = [];
 	for (const slug of slugs()) {
 		const doc = page(slug)!;
-		const href = `/docs/${slug}`;
+		const href = docHref(slug);
 		let current: SearchEntry = { href, page: doc.title, heading: '', text: doc.lead };
 		entries.push(current);
 		for (const segment of doc.segments) {
@@ -210,4 +240,14 @@ export function searchIndex(): SearchEntry[] {
 		}
 	}
 	return entries.map((entry) => ({ ...entry, text: entry.text.trim() }));
+}
+
+/** One version's section of CHANGELOG.md, rendered: the newest released one when `version` has none. */
+export function changelogSection(version?: string): { version: string; html: string } | undefined {
+	const sections = (markdown.get('changelog') ?? '').split(/^(?=## )/m).slice(1);
+	const named = (section: string) => /^##\s+\[?([^\s\]]+)/.exec(section)?.[1] ?? '';
+	const section = sections.find((s) => named(s) === version) ?? sections.find((s) => named(s) !== 'Unreleased');
+	if (!section) return;
+	const body = section.slice(section.indexOf('\n') + 1);
+	return { version: named(section), html: renderer([]).parse(body) as string };
 }

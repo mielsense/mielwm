@@ -14,10 +14,13 @@ func settingsPreview(_ args: [String]) -> Never {
     NSApp.applicationIconImage = appIcon()
     let fm = FileManager.default
     let out = URL(fileURLWithPath: value("--out", in: args) ?? "settings-preview", isDirectory: true)
-    let scratch = fm.temporaryDirectory.appendingPathComponent("mielwm-settings-preview-\(getpid())", isDirectory: true)
+    // A test copy's own MIELWM_CONFIG_DIR is scratch already: work there, so the Advanced pane shows that path
+    let ownDir = ProcessInfo.processInfo.environment["MIELWM_CONFIG_DIR"]
+    let scratch = ownDir.map { URL(fileURLWithPath: $0, isDirectory: true) }
+        ?? fm.temporaryDirectory.appendingPathComponent("mielwm-settings-preview-\(getpid())", isDirectory: true)
     try? fm.createDirectory(at: out, withIntermediateDirectories: true)
     try? fm.createDirectory(at: scratch, withIntermediateDirectories: true)
-    defer { try? fm.removeItem(at: scratch) }
+    defer { if ownDir == nil { try? fm.removeItem(at: scratch) } }
     let real = ConfigPaths.standard()
     let paths = ConfigPaths(config: scratch.appendingPathComponent("config.json"))
     try? fm.copyItem(at: real.config, to: paths.config)
@@ -77,7 +80,9 @@ func settingsPreview(_ args: [String]) -> Never {
     if args.contains("--selftest") {
         settingsSelfTest(model, settings, paths)
     }
-    let note = AeroSpaceImport.standardURL().flatMap { try? String(contentsOf: $0, encoding: .utf8) }.map {
+    // --aerospace reads a made-up config instead of yours, so the pictures show no real apps
+    let aeroSpaceURL = value("--aerospace", in: args).map { URL(fileURLWithPath: $0) } ?? AeroSpaceImport.standardURL()
+    let note = aeroSpaceURL.flatMap { try? String(contentsOf: $0, encoding: .utf8) }.map {
         var found = AeroSpaceImport(toml: $0)
         found.bindings = [:]
         return aeroSpaceImportNote(found)
@@ -112,8 +117,8 @@ func settingsPreview(_ args: [String]) -> Never {
                 shot.waitUntilExit()
             }
         }
-        // The AeroSpace import, as the AeroSpace & Barik pane asks about it.
-        if let toml = AeroSpaceImport.standardURL().flatMap({ try? String(contentsOf: $0, encoding: .utf8) }) {
+        // The AeroSpace import, as the AeroSpace pane asks about it.
+        if let toml = aeroSpaceURL.flatMap({ try? String(contentsOf: $0, encoding: .utf8) }) {
             settings.show(.integrations)
             pump(0.5)
             model.aeroSpaceFound = AeroSpaceImport(toml: toml)
@@ -205,8 +210,9 @@ func settingsPreview(_ args: [String]) -> Never {
 @MainActor
 private func saveMenuPreview(to url: URL) {
     let controller = Controller(mode: .manageOnly(0))
-    // A window from each of the first open apps, spread over workspaces 1 to 3, so the menu lists them.
-    let apps = NSWorkspace.shared.runningApplications.filter { $0.activationPolicy == .regular && $0.bundleIdentifier != nil }.prefix(6)
+    // A window from each of the first open Apple apps, spread over workspaces 1 to 3, so the menu lists them
+    // without showing which other apps this Mac runs.
+    let apps = NSWorkspace.shared.runningApplications.filter { $0.activationPolicy == .regular && $0.bundleIdentifier?.hasPrefix("com.apple.") == true }.prefix(6)
     let screen = controller.state.screens.first?.visibleFrame ?? .zero
     controller.state.settings.defaultLayout = .tiles
     controller.state.settings.workspaceRules = apps.enumerated().map { "\($1.bundleIdentifier!)=\([1, 1, 1, 2, 3, 3][$0])" }.joined(separator: ",")
