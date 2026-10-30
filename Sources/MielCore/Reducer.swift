@@ -300,6 +300,7 @@ extension CanvasState {
         if let f = expectedFocus, f.id != id, now < f.until { heldFocus = .windowFocused(id); return }
         heldFocus = nil // ours landed, or there was none
         guard let i = index(id), windows[i].isShown else { // a dialog or sheet, say, or a window about to show
+            if expectedFocus?.id == id { expectedFocus = nil } // ours reported in before it shows: nothing to hold back
             focusLeft(id.pid)
             if index(id) != nil { pendingFocus = id } // macOS can report focus before the unhide or unminimize
             return

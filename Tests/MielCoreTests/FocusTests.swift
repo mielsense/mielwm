@@ -67,3 +67,22 @@ import Testing
     _ = s.advance(1)
     #expect(s.focused == wid(2))
 }
+
+@Test func aFocusAfterOursLandedIsAppliedOnceTheWaitEnds() {
+    var s = twoWindows()
+    _ = s.send(.action(.focus(.right)))
+    _ = s.send(.system(.windowFocused(wid(2)))) // ours lands
+    _ = s.send(.system(.windowFocused(wid(1)))) // then the user clicks window 1
+    _ = s.advance(1)
+    #expect(s.focused == wid(1))
+}
+
+@Test func ourFocusReportedBeforeTheWindowShowsLandsWhenItDoes() {
+    var s = twoWindows()
+    _ = s.send(.action(.focus(.right))) // mielwm focuses window 2
+    _ = s.send(.system(.windowMinimized(wid(2), true)))
+    _ = s.send(.system(.windowFocused(wid(2)))) // reported in, but not shown yet
+    _ = s.advance(1) // the unminimize takes longer than the wait
+    _ = s.send(.system(.windowMinimized(wid(2), false)))
+    #expect(s.focused == wid(2))
+}
