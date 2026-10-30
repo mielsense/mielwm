@@ -15,8 +15,7 @@ struct HUDLayer {
     var texture: MTLTexture
     var rect: CGRect
     var caret: CGRect? // layer-local; blinked by the shader
-    var panel: CGRect? // layer-local; the renderer blurs what is behind it
-    var radius: CGFloat = 0
+    var panels: [(rect: CGRect, radius: CGFloat)] = [] // layer-local; the renderer blurs what is behind them
 }
 
 /// What the painter needs to know about the screen, all in px.
@@ -38,11 +37,11 @@ final class HUDPainter {
     }
 
     private func layer(_ bitmap: Bitmap?, key: Int, at origin: CGPoint, caret: CGRect? = nil,
-                       panel: CGRect? = nil, radius: CGFloat = 0) -> HUDLayer? {
+                       panels: [(rect: CGRect, radius: CGFloat)] = []) -> HUDLayer? {
         guard let bitmap, let texture = bitmap.texture(device: device) else { return nil }
         return HUDLayer(key: key, texture: texture,
                         rect: CGRect(x: origin.x, y: origin.y, width: CGFloat(bitmap.width), height: CGFloat(bitmap.height)),
-                        caret: caret, panel: panel, radius: radius)
+                        caret: caret, panels: panels)
     }
 
     // MARK: - Shared pieces
@@ -193,7 +192,6 @@ final class HUDPainter {
         let columns = help ? 3 : 1
         let width = min((help ? max(look.paletteWidth, 960) : look.paletteWidth) * s, view.size.width * 0.94)
         let inset = PaletteMetrics.listInset * s
-        let radius = (look.rounding + PaletteMetrics.panelExtraRadius) * s
         let count = min(hud.rows.count, max(1, look.paletteRows))
         let rowHeight = look.rowHeight * s
         let selected = hud.selectedRow ?? -1
@@ -201,23 +199,23 @@ final class HUDPainter {
         let showFooter = list && !hud.footer.isEmpty
         let footHeight = PaletteMetrics.footerHeight * s
         let sections = help ? HelpSection.columns(hud.help, count: columns) : []
-        let helpHeight = help ? self.helpHeight(sections, s: s) : 0
         let fieldHeight = look.searchHeight * s
+        // The field is a capsule; results and the shortcuts sheet sit in a card of their own just below it.
+        var cardHeight: CGFloat = 0
+        if rows > 0 { cardHeight = inset * 2 + CGFloat(rows) * rowHeight + (showFooter ? footHeight : 0) }
+        if help { cardHeight = helpHeight(sections, s: s) }
+        let gap = cardHeight > 0 ? PaletteMetrics.cardGap * s : 0
+        let cardRadius = PaletteMetrics.cardRadius * s
 
-        var height = fieldHeight
-        if rows > 0 { height += inset * 2 + CGFloat(rows) * rowHeight + (showFooter ? footHeight : 0) }
-        if help { height += helpHeight }
-
-        guard let b = Bitmap(width: Int(ceil(width + m * 2)), height: Int(ceil(height + m * 2))) else { return nil }
-        let box = CGRect(x: m, y: m, width: width, height: height)
-        panel(b, box, radius, s, theme)
-        let caret = searchField(b, CGRect(x: m, y: m, width: width, height: fieldHeight), s: s, hud: hud, theme)
-        var y = m + fieldHeight
-        if rows > 0 || help { hairline(b, x: m, y: y, width: width, theme) }
+        guard let b = Bitmap(width: Int(ceil(width + m * 2)), height: Int(ceil(fieldHeight + gap + cardHeight + m * 2))) else { return nil }
+        let field = CGRect(x: m, y: m, width: width, height: fieldHeight)
+        let card = CGRect(x: m, y: field.maxY + gap, width: width, height: cardHeight)
+        panel(b, field, fieldHeight / 2, s, theme)
+        if cardHeight > 0 { panel(b, card, cardRadius, s, theme) }
+        let caret = searchField(b, field, s: s, hud: hud, theme)
 
         if rows > 0 {
-            y += inset
-            let x = m + inset, rowWidth = width - inset * 2
+            let x = card.minX + inset, y = card.minY + inset, rowWidth = width - inset * 2
             if hud.rows.isEmpty {
                 let r = CGRect(x: x, y: y, width: rowWidth, height: rowHeight)
                 let title = TextStyle(size: look.titleSize * s)
@@ -226,24 +224,20 @@ final class HUDPainter {
             }
             for row in 0..<count {
                 let r = CGRect(x: x, y: y + CGFloat(row) * rowHeight, width: rowWidth, height: rowHeight)
-                searchRow(b, hud.rows[row], r, s: s, selected: row == selected, theme)
+                searchRow(b, hud.rows[row], r, s: s, selected: row == selected, radius: cardRadius - inset, theme)
             }
-            y += CGFloat(rows) * rowHeight + inset
             if showFooter {
-                hairline(b, x: m, y: y, width: width, theme)
                 let style = TextStyle(size: look.detailSize * s)
-                text(b, hud.footer, style, theme.textFaint, x: m + 16 * s, cy: y + footHeight / 2,
-                     maxWidth: width - 32 * s)
+                text(b, hud.footer, style, theme.textFaint, x: x + 12 * s, cy: card.maxY - inset - footHeight / 2,
+                     maxWidth: rowWidth - 24 * s)
             }
         }
 
-        if help {
-            drawHelp(b, sections, CGRect(x: m, y: y, width: width, height: helpHeight), s: s, theme)
-        }
+        if help { drawHelp(b, sections, card, s: s, theme) }
 
         let top = PaletteMetrics.top(look, screenHeight: view.size.height / view.scale, topInset: view.topInset / view.scale) * view.scale
         return layer(b, key: key, at: CGPoint(x: ((view.size.width - CGFloat(b.width)) / 2).rounded(), y: (top - m).rounded()),
-                     caret: caret, panel: box, radius: radius)
+                     caret: caret, panels: cardHeight > 0 ? [(field, fieldHeight / 2), (card, cardRadius)] : [(field, fieldHeight / 2)])
     }
 
     /// Spotlight's field: a magnifying glass and the query in the biggest
@@ -253,7 +247,7 @@ final class HUDPainter {
         let size = look.querySize * s
         let style = TextStyle(size: size)
         let glyph = (size * 0.8).rounded()
-        let gx = r.minX + 18 * s
+        let gx = r.minX + 20 * s // the capsule's round end needs a little more room than a corner
         if let image = icons.symbol("magnifyingglass", pointSize: glyph, color: theme.textDim) {
             let fit = min(glyph * 1.3 / max(image.size.width, 1), glyph * 1.3 / max(image.size.height, 1), 1)
             let w = image.size.width * fit, h = image.size.height * fit
@@ -273,9 +267,9 @@ final class HUDPainter {
         return CGRect(x: caretX.rounded(), y: (r.midY - caretHeight / 2).rounded(), width: max(2, (1.5 * s).rounded()), height: caretHeight)
     }
 
-    private func searchRow(_ b: Bitmap, _ row: HUDRow, _ r: CGRect, s: CGFloat, selected: Bool, _ theme: Theme) {
+    private func searchRow(_ b: Bitmap, _ row: HUDRow, _ r: CGRect, s: CGFloat, selected: Bool, radius: CGFloat, _ theme: Theme) {
         let look = theme.look
-        if selected { b.fill(b.roundedPath(r, look.rounding * s), theme.accent) }
+        if selected { b.fill(b.roundedPath(r, radius), theme.accent) }
         let icon = (min(r.height * 0.66, 48 * s)).rounded()
         appIcon(b, CGRect(x: r.minX + 8 * s, y: (r.midY - icon / 2).rounded(), width: icon, height: icon), bundleID: row.bundleID,
                 fallback: row.detail.isEmpty ? row.title : row.detail, theme)
@@ -380,7 +374,7 @@ final class HUDPainter {
                capHeight: type.capHeight(titleStyle))
         let origin = CGPoint(x: ((view.size.width - CGFloat(b.width)) / 2).rounded(),
                              y: ((view.size.height - CGFloat(b.height)) / 2).rounded())
-        return layer(b, key: key, at: origin, panel: box, radius: radius)
+        return layer(b, key: key, at: origin, panels: [(box, radius)])
     }
 
     /// A small chevron, 4 by 8 points with round ends, centred on `x`.
@@ -424,7 +418,7 @@ final class HUDPainter {
         default: view.size.width - margin - width
         }
         let origin = CGPoint(x: (x - m).rounded(), y: ((index < 2 ? top : bottom) - m).rounded())
-        return layer(b, key: key, at: origin, panel: box, radius: height / 2)
+        return layer(b, key: key, at: origin, panels: [(box, height / 2)])
     }
 
     // MARK: - Toast
@@ -442,7 +436,7 @@ final class HUDPainter {
         hints(b, message, style, x: m + padX, cy: box.midY, s: s, theme, color: theme.text)
         let y = view.size.height * 0.78 - height / 2 - m
         return layer(b, key: key, at: CGPoint(x: ((view.size.width - CGFloat(b.width)) / 2).rounded(), y: y.rounded()),
-                     panel: box, radius: height / 2)
+                     panels: [(box, height / 2)])
     }
 
     // MARK: - Labels drawn in the world, under the lens

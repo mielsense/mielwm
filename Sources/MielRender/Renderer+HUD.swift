@@ -70,17 +70,19 @@ extension Renderer {
         let ease = smoothstep(0, 1, t)
         func draw(_ layer: HUDLayer?, alpha: Double, dy: CGFloat = 0) {
             guard let layer, alpha > 0.001 else { return }
-            if let (world, lens, map) = behind, let panel = layer.panel, t > 0.001, !scene.look.reduceTransparency {
-                // The material: what is behind the panel, blurred, under its translucent tint.
-                let r = panel.offsetBy(dx: layer.rect.minX, dy: layer.rect.minY + dy)
-                var m = MaterialUniforms(rect: SIMD4(r), map: map, size: SIMD2(Float(pxSize.width), Float(pxSize.height)),
-                                         radius: Float(layer.radius), distort: Float(lens.distort), contrast: Float(lens.contrast),
-                                         alpha: Float(alpha * opacity * ease), blur: Float((scene.look.liquid ? 5 : 24) * scale),
-                                         liquid: scene.look.liquid ? 1 : 0, scale: Float(scale), dark: scene.look.dark ? 1 : 0)
-                enc.setRenderPipelineState(pipelines.material)
-                enc.setFragmentBytes(&m, length: MemoryLayout<MaterialUniforms>.stride, index: 0)
-                enc.setFragmentTexture(world, index: 0)
-                quad(enc, r, pxSize)
+            if let (world, lens, map) = behind, t > 0.001, !scene.look.reduceTransparency {
+                // The material: what is behind each panel, blurred, under its translucent tint.
+                for panel in layer.panels {
+                    let r = panel.rect.offsetBy(dx: layer.rect.minX, dy: layer.rect.minY + dy)
+                    var m = MaterialUniforms(rect: SIMD4(r), map: map, size: SIMD2(Float(pxSize.width), Float(pxSize.height)),
+                                             radius: Float(panel.radius), distort: Float(lens.distort), contrast: Float(lens.contrast),
+                                             alpha: Float(alpha * opacity * ease), blur: Float((scene.look.liquid ? 5 : 24) * scale),
+                                             liquid: scene.look.liquid ? 1 : 0, scale: Float(scale), dark: scene.look.dark ? 1 : 0)
+                    enc.setRenderPipelineState(pipelines.material)
+                    enc.setFragmentBytes(&m, length: MemoryLayout<MaterialUniforms>.stride, index: 0)
+                    enc.setFragmentTexture(world, index: 0)
+                    quad(enc, r, pxSize)
+                }
             }
             var u = TexturedUniforms(alpha: Float(alpha * opacity))
             enc.setRenderPipelineState(pipelines.texture)

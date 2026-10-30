@@ -9,14 +9,15 @@ import Foundation
 /// The search palette's layout in points (times look.hudScale). Render draws
 /// with these and the camera aims below them, so the two agree.
 public enum PaletteMetrics {
-    public static let listInset = 6.0 // above and below the rows, and beside them
-    public static let footerHeight = 30.0
-    public static let panelExtraRadius = 6.0 // the panel's corners are rounder than its rows'
+    public static let listInset = 8.0 // above and below the rows, and beside them
+    public static let footerHeight = 28.0
+    public static let cardGap = 8.0 // between the field and the card of results below it
+    public static let cardRadius = 20.0 // the card's corners; its rows' are this minus listInset, so they share a centre
 
-    /// Height of the search panel with `rows` result rows (0: the field alone).
+    /// Height of the field (a capsule) and, with `rows` result rows, the card below it.
     public static func height(_ look: Look, rows: Int, footer: Bool) -> Double {
         guard rows > 0 else { return look.searchHeight }
-        return look.searchHeight + listInset * 2 + Double(rows) * look.rowHeight + (footer ? footerHeight : 0)
+        return look.searchHeight + cardGap + listInset * 2 + Double(rows) * look.rowHeight + (footer ? footerHeight : 0)
     }
 
     /// The palette's top edge, in points from the screen's top; `topInset` is the notch or menu bar.
