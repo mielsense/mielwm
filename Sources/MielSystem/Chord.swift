@@ -12,32 +12,17 @@ public struct Chord: Hashable, Sendable {
         self.modifiers = modifiers
     }
 
-    /// Parses "ctrl+opt+g", "alt-shift-left", "cmd+,". Modifier names:
-    /// ctrl/control, opt/option/alt, cmd/command/super, shift. nil if any
-    /// part is unknown or there is no key.
-    public init?(_ text: String) {
-        var modifiers: Modifiers = []
-        var key: UInt16?
-        let parts = text.lowercased().split(omittingEmptySubsequences: false) { $0 == "+" || $0 == "-" }
-        // "cmd+-" splits into ["cmd", "", ""]: an empty last part is the minus key.
-        for (i, part) in parts.enumerated() {
-            if part.isEmpty, i > 0, i == parts.count - 1 { key = UInt16(kVK_ANSI_Minus); continue }
-            switch part {
-            case "ctrl", "control": modifiers.insert(.control)
-            case "opt", "option", "alt": modifiers.insert(.option)
-            case "cmd", "command", "super": modifiers.insert(.command)
-            case "shift": modifiers.insert(.shift)
-            case "": continue
-            default:
-                guard key == nil, let code = keyCodes[String(part)] else { return nil }
-                key = code
-            }
-        }
-        guard let key else { return nil }
-        self.init(key, modifiers)
+    /// The key a config chord names, at its ANSI position.
+    public init?(_ chord: KeyChord) {
+        guard let code = keyCodes[chord.key] else { return nil }
+        self.init(code, chord.modifiers)
     }
+
+    /// The key code of a key name in `KeyChord`'s spelling.
+    public static func keyCode(_ name: String) -> UInt16? { keyCodes[name] }
 }
 
+/// Every name in `KeyChord.allKeys`.
 private let keyCodes: [String: UInt16] = {
     var map: [String: Int] = [
         "a": kVK_ANSI_A, "b": kVK_ANSI_B, "c": kVK_ANSI_C, "d": kVK_ANSI_D, "e": kVK_ANSI_E, "f": kVK_ANSI_F,
@@ -48,16 +33,13 @@ private let keyCodes: [String: UInt16] = {
         "0": kVK_ANSI_0, "1": kVK_ANSI_1, "2": kVK_ANSI_2, "3": kVK_ANSI_3, "4": kVK_ANSI_4,
         "5": kVK_ANSI_5, "6": kVK_ANSI_6, "7": kVK_ANSI_7, "8": kVK_ANSI_8, "9": kVK_ANSI_9,
         "left": kVK_LeftArrow, "right": kVK_RightArrow, "up": kVK_UpArrow, "down": kVK_DownArrow,
-        "tab": kVK_Tab, "enter": kVK_Return, "return": kVK_Return, "esc": kVK_Escape, "escape": kVK_Escape,
-        "space": kVK_Space, "backspace": kVK_Delete, "delete": kVK_Delete, "forwarddelete": kVK_ForwardDelete,
+        "tab": kVK_Tab, "return": kVK_Return, "escape": kVK_Escape, "space": kVK_Space,
+        "delete": kVK_Delete, "forwarddelete": kVK_ForwardDelete,
         "home": kVK_Home, "end": kVK_End, "pageup": kVK_PageUp, "pagedown": kVK_PageDown,
-        "minus": kVK_ANSI_Minus, "equal": kVK_ANSI_Equal, "=": kVK_ANSI_Equal,
-        "comma": kVK_ANSI_Comma, ",": kVK_ANSI_Comma, "period": kVK_ANSI_Period, ".": kVK_ANSI_Period,
-        "slash": kVK_ANSI_Slash, "/": kVK_ANSI_Slash, "semicolon": kVK_ANSI_Semicolon, ";": kVK_ANSI_Semicolon,
-        "quote": kVK_ANSI_Quote, "'": kVK_ANSI_Quote, "backslash": kVK_ANSI_Backslash, "\\": kVK_ANSI_Backslash,
-        "grave": kVK_ANSI_Grave, "`": kVK_ANSI_Grave,
-        "leftbracket": kVK_ANSI_LeftBracket, "[": kVK_ANSI_LeftBracket,
-        "rightbracket": kVK_ANSI_RightBracket, "]": kVK_ANSI_RightBracket,
+        "minus": kVK_ANSI_Minus, "equal": kVK_ANSI_Equal, "comma": kVK_ANSI_Comma, "period": kVK_ANSI_Period,
+        "slash": kVK_ANSI_Slash, "semicolon": kVK_ANSI_Semicolon, "quote": kVK_ANSI_Quote,
+        "backslash": kVK_ANSI_Backslash, "grave": kVK_ANSI_Grave,
+        "leftbracket": kVK_ANSI_LeftBracket, "rightbracket": kVK_ANSI_RightBracket,
     ]
     let functionKeys = [kVK_F1, kVK_F2, kVK_F3, kVK_F4, kVK_F5, kVK_F6, kVK_F7, kVK_F8, kVK_F9, kVK_F10, kVK_F11, kVK_F12]
     for (i, code) in functionKeys.enumerated() { map["f\(i + 1)"] = code }

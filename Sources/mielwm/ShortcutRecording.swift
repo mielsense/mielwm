@@ -85,7 +85,7 @@ extension SettingsModel {
     }
 
     static let keyNames: [UInt16: String] = Dictionary(
-        KeyChord.allKeys.compactMap { name in Chord(name).map { ($0.keyCode, name) } }, uniquingKeysWith: { a, _ in a })
+        KeyChord.allKeys.compactMap { name in Chord.keyCode(name).map { ($0, name) } }, uniquingKeysWith: { a, _ in a })
 
     static func isFunctionKey(_ key: String) -> Bool { key.count > 1 && key.hasPrefix("f") && Int(key.dropFirst()) != nil }
 }

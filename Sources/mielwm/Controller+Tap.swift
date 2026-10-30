@@ -39,7 +39,7 @@ extension Controller {
             tapSettings = s
             var bindings: [Chord: Action] = [:], swallow: Set<Chord> = [] // only the config's no-ops: a key the user unbinds types again
             for (chord, action) in s.chords {
-                guard let c = Chord(chord.description) else { continue }
+                guard let c = Chord(chord) else { continue }
                 if action == .noop { swallow.insert(c) } else { bindings[c] = action }
             }
             bindingTable = BindingTable(bindings: bindings, swallow: swallow)

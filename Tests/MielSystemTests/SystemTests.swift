@@ -25,22 +25,16 @@ private let scratchRoot: URL = {
 
 // MARK: - Chords
 
-@Test func chordParsesModifiersAndKeys() {
-    #expect(Chord("ctrl+opt+g") == Chord(UInt16(kVK_ANSI_G), [.control, .option]))
-    #expect(Chord("alt-shift-left") == Chord(UInt16(kVK_LeftArrow), [.option, .shift]))
-    #expect(Chord("Cmd+,") == Chord(UInt16(kVK_ANSI_Comma), .command))
-    #expect(Chord("alt+-") == Chord(UInt16(kVK_ANSI_Minus), .option))
-    #expect(Chord("alt-minus") == Chord(UInt16(kVK_ANSI_Minus), .option))
-    #expect(Chord("alt+=") == Chord(UInt16(kVK_ANSI_Equal), .option))
-    #expect(Chord("super+f1") == Chord(UInt16(kVK_F1), .command))
-    #expect(Chord("tab") == Chord(UInt16(kVK_Tab)))
-}
-
-@Test func chordRejectsUnknownPartsAndMissingKeys() {
-    #expect(Chord("ctrl+opt") == nil)
-    #expect(Chord("hyper+g") == nil)
-    #expect(Chord("ctrl+g+h") == nil)
-    #expect(Chord("") == nil)
+@Test func chordsTakeTheKeyCodeTheConfigNames() throws {
+    func chord(_ text: String) throws -> Chord? { Chord(try #require(KeyChord(text))) }
+    #expect(try chord("ctrl+opt+g") == Chord(UInt16(kVK_ANSI_G), [.control, .option]))
+    #expect(try chord("opt+shift+left") == Chord(UInt16(kVK_LeftArrow), [.option, .shift]))
+    #expect(try chord("Cmd+,") == Chord(UInt16(kVK_ANSI_Comma), .command))
+    #expect(try chord("alt+-") == Chord(UInt16(kVK_ANSI_Minus), .option))
+    #expect(try chord("alt+=") == Chord(UInt16(kVK_ANSI_Equal), .option))
+    #expect(try chord("cmd+f1") == Chord(UInt16(kVK_F1), .command))
+    #expect(try chord("tab") == Chord(UInt16(kVK_Tab)))
+    #expect(KeyChord.allKeys.allSatisfy { Chord.keyCode($0) != nil }, "every key the config can name")
 }
 
 // MARK: - Tap routing
@@ -52,10 +46,10 @@ private func key(_ code: Int, _ modifiers: Modifiers = [], down: Bool = true, is
 private func tapState() -> TapState {
     var state = TapState()
     state.table = BindingTable(bindings: [
-        Chord("ctrl+opt+g")!: .toggleOverview,
-        Chord("opt+shift+left")!: .nudge(.left),
-        Chord("opt+tab")!: .switchWindow(forward: true),
-        Chord("opt+shift+tab")!: .switchWindow(forward: false),
+        Chord(KeyChord("ctrl+opt+g")!)!: .toggleOverview,
+        Chord(KeyChord("opt+shift+left")!)!: .nudge(.left),
+        Chord(KeyChord("opt+tab")!)!: .switchWindow(forward: true),
+        Chord(KeyChord("opt+shift+tab")!)!: .switchWindow(forward: false),
     ])
     return state
 }
@@ -82,7 +76,8 @@ private func tapState() -> TapState {
     var router = TapRouter()
     let state = tapState()
     for chord in ["opt+1", "opt+0", "opt+shift+5", "opt+/", "opt+,", "opt+;"] {
-        #expect(router.route(key(Int(Chord(chord)!.keyCode), Chord(chord)!.modifiers), state)
+        let c = Chord(KeyChord(chord)!)!
+        #expect(router.route(key(Int(c.keyCode), c.modifiers), state)
             == TapOutput(consume: true), "\(chord)")
     }
     #expect(router.route(key(kVK_ANSI_A, .option), state) == TapOutput())
