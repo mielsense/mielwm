@@ -139,6 +139,10 @@ public enum WindowCommand: Sendable, Equatable {
     case minimize(WindowID)
 }
 
+extension WindowCommand {
+    var isFocus: Bool { if case .focus = self { true } else { false } }
+}
+
 // MARK: - Live window images
 
 public enum WindowFrame: @unchecked Sendable {

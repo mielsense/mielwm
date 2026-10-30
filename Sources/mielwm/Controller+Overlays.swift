@@ -159,10 +159,8 @@ extension Controller {
         }
     }
 
-    func didCloseOverview(focusSent: Bool) {
+    func didCloseOverview() {
         keyCaptureFallback = false
         updateMouse()
-        // Esc lands nowhere: give the keyboard back to the window that had it.
-        if !focusSent, mode == .normal, let f = state.focused { registry.perform([.focus(f)]) }
     }
 }

@@ -42,6 +42,7 @@ public extension CanvasState {
     mutating func send(_ input: CoreInput) -> [WindowCommand] {
         outbox = []
         let watch: NoticeWatch? = if case .tick = input { nil } else { noticeWatch }
+        let wasOverview = isOverview
         switch input {
         case let .system(event): handle(event)
         case let .action(action): perform(action)
@@ -62,6 +63,8 @@ public extension CanvasState {
         case let .setSettings(s): settings = s
         }
         if let watch { updateNotices(from: watch) }
+        // Leaving the overview without landing on a window gives the keyboard back to the one that had it.
+        if wasOverview, !isOverview, let f = focused, !outbox.contains(where: \.isFocus) { focusWindow(f) }
         // One batch moves each window once: its last setFrame wins.
         var seen = Set<WindowID>()
         let out = outbox.reversed().filter { command in

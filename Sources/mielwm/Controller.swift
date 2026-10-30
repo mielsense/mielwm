@@ -242,9 +242,8 @@ final class Controller {
         let commands = state.send(input)
         if Self.logsTimings { noteTiming(input, commands) }
         perform(commands, before: before)
-        let focusSent = commands.contains { if case .focus = $0 { true } else { false } }
         let tick = if case .tick = input { true } else { false }
-        update(from: before, focusSent: focusSent, tick: tick)
+        update(from: before, tick: tick)
     }
 
     private func perform(_ commands: [WindowCommand], before: CanvasState) {
@@ -299,9 +298,9 @@ final class Controller {
     }
 
     /// What follows every input: overlays, keyboard, tap, files, ticking.
-    private func update(from before: CanvasState, focusSent: Bool, tick: Bool) {
+    private func update(from before: CanvasState, tick: Bool) {
         if state.isOverview != before.isOverview {
-            state.isOverview ? didOpenOverview() : didCloseOverview(focusSent: focusSent)
+            state.isOverview ? didOpenOverview() : didCloseOverview()
         }
         if state.appearanceRequests != before.appearanceRequests { onSettings?(.appearance) }
         if state.overview.switcher, !before.overview.switcher { warmStreams() }
