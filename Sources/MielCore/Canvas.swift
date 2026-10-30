@@ -51,6 +51,7 @@ struct Checkpoint: Hashable, Sendable {
 /// Everything Core knows. Change it only through `send` / `reduce`.
 public struct CanvasState: Sendable {
     static let expectationLifetime = 1.0 // seconds a setFrame has to show up
+    static let focusLifetime = 0.6 // seconds a focus we asked for has to show up
     static let frameTolerance: CGFloat = 2
     static let screenGracePeriod = 1.5
     static let maxReparks = 2

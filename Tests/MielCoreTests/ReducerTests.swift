@@ -239,7 +239,7 @@ func panDesk(_ s: inout CanvasState, dx: CGFloat) -> [WindowCommand] {
     _ = s.run(.system(.windowFocused(wid(1))), .system(.windowFocused(wid(2))))
     _ = s.send(.system(.windowClosed(wid(2))))
     #expect(s.mru.order == [wid(1)])
-    #expect(s.focused == nil)
+    #expect(s.focused == wid(1)) // the next on screen takes focus
     _ = s.send(.system(.appTerminated(pid: 100)))
     #expect(s.windows.isEmpty)
 }

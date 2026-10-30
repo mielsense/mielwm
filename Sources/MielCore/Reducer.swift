@@ -135,6 +135,7 @@ extension CanvasState {
             windows[i].isMinimized = minimized
             retile(windows[i].workspace) // a minimized window gives up its tile
             if !minimized { sync([id]) }
+            refocusIfLost()
         case let .windowFullScreen(id, on):
             guard let i = index(id) else { return }
             windows[i].isFullScreen = on
@@ -149,6 +150,7 @@ extension CanvasState {
             for i in windows.indices where windows[i].id.pid == pid { windows[i].isHidden = hidden }
             for slot in Set(windows.filter { $0.id.pid == pid }.compactMap(\.workspace)) { retile(slot) }
             if !hidden { sync(Set(windows.filter { $0.id.pid == pid }.map(\.id))) }
+            refocusIfLost()
         case let .appTerminated(pid): remove { $0.id.pid == pid }
         case let .screensChanged(new): screensChanged(new)
         }
@@ -162,12 +164,26 @@ extension CanvasState {
             mru.remove(id)
             fills[id] = nil
             fullscreens[id] = nil
-            if focused == id { focused = nil }
             if selection == id { selection = nil }
             if dragging == id { dragging = nil; dropIndicator = nil }
             leave(id) // the rest of its workspace tiles again
         }
         layoutRevision += 1
+        refocusIfLost()
+    }
+
+    /// The focused window closed, minimized or hid. macOS focuses a window of
+    /// its choosing, often one parked on another workspace, so the most
+    /// recent window on screen takes focus instead. With none, nothing does
+    /// and macOS's pick is ignored for a moment: the camera stays.
+    mutating func refocusIfLost() {
+        guard let f = focused, !(window(f)?.isShown ?? false) else { return }
+        focused = nil
+        if let next = mru.sorted(windows.filter { $0.isShown && isFullyVisible($0) }.map(\.id)).first {
+            focusWindow(next)
+        } else {
+            expectedFocus = (f, now + Self.focusLifetime) // a focus nobody gets, to hold off the others
+        }
     }
 
     /// (f) A new window: a saved spot (and workspace) wins; one found in a
