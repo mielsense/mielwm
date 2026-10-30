@@ -46,7 +46,8 @@ extension Controller {
     static func stopwords() -> Set<String> {
         var host = [CChar](repeating: 0, count: 256)
         gethostname(&host, host.count)
-        let words = [NSUserName(), String(cString: host)].flatMap { $0.lowercased().split { !$0.isLetter && !$0.isNumber } }
+        let hostName = String(decoding: host.prefix { $0 != 0 }.map { UInt8(bitPattern: $0) }, as: UTF8.self)
+        let words = [NSUserName(), hostName].flatMap { $0.lowercased().split { !$0.isLetter && !$0.isNumber } }
         return Set(words.map(String.init).filter { $0.count > 1 && $0 != "local" })
     }
 }

@@ -14,7 +14,7 @@ private final class FakeApps: BarikApps {
 
     func barikLaunched() -> Date? { barik }
     func relaunchBarik() { if barik != nil { relaunched += 1 } }
-    func startHelper(_ url: URL, started: @escaping (Date?) -> Void) {
+    func startHelper(_ url: URL, started: @escaping @MainActor (Date?) -> Void) {
         helperRunning = true
         started(helperStart)
     }

@@ -129,6 +129,7 @@ final class SettingsWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
 }
 
 /// The first view of `type` in `view`'s tree, depth first.
+@MainActor
 func firstView<T: NSView>(_ type: T.Type, in view: NSView) -> T? {
     if let found = view as? T { return found }
     for sub in view.subviews { if let found = firstView(type, in: sub) { return found } }

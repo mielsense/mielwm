@@ -94,7 +94,7 @@ final class Overlay {
     }
 }
 
-final class OverlayView: NSView, NSTextInputClient {
+final class OverlayView: NSView, @preconcurrency NSTextInputClient {
     let screenID: UInt32
     private(set) var metal = CAMetalLayer()
     var link: CADisplayLink?

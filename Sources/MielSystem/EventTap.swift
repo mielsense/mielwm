@@ -7,8 +7,9 @@ import os
 /// buttons, the wheel and gestures only while `TapRouter.wantsPointer`, so
 /// every click, drag and scroll in other apps does not make a round trip
 /// through this process. The callback only routes; handlers run later on
-/// the main queue.
-public final class EventTap {
+/// the main queue. Unchecked Sendable: `state` is behind a lock, and the
+/// rest belongs to the tap thread or is set before it starts.
+public final class EventTap: @unchecked Sendable {
     /// eventSourceUserData of events we post ourselves, so the tap lets them through.
     private static let replayMarker: Int64 = 0x4D49_454C // "MIEL"
 
@@ -21,7 +22,7 @@ public final class EventTap {
     }
 
     private let lockedState = OSAllocatedUnfairLock(initialState: TapState())
-    private let handler: (TapEvent) -> Void
+    private let handler: @MainActor @Sendable (TapEvent) -> Void
     private var router = TapRouter() // tap thread only
     private var middleDown: CGEvent? // tap thread only, replayed if no pan follows
     private var tap: CFMachPort?
@@ -30,7 +31,7 @@ public final class EventTap {
     private var listenOnly = false
     private var thread: RunLoopThread?
 
-    public init(handler: @escaping (TapEvent) -> Void) {
+    public init(handler: @escaping @MainActor @Sendable (TapEvent) -> Void) {
         self.handler = handler
     }
 

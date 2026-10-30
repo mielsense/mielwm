@@ -123,7 +123,8 @@ public final class Renderer {
         var still = scene
         still.time = 0
         s.drawn = (still, generations(scene, frames))
-        let semaphore = s.inFlight, held = s.retained
+        let semaphore = s.inFlight
+        nonisolated(unsafe) let held = s.retained // kept alive until the GPU is done, never touched
         s.retained = []
         cb.addCompletedHandler { _ in
             withExtendedLifetime(held) {}

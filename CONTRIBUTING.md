@@ -66,6 +66,7 @@ Run `scripts/system-test.sh` when you change window handling, and `scripts/bench
 - Match the file you're in. Files are small, with one concern each.
 - Log with `log(_:)` from `MielSystem`. Never log window titles.
 - Every API must exist on macOS 15. Guard anything newer with `#available`.
+- Every module builds in the Swift 6 language mode, with its strict concurrency checks. A callback that runs on the main thread says so with `@MainActor`, and one that crosses threads is `@Sendable`. `@unchecked Sendable` and `nonisolated(unsafe)` need a comment that says why they are safe.
 - The app takes no new dependencies. A test-only dependency is fine when it saves real work.
 
 ## Commits

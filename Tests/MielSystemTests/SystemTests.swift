@@ -469,7 +469,7 @@ private func aerospace(_ args: [String], socket path: String) async throws -> St
 
 // MARK: - Screens
 
-@Test func screensReportedOnWakeKeepTheCacheCurrent() {
+@MainActor @Test func screensReportedOnWakeKeepTheCacheCurrent() {
     var seen: [[ScreenInfo]] = []
     let registry = WindowRegistry { if case .screensChanged(let s) = $0 { seen.append(s) } }
     func screen(_ id: UInt32, _ width: CGFloat) -> [ScreenInfo] {

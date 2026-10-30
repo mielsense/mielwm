@@ -63,7 +63,9 @@ for i in 0..<count {
     views.append(view)
     windows.append(window)
 }
-if !CommandLine.arguments.contains("--still") { Timer.scheduledTimer(withTimeInterval: 1.0 / 60, repeats: true) { _ in views.forEach { $0.tick() } } }
+if !CommandLine.arguments.contains("--still") {
+    Timer.scheduledTimer(withTimeInterval: 1.0 / 60, repeats: true) { _ in MainActor.assumeIsolated { views.forEach { $0.tick() } } }
+}
 signal(SIGUSR1, SIG_IGN)
 let moveSignal = DispatchSource.makeSignalSource(signal: SIGUSR1, queue: .main)
 moveSignal.setEventHandler {

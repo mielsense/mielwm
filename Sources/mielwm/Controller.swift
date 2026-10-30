@@ -128,10 +128,10 @@ final class Controller {
         if mode == .normal || ProcessInfo.processInfo.environment["MIELWM_TEST_OVERLAY"] != nil {
             do { renderer = try Renderer() } catch { log("no Metal renderer: \(error)") }
             rebuildOverlays()
-            capture.onFirstFrame = { [weak self] id in MainActor.assumeIsolated { self?.firstFrame(id) } }
+            capture.onFirstFrame = { [weak self] id in self?.firstFrame(id) }
         }
         if mode == .normal {
-            let tap = EventTap { [weak self] event in MainActor.assumeIsolated { self?.tapEvent(event) } }
+            let tap = EventTap { [weak self] event in self?.tapEvent(event) }
             if tap.start() { self.tap = tap } else { permissionProblems.append(Self.shortcutsNeedAccessibility) }
             updateTap()
             let center = NotificationCenter.default
@@ -142,7 +142,7 @@ final class Controller {
                 forName: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated { self?.state.accessibility = Self.accessibility() }
             })
-            appearance = NSApplication.shared.observe(\.effectiveAppearance) { [weak self] _, _ in
+            appearance = NSApplication.shared.observe(\.effectiveAppearance) { @Sendable [weak self] _, _ in
                 DispatchQueue.main.async { MainActor.assumeIsolated { self?.state.systemDark = Self.systemDark() } }
             }
         }
@@ -150,9 +150,7 @@ final class Controller {
             MainActor.assumeIsolated { self?.checkConfig() }
         }
         do {
-            ipc = try IPCServer() { [weak self] args, reply in
-                MainActor.assumeIsolated { self?.command(args, reply) }
-            }
+            ipc = try IPCServer { [weak self] args, reply in self?.command(args, reply) }
         } catch {
             log("socket: \(error); `mielwm <action>` will not reach this instance")
         }
@@ -162,7 +160,7 @@ final class Controller {
 
     /// Quit, toggle off, signals: every window back on a screen, then stop.
     /// `done` gets false when some app did not answer in time.
-    func shutdown(quitting: Bool, _ done: @escaping (Bool) -> Void) {
+    func shutdown(quitting: Bool, _ done: @escaping @MainActor @Sendable (Bool) -> Void) {
         tap?.stop()
         tap = nil
         swipes.stop()
@@ -193,10 +191,12 @@ final class Controller {
             }
             // While quitting, AppKit runs the main run loop in modal-panel mode, which the main queue does not reach.
             RunLoop.main.perform(inModes: [.default, .modalPanel]) {
-                registry.stop()
-                capture.stop(dropFrames: true)
-                if !savesLayout { try? FileManager.default.removeItem(at: layoutURL.deletingLastPathComponent()) } // a test copy's scratch
-                done(answered)
+                MainActor.assumeIsolated {
+                    registry.stop()
+                    capture.stop(dropFrames: true)
+                    if !savesLayout { try? FileManager.default.removeItem(at: layoutURL.deletingLastPathComponent()) } // a test copy's scratch
+                    done(answered)
+                }
             }
             CFRunLoopWakeUp(CFRunLoopGetMain())
         }

@@ -8,7 +8,7 @@ public enum Wallpaper {
     /// otherwise stay decoded in full. Dynamic (.heic) and other wallpapers
     /// that are not a plain image are captured from the system's wallpaper
     /// window instead. Completion on the main queue, nil if both fail.
-    public static func image(for screen: ScreenInfo, completion: @escaping (CGImage?) -> Void) {
+    public static func image(for screen: ScreenInfo, completion: @escaping @MainActor @Sendable (CGImage?) -> Void) {
         let nsScreen = NSScreen.screens.first { $0.displayID == screen.id }
         guard let url = nsScreen.flatMap(NSWorkspace.shared.desktopImageURL(for:)), url.pathExtension.lowercased() != "heic" else {
             return captureWallpaperWindow(screen, completion: completion)
@@ -39,8 +39,8 @@ public enum Wallpaper {
 
     /// The window the system draws the wallpaper in: WindowManager's
     /// "Wallpaper" since macOS 14, the Dock's "Desktop Picture" before.
-    static func captureWallpaperWindow(_ screen: ScreenInfo, completion: @escaping (CGImage?) -> Void) {
-        let done = { (image: CGImage?) in DispatchQueue.main.async { completion(image) } }
+    static func captureWallpaperWindow(_ screen: ScreenInfo, completion: @escaping @MainActor @Sendable (CGImage?) -> Void) {
+        let done = { @Sendable (image: CGImage?) in DispatchQueue.main.async { completion(image) } }
         SCShareableContent.getExcludingDesktopWindows(false, onScreenWindowsOnly: true) { content, _ in
             let owners = ["com.apple.WindowManager", "com.apple.dock"]
             guard let window = content?.windows.first(where: { w in

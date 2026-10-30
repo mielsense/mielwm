@@ -33,7 +33,7 @@ extension Controller {
             let stamp = url.flatMap { $0.pathExtension.lowercased() == "heic" ? nil : "\($0.path) \(date?.timeIntervalSince1970 ?? 0) \(s.frame.size) \(s.scale)" }
             if let stamp, wallpaperStamps[s.id] == stamp { continue }
             wallpaperStamps[s.id] = stamp
-            MielSystem.Wallpaper.image(for: s) { [weak self] image in MainActor.assumeIsolated { self?.setWallpaper(image, on: s) } }
+            MielSystem.Wallpaper.image(for: s) { [weak self] image in self?.setWallpaper(image, on: s) }
         }
     }
 
@@ -134,7 +134,7 @@ extension Controller {
             for o in overlays.values { o.view.link?.isPaused = true }
             framesPaused = true
             let looked = overlays.keys.compactMap { pictureChecks[$0] }.min() ?? 0 // the display that looked longest ago
-            capture.wakeOnNextPicture(after: looked) { [weak self] in MainActor.assumeIsolated { self?.wakeFrames() } }
+            capture.wakeOnNextPicture(after: looked) { [weak self] in self?.wakeFrames() }
         }
     }
 

@@ -18,18 +18,20 @@ private let axCallback: AXObserverCallback = { _, element, notification, refcon 
     guard let refcon else { return }
     let tracker = Unmanaged<AppTracker>.fromOpaque(refcon).takeUnretainedValue()
     let name = notification as String
+    nonisolated(unsafe) let element = element // AX elements are safe to use from any thread
     tracker.queue.async { tracker.handle(name, element) }
 }
 
-/// Everything below runs on `queue` unless noted.
-final class AppTracker {
+/// Everything below runs on `queue` unless noted, which is why it can be
+/// shared between threads unchecked.
+final class AppTracker: @unchecked Sendable {
     let pid: pid_t
     let queue: DispatchQueue
     private let app: AXUIElement
     private let bundleID: String?
     private let appName: String
     private let observerThread: RunLoopThread
-    private let post: (SystemEvent) -> Void
+    private let post: @Sendable (SystemEvent) -> Void
 
     private var observer: AXObserver?
     private var refcon: Unmanaged<AppTracker>?
@@ -43,7 +45,7 @@ final class AppTracker {
     private var sizes: [WindowID: CGSize] = [:] // last size read or written, so a move that keeps it sets only the position
 
     init(pid: pid_t, bundleID: String?, appName: String, observerThread: RunLoopThread,
-         post: @escaping (SystemEvent) -> Void) {
+         post: @escaping @Sendable (SystemEvent) -> Void) {
         self.pid = pid
         self.bundleID = bundleID
         self.appName = appName

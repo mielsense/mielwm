@@ -144,6 +144,7 @@ struct AccentWell: NSViewRepresentable {
 
     func makeCoordinator() -> Coordinator { Coordinator(changed) }
 
+    @MainActor
     final class Coordinator: NSObject {
         var changed: (NSColor) -> Void
         init(_ changed: @escaping (NSColor) -> Void) { self.changed = changed }

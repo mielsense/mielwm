@@ -1,9 +1,10 @@
 import Foundation
 
 /// A thread that runs its own CFRunLoop, for event-tap and AXObserver sources
-/// that must never wait on the main thread.
-final class RunLoopThread: Thread {
-    private(set) var runLoop: CFRunLoop!
+/// that must never wait on the main thread. Unchecked Sendable: `runLoop` is
+/// set once, before `startAndWait` returns, and CFRunLoop is thread-safe.
+final class RunLoopThread: Thread, @unchecked Sendable {
+    private(set) var runLoop: CFRunLoop! // set on the thread itself, before anyone can use it
     private let ready = DispatchSemaphore(value: 0)
 
     init(name: String) {

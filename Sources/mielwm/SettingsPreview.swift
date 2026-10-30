@@ -282,6 +282,7 @@ private func saveMenuBarPreview(dark: Bool, to url: URL) {
 }
 
 /// The detail pane's scroll view (the sidebar has one too).
+@MainActor
 private func detailScrollView(in view: NSView?) -> NSScrollView? {
     guard let view else { return nil }
     var all: [NSScrollView] = []

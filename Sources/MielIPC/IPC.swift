@@ -23,8 +23,8 @@ public enum IPCError: Error, Equatable {
 }
 
 public final class IPCServer {
-    /// Runs on the main queue. Call `reply` once, from any thread.
-    public typealias Handler = (_ args: [String], _ reply: @escaping (Data) -> Void) -> Void
+    /// Runs on the main actor. Call `reply` once, from any thread.
+    public typealias Handler = @MainActor @Sendable (_ args: [String], _ reply: @escaping @Sendable (Data) -> Void) -> Void
 
     private let path: String
     private let source: DispatchSourceRead

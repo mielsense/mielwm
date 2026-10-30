@@ -8,9 +8,10 @@ func listWindows(json: Bool, fps: Bool, pid: Int32?) {
     _ = NSApplication.shared
     let screens = Displays.screens()
     let (windows, _) = readWindows(pid: pid)
-    var onScreen: [UInt32: Bool] = [:]
-    var done = false
-    SCShareableContent.getExcludingDesktopWindows(true, onScreenWindowsOnly: false) { content, _ in
+    // Set on the main queue, which `spin` runs: never touched from two threads at once.
+    nonisolated(unsafe) var onScreen: [UInt32: Bool] = [:]
+    nonisolated(unsafe) var done = false
+    SCShareableContent.getExcludingDesktopWindows(true, onScreenWindowsOnly: false) { @Sendable content, _ in
         let pairs = (content?.windows ?? []).map { ($0.windowID, $0.isOnScreen) }
         DispatchQueue.main.async {
             onScreen = Dictionary(pairs, uniquingKeysWith: { a, _ in a })

@@ -10,6 +10,7 @@ import MielCore
 /// on a private run-loop thread. Events reach `onEvent` on the main queue, in
 /// the order each app reported them. Call the public methods on the main
 /// thread; none of them waits on an app except `performAndWait`.
+@MainActor
 public final class WindowRegistry {
     /// Only this pid's windows (`--manage-only`, tests), whatever its
     /// activation policy. nil tracks every regular app except our own.
@@ -52,7 +53,7 @@ public final class WindowRegistry {
         }
         // Leaving a full screen Space shows a bar that was hidden there.
         let spaces = workspace.addObserver(forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
-            self?.checkScreensSoon()
+            MainActor.assumeIsolated { self?.checkScreensSoon() }
         }
         tokens.append((workspace, spaces))
         observe(workspace, NSWorkspace.didHideApplicationNotification) { [weak self] app in
@@ -68,8 +69,10 @@ public final class WindowRegistry {
         let token = NotificationCenter.default.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main
         ) { [weak self] _ in
-            self?.checkScreens()
-            self?.checkScreensSoon() // a status bar moves its window after the change
+            MainActor.assumeIsolated {
+                self?.checkScreens()
+                self?.checkScreensSoon() // a status bar moves its window after the change
+            }
         }
         tokens.append((NotificationCenter.default, token))
         if known != nil { checkScreens() }
@@ -101,7 +104,7 @@ public final class WindowRegistry {
         let group = DispatchGroup()
         trackers.values.forEach { $0.stop(group) }
         trackers = [:]
-        group.notify(queue: .global()) { [thread = observerThread] in thread.stop() }
+        group.notify(queue: .global()) { @Sendable [thread = observerThread] in thread.stop() }
     }
 
     /// `rescan`, after picking up apps that became regular after launch.
@@ -155,9 +158,10 @@ public final class WindowRegistry {
     // MARK: - Private
 
     private func observe(_ center: NotificationCenter, _ name: Notification.Name,
-                         _ handler: @escaping (NSRunningApplication) -> Void) {
+                         _ handler: @escaping @MainActor @Sendable (NSRunningApplication) -> Void) {
         let token = center.addObserver(forName: name, object: nil, queue: .main) { note in
-            if let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication { handler(app) }
+            guard let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication else { return }
+            MainActor.assumeIsolated { handler(app) }
         }
         tokens.append((center, token))
     }

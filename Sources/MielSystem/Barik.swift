@@ -10,7 +10,7 @@ public protocol BarikApps: AnyObject {
     /// Quits a running Barik, waits until it has, and opens it again.
     func relaunchBarik()
     /// Starts the helper; `started` gets its start time, nil if it failed.
-    func startHelper(_ url: URL, started: @escaping (Date?) -> Void)
+    func startHelper(_ url: URL, started: @escaping @MainActor (Date?) -> Void)
     func stopHelper()
 }
 
@@ -135,7 +135,7 @@ public final class SystemBarikApps: BarikApps {
                 }
                 let config = NSWorkspace.OpenConfiguration()
                 config.activates = false
-                NSWorkspace.shared.openApplication(at: url, configuration: config) { _, error in
+                NSWorkspace.shared.openApplication(at: url, configuration: config) { @Sendable _, error in
                     if let error { log("Barik did not open again: \(error)") }
                 }
                 return
@@ -144,14 +144,14 @@ public final class SystemBarikApps: BarikApps {
         }
     }
 
-    public func startHelper(_ url: URL, started: @escaping (Date?) -> Void) {
+    public func startHelper(_ url: URL, started: @escaping @MainActor (Date?) -> Void) {
         stopHelper()
         let config = NSWorkspace.OpenConfiguration()
         config.activates = false
         config.addsToRecentItems = false
         config.createsNewApplicationInstance = true
         config.arguments = ["--mielwm-pid", String(getpid())] // it quits when mielwm does
-        NSWorkspace.shared.openApplication(at: url, configuration: config) { app, error in
+        NSWorkspace.shared.openApplication(at: url, configuration: config) { @Sendable app, error in
             Task { @MainActor in
                 if let error { log("AeroSpace helper did not start: \(error)") }
                 self.helper = app
