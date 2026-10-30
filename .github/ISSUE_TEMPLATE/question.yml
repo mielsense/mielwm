@@ -1,0 +1,18 @@
+name: Question
+description: How something works, or why it does what it does.
+labels: [question]
+body:
+  - type: markdown
+    attributes:
+      value: The [docs](https://wm.miel.my/docs) cover every key and setting, and [Troubleshooting](https://wm.miel.my/docs/troubleshooting) answers the common problems.
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: mielwm and macOS versions
+      description: About mielwm, in the menu bar item, and Apple menu > About This Mac.
