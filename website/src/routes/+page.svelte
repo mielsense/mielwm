@@ -225,11 +225,9 @@ scripts/build-app.sh --install`;
 				</div>
 			</div>
 		</section>
-	</div>
 
-	<!-- keyboard: one wide card, the keys beside the switcher -->
-	<div class="wrap py-16 sm:py-24">
-		<section class="tile group/section grid grid-cols-[minmax(0,1fr)] gap-2 p-2 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]" aria-labelledby="keys">
+		<!-- keyboard: one wide card, the keys beside the switcher -->
+		<section class="tile group/section grid grid-cols-[minmax(0,1fr)] gap-2 p-2 lg:col-span-12 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]" aria-labelledby="keys">
 			<div class="{copy} justify-center lg:p-8">
 				{@render label('Keyboard first', CommandIcon, mesh.lime)}
 				<h2 id="keys" class={title}>Your hands stay on the keys</h2>
@@ -255,7 +253,7 @@ scripts/build-app.sh --install`;
 	</div>
 
 	<!-- performance -->
-	<section class="group/section wrap flex flex-col gap-8 pb-16 sm:pb-24" aria-labelledby="performance">
+	<section class="group/section wrap flex flex-col gap-8 pt-16 pb-16 sm:pt-24 sm:pb-24" aria-labelledby="performance">
 		<div class="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
 			<div class="flex max-w-[40rem] flex-col gap-4">
 				{@render label('Performance', ChartIcon, mesh.sky)}
