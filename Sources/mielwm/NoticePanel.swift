@@ -163,7 +163,7 @@ final class NoticeBoard {
         place(toast, n.toastInOverview ? nil : n.toast, NoticeContent.toast, state) { _, f, _, s in
             (f.midX, f.minY + f.height * 0.22 + s.height / 2) // where the overview draws its toasts
         }
-        place(workspace, n.workspace, NoticeContent.workspace, state) { _, f, visible, s in
+        place(workspace, state.workspacePill, NoticeContent.workspace, state) { _, f, visible, s in
             (f.midX, visible.minY + 20 + s.height) // just above the Dock
         }
         place(stack, n.stack, NoticeContent.stack, state) { strip, _, _, _ in

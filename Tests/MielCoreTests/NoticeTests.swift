@@ -50,7 +50,8 @@ func stacked(settings: Settings = testSettings(layout: .tiles)) -> CanvasState {
     off.workspaceNotice = false
     _ = s.send(.setSettings(off))
     _ = s.send(.action(.workspace(2)))
-    #expect(s.notices.workspace == nil)
+    #expect(s.workspacePill == nil) // no pill on screen
+    #expect(s.notices.workspace?.content.spoken == "Workspace 2, 1 window") // VoiceOver still hears it
 
     var t = stacked()
     _ = t.send(.action(.toggleOverview))

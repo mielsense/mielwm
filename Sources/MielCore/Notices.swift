@@ -112,6 +112,9 @@ extension CanvasState {
         return (ws, rest.screen, ids, front)
     }
 
+    /// The workspace pill on screen: the switch notice, unless the setting turns the pill off.
+    public var workspacePill: Notice<WorkspaceNotice>? { settings.workspaceNotice ? notices.workspace : nil }
+
     /// The numbers of the workspaces with windows, and `current`, as the menu bar and the pill show them.
     public func workspaceNumbers(current: Int?) -> [Int] {
         Set(workspaces.filter { !$0.members.isEmpty }.compactMap(\.number) + (current.map { [$0] } ?? [])).sorted()
@@ -127,7 +130,7 @@ extension CanvasState {
     mutating func updateNotices(from before: NoticeWatch) {
         let after = noticeWatch
         guard after != before, !after.overview, !before.overview else { return }
-        if after.workspace != before.workspace, settings.workspaceNotice, let current = currentWorkspace, current <= 9 {
+        if after.workspace != before.workspace, let current = currentWorkspace, current <= 9 { // spoken even with the pill off
             let numbers = workspaceNumbers(current: current)
             let ws = workspaceIndex(current).map { workspaces[$0] }
             let count = ws?.members.count { window($0)?.isShown ?? false } ?? 0
