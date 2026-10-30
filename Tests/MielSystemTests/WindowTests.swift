@@ -431,6 +431,20 @@ struct WindowTests {
         }
     }
 
+    /// The last reference can go on the tap thread itself, in a callback: stopping there must not wait on itself.
+    @Test(.timeLimit(.minutes(1))) func aTapStopsOnItsOwnThread() async throws {
+        let tap = EventTap { _ in }
+        #expect(tap.start(listenOnly: true))
+        let thread = try #require(tap.thread)
+        await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in
+            thread.perform {
+                tap.stop()
+                done.resume()
+            }
+        }
+        #expect(tap.thread == nil)
+    }
+
     @Test func wallpaperImages() async throws {
         let screen = try #require(Displays.screens().first)
         let window = await withCheckedContinuation { done in Wallpaper.captureWallpaperWindow(screen) { done.resume(returning: $0) } }

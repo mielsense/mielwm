@@ -29,7 +29,7 @@ public final class EventTap: @unchecked Sendable {
     private var pointerTap: CFMachPort?
     private var pointerOn = false // tap thread only
     private var listenOnly = false
-    private var thread: RunLoopThread?
+    private(set) var thread: RunLoopThread? // internal for tests
 
     public init(handler: @escaping @MainActor @Sendable (TapEvent) -> Void) {
         self.handler = handler
@@ -69,15 +69,22 @@ public final class EventTap: @unchecked Sendable {
     public func stop() {
         guard let thread else { return }
         let ports = [tap, pointerTap].compactMap { $0 }
-        let done = DispatchSemaphore(value: 0)
-        thread.perform {
+        let close = {
             for p in ports {
                 CGEvent.tapEnable(tap: p, enable: false)
                 CFMachPortInvalidate(p)
             }
-            done.signal()
         }
-        done.wait()
+        if Thread.current === thread {
+            close() // already between callbacks; waiting on its own run loop would never end
+        } else {
+            let done = DispatchSemaphore(value: 0)
+            thread.perform {
+                close()
+                done.signal()
+            }
+            done.wait()
+        }
         thread.stop()
         tap = nil
         pointerTap = nil
