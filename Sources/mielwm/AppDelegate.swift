@@ -116,11 +116,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func showOnboarding() {
         guard onboarding == nil else { return }
-        onboarding = Onboarding(note: takeImportNote()) { [weak self] in
-            self?.onboarding = nil
-            self?.onboardingDone = true
-            self?.begin()
+        let onboarding = Onboarding(note: takeImportNote()) { [weak self] in
+            guard let self else { return }
+            self.onboarding = nil
+            onboardingDone = true
+            // Closed before Accessibility was allowed: mielwm stays paused, and Resume asks again.
+            if Permissions.accessibility() { begin() } else { refreshIcon() }
         }
+        self.onboarding = onboarding
+        onboarding.show()
         refreshIcon()
     }
 }

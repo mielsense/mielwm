@@ -10,7 +10,7 @@ mielwm asks for two permissions, both under System Settings > Privacy & Security
 
 ### Accessibility
 
-Accessibility lets mielwm move and focus windows and hear its shortcuts. It can't do anything without it.
+Accessibility lets mielwm move and focus windows and hear its shortcuts. It can't do anything without it. If you close the welcome window before you allow it, mielwm stays paused. Choose Resume mielwm in its menu to see the window again.
 
 ### Screen Recording
 

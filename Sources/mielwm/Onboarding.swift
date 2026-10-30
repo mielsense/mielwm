@@ -5,11 +5,12 @@ import SwiftUI
 
 /// Explains the two permissions and opens the right System Settings pages.
 /// Polls until Accessibility is granted; Screen Recording only applies after
-/// a restart, so it offers one.
+/// a restart, so it offers one. Closing the window ends it too, so the app
+/// never waits on a window that is gone.
 @MainActor
-final class Onboarding: NSObject {
-    private let window: NSWindow
-    private let model: OnboardingModel
+final class Onboarding: NSObject, NSWindowDelegate {
+    let window: NSWindow
+    let model: OnboardingModel
     private var timer: Timer?
     private let done: () -> Void
 
@@ -19,10 +20,18 @@ final class Onboarding: NSObject {
         window = Onboarding.makeWindow(model)
         super.init()
         model.finish = { [weak self] in self?.finish() }
+        window.delegate = self
+        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in MainActor.assumeIsolated { self?.refresh() } }
+    }
+
+    func show() {
         window.center()
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in MainActor.assumeIsolated { self?.refresh() } }
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        finish()
     }
 
     /// A title-less window, as Apple's welcome windows are.

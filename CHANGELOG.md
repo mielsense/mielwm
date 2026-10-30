@@ -45,6 +45,7 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 
 ### Fixes
 
+- Closing the welcome window no longer leaves the menu stuck on Waiting for permissions. Without Accessibility, mielwm stays paused, and Resume mielwm opens the window again.
 - A window that its app keeps pulling back is parked again on time, even while a message or a display change is still settling.
 - One of something is counted in the singular, like "1 floating app" in the import note.
 - Text in the app uses straight quotes and plain hyphens, like `⌘1-9`.
