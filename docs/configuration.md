@@ -106,7 +106,7 @@ If the file isn't valid JSON, mielwm keeps its defaults and shows the error in t
 | `animation:enabled` | `true` | Camera flights. Off, mielwm cuts. |
 | `animation:speed` | `1` | 1 flies in 0.8 seconds, 2 in 0.4. |
 | `animation:curve` | `"spring"` | `spring` or `bezier`. |
-| `menubar:workspaces` | `true` | Workspace numbers in the menu bar instead of the icon. |
+| `menubar:style` | `"all"` | What the menu bar item shows: `all` workspaces with windows, the `current` one only, or the `icon`. The older `menubar:workspaces: false` still means `icon`. |
 | `integrations:barik` | `false` | [Barik](aerospace.md#barik) shows mielwm's workspaces. Turn it on in Settings, which also edits Barik's config. |
 
 ## Shortcuts

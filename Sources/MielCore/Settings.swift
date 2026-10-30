@@ -54,8 +54,8 @@ public struct Settings: Hashable, Codable, Sendable {
     var navigatorEnabled = true
     public var pointer = true
 
-    /// menubar:workspaces: the menu bar shows the workspace numbers instead of the icon.
-    public var menuBarWorkspaces = true
+    /// menubar:style. The old menubar:workspaces = false still means the icon.
+    public var menuBarStyle = MenuBarStyle.all
 
     /// integrations:barik: Barik's menu bar shows mielwm's workspaces (docs/aerospace.md).
     public var barik = false

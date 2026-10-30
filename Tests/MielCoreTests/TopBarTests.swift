@@ -80,3 +80,14 @@ import Testing
     #expect(BarikConfig.barHeight("[experimental.foreground]\nheight = \"menu-bar\"\n", menuBar: 24) == 24)
     #expect(BarikConfig.barHeight("[experimental.foreground]\nheight = \"default\"\n", menuBar: 24) == 55)
 }
+
+@Test func menuBarStyleReadsTheOldSwitch() {
+    #expect(Settings().menuBarStyle == .all)
+    #expect(Settings.entry("menubar:style", .text("all")) == nil)
+    let off = parseSettings(config: json(#"{"menubar": {"workspaces": false}}"#))
+    #expect(off.errors.isEmpty && off.settings.menuBarStyle == .icon)
+    #expect(parseSettings(config: json(#"{"menubar:workspaces": true}"#)).settings.menuBarStyle == .all)
+    let both = parseSettings(config: json(#"{"menubar:style": "current", "menubar:workspaces": true}"#))
+    #expect(both.errors.isEmpty && both.settings.menuBarStyle == .current)
+    #expect(parseSettings(config: json(#"{"menubar:style": "numbers"}"#)).errors.count == 1)
+}

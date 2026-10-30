@@ -9,7 +9,7 @@ Open Settings from the menu bar item, with `⌘,` in the overview, or with `miel
 ## General
 
 - Open mielwm at login.
-- Show workspace numbers in the menu bar, or just the icon.
+- What the menu bar item shows: all workspaces, the current one only, or the icon.
 - How far the overview zooms out when it opens.
 - Whether clicks, drags and scrolling work in the overview.
 - Animation on or off, and its speed.
@@ -58,7 +58,13 @@ Changes apply to your windows right away. Edits you make to the file yourself sh
 
 ## The menu bar
 
-The menu bar item shows the numbers of the workspaces that have windows, with the current one filled. Turn the numbers off in General and it shows the mielwm icon instead. While the configuration file has errors, a warning sign takes its place.
+What the menu bar item shows is up to you, in General > Menu bar:
+
+- All workspaces: the numbers of the workspaces that have windows, with the current one filled.
+- Current only: just the current workspace's number, for a crowded menu bar or one cut short by the notch.
+- Icon: the mielwm icon. Turning on Work with Barik switches to this, since Barik shows the numbers already.
+
+While the configuration file has errors, a warning sign takes its place.
 
 The menu tells you what mielwm is doing: the current workspace and its layout, that it's paused, or what it's waiting for, such as a permission or AeroSpace quitting. From there you can also open the overview, tidy your windows, pause mielwm, open Settings or quit.
 

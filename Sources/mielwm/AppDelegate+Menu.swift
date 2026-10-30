@@ -3,16 +3,16 @@ import MielCore
 import MielSystem
 
 extension AppDelegate {
-    /// The workspace numbers (the setting, while the canvas runs), else the
-    /// icon; a warning sign while the config has problems.
+    /// The workspace numbers as menubar:style asks (while the canvas runs),
+    /// else the icon; a warning sign while the config has problems.
     func refreshIcon() {
         guard let button = statusItem?.button else { return }
         let settings = currentSettings
         let status = controller?.workspaceStatus
         if !configErrors.isEmpty {
             button.image = NSImage(systemSymbolName: "exclamationmark.triangle", accessibilityDescription: "mielwm: the config has problems")
-        } else if let status, settings.menuBarWorkspaces, !status.numbers.isEmpty {
-            button.image = workspaceIndicator(status.numbers, current: status.current)
+        } else if let status, let numbers = Self.shownNumbers(settings.menuBarStyle, status), !numbers.isEmpty {
+            button.image = workspaceIndicator(numbers, current: status.current)
             button.image?.accessibilityDescription = "mielwm: " + (status.current.map { "workspace \($0)" } ?? "workspaces")
         } else {
             button.image = menuBarIconImage
@@ -55,6 +55,15 @@ extension AppDelegate {
         add("About mielwm", "info.circle", #selector(about))
         menu.addItem(.separator())
         add("Quit mielwm", "power", #selector(quit), key: "q")
+    }
+
+    /// The numbers the menu bar shows in `style`; nil for the icon.
+    static func shownNumbers(_ style: MenuBarStyle, _ status: Controller.WorkspaceStatus) -> [Int]? {
+        switch style {
+        case .all: status.numbers
+        case .current: status.current.map { [$0] }
+        case .icon: nil
+        }
     }
 
     /// The first, disabled line of the menu: what mielwm is doing.

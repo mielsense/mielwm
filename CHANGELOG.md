@@ -8,6 +8,10 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 
 - The top gap leaves room for a status bar such as Barik or SketchyBar only on displays that have one. Without one, external displays get the same 12 point top gap as the built-in display instead of 54. Settings > Layout & workspaces > Top edge also offers Same as other edges and Custom, and a number already in your config keeps working as Custom.
 
+### Settings and the menu bar
+
+- The menu bar item can show all workspaces, the current one only, or the icon. Turning on Work with Barik switches it to the icon.
+
 ### Fixes
 
 - Leaving macOS full screen, like a full screen video, no longer flashes two desktops side by side. mielwm leaves a full screen window alone and keeps its tile for when it comes back.

@@ -32,6 +32,11 @@ public enum TopGapMode: String, Codable, CaseIterable, Sendable {
     case auto, same, custom
 }
 
+/// What the menu bar shows: every workspace with windows, the current one, or the icon.
+public enum MenuBarStyle: String, Codable, CaseIterable, Sendable {
+    case all, current, icon
+}
+
 public extension Settings {
     /// The gap above the tiles on `screen`, in points below its visible frame's top.
     func topGap(on screen: ScreenInfo) -> Double {
