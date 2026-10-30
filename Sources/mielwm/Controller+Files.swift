@@ -28,8 +28,7 @@ extension Controller {
     func checkConfig() {
         let now = paths.configModified
         guard now != configStamp else { return }
-        configStamp = now
-        reloadConfig()
+        reloadConfig() // which takes the new stamp
     }
 
     func reloadConfig() {

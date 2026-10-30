@@ -33,7 +33,7 @@ final class Controller {
     /// The displays changed, or a status bar on one came or went.
     var onScreens: (() -> Void)?
     /// The menu bar's workspace numbers changed.
-    var onWorkspaces: ((WorkspaceStatus) -> Void)?
+    var onWorkspaces: (() -> Void)?
     var reportedWorkspaces: WorkspaceStatus?
     /// While the Settings window records a shortcut, every key reaches it.
     var bindingsSuspended = false {
@@ -307,8 +307,8 @@ final class Controller {
             } else if overlayShown, restingSince == nil, fadeStart == nil {
                 restingSince = state.now
             }
+            notices.update(state) // ticks too: a notice fades a little every tick
         }
-        if renderer != nil { notices.update(state) } // ticks too: a notice fades a little every tick
         if let t = timing, let first = t.firstMove, !state.movesInFlight, state.animator.isSettled {
             timing = nil
             let ms = { (end: Double) in String(format: "%.0f ms", (end - t.start) * 1000) }

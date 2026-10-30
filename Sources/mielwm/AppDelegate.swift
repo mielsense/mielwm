@@ -69,7 +69,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         guard controller == nil, !stopping else { return }
         let c = Controller(mode: mode)
         c.onChange = { [weak self] in self?.refreshIcon() }
-        c.onWorkspaces = { [weak self] _ in self?.refreshIcon() }
+        c.onWorkspaces = { [weak self] in self?.refreshIcon() }
         c.onSettings = { [weak self] pane in self?.showSettings(at: pane) }
         c.onScreens = { [weak self] in self?.settingsWindow?.model.refreshScreens() }
         c.bindingsSuspended = settingsWindow?.model.recording != nil
