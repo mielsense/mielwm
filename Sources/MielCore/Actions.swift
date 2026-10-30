@@ -132,7 +132,7 @@ extension CanvasState {
     mutating func focusWindow(_ id: WindowID) {
         focused = id
         mru.note(id)
-        expectedFocus = (id, now + 0.6)
+        expectedFocus = (id, now + Self.focusLifetime)
         heldFocus = nil
         outbox.append(.focus(id))
     }

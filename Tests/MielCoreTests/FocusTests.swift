@@ -40,7 +40,8 @@ import Testing
     #expect(s.focused == nil)
     _ = s.send(.system(.appHidden(pid: 200, false)))
     #expect(s.focused == other)
-    _ = s.send(.system(.windowMinimized(other, true)))
+    _ = s.send(.system(.windowMinimized(other, true))) // mielwm focuses the workspace's last window meanwhile
+    _ = s.advance(1) // the click in the Dock comes after that focus has landed
     _ = s.send(.system(.windowFocused(other))) // a click on it in the Dock
     _ = s.send(.system(.windowMinimized(other, false)))
     #expect(s.focused == other)

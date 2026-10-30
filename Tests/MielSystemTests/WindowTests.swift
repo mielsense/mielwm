@@ -136,7 +136,7 @@ final class Session {
 
     private func record(_ event: SystemEvent) {
         let step: FixtureStep? = switch event {
-        case .windowFrameChanged(watched, let frame): FixtureStep(t: now(), event: "frameChanged", frame: frame)
+        case .windowFrameChanged(watched, let frame, _): FixtureStep(t: now(), event: "frameChanged", frame: frame)
         case .windowMinimized(watched, let value): FixtureStep(t: now(), event: "minimized", value: value)
         case .windowFocused(watched): FixtureStep(t: now(), event: "focused")
         case .windowTitleChanged(watched, _): FixtureStep(t: now(), event: "title")
