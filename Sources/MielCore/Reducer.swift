@@ -73,7 +73,7 @@ public extension CanvasState {
     /// Ticks are needed while this is true: animations, moves awaiting
     /// confirmation, the screen grace period, toasts, the switcher's delay.
     var needsTicks: Bool {
-        !animator.isSettled || windows.contains { $0.expected != nil } || graceUntil != nil || toast != nil
+        !animator.isSettled || windows.contains { $0.expected != nil || $0.reparkRetry != nil } || graceUntil != nil || toast != nil
             || expectedFocus != nil || (overview.switcherRevealAt.map { $0 > now } ?? false)
     }
 
@@ -100,6 +100,12 @@ extension CanvasState {
                 windows[i].pending = nil
                 judge(i, report, answering: true)
             }
+        }
+        for i in windows.indices {
+            guard let t = windows[i].reparkRetry, now >= t else { continue }
+            windows[i].reparkRetry = nil
+            windows[i].reparkedAt = now // the app's answer to this try counts on from it
+            sync([windows[i].id], force: true)
         }
         if let g = graceUntil, now >= g { // (h) the screens settled: put everything where it belongs
             graceUntil = nil
@@ -268,16 +274,14 @@ extension CanvasState {
             // Another report of its own slot (repeats, stray moves) confirms the park.
             if frame.isClose(to: desiredFrame(windows[i]).frame, tolerance: Self.frameTolerance) { return }
             // (c) An app pulled a parked window back, or resized it: keep the
-            // new size and park it again; after two tries, let it be.
+            // new size and park it again. After two tries in a row, wait 1, 2,
+            // 4 up to 16 seconds before the next: it still belongs off screen.
             if !sameSize { windows[i].frame.size = frame.size }
-            if windows[i].reparks < Self.maxReparks {
-                windows[i].reparks += 1
+            let n = countRepark(i)
+            if n <= Self.maxReparks {
                 sync([id], force: true)
-            } else {
-                windows[i].frame = deskCamera.toCanvas(frame, deskCenter: deskCenter)
-                windows[i].parked = false
-                windows[i].reparks = 0
-                layoutRevision += 1
+            } else if windows[i].reparkRetry == nil {
+                windows[i].reparkRetry = now + min(16, pow(2, Double(n - Self.maxReparks - 1)))
             }
             return
         }

@@ -382,8 +382,7 @@ extension CanvasState {
         }
         retile(ws.slot) // a gesture may have moved the canvas frame
         guard let j = index(id) else { return }
-        if windows[j].reparks < Self.maxReparks {
-            windows[j].reparks += 1
+        if countRepark(j) <= Self.maxReparks {
             sync([id], force: true)
         } else {
             windows[j].frame.size = frame.size

@@ -17,7 +17,9 @@ public struct ManagedWindow: Hashable, Sendable {
     public var real: CGRect // what macOS last reported, or we last set
     public var workspace: Int? // its workspace's slot; nil floats
     var floatingFrame: CGRect? // where it last floated, for going back
-    var reparks = 0
+    var reparks = 0 // tries to put it back where it belongs, in a row
+    var reparkedAt = 0.0 // the last try
+    var reparkRetry: Double? // when to try parking it again
     var expected: Expectation?
     var pending: CGRect? // newest unconfirmed report while an expectation lives
 
@@ -54,7 +56,8 @@ public struct CanvasState: Sendable {
     static let focusLifetime = 0.6 // seconds a focus we asked for has to show up
     static let frameTolerance: CGFloat = 2
     static let screenGracePeriod = 1.5
-    static let maxReparks = 2
+    static let maxReparks = 2 // tries in a row before giving in (tiles) or waiting (parked windows)
+    static let reparkQuiet = 3.0 // seconds after the last try that make the next one a first again
     static let toastDuration = 1.8
     static let undoDepth = 30
 
@@ -354,6 +357,7 @@ public struct CanvasState: Sendable {
             let (desired, parked) = desiredFrame(windows[i])
             if parked != windows[i].parked {
                 windows[i].reparks = 0
+                windows[i].reparkRetry = nil
                 layoutRevision += 1 // the crash watcher needs to know what is parked
             }
             windows[i].parked = parked
@@ -367,6 +371,14 @@ public struct CanvasState: Sendable {
         windows[i].expected = Expectation(frame: frame, deadline: now + Self.expectationLifetime)
         windows[i].pending = nil
         outbox.append(.setFrame(windows[i].id, frame))
+    }
+
+    /// Counts a try to put window `i` back and returns how many in a row that makes.
+    mutating func countRepark(_ i: Int) -> Int {
+        if now - windows[i].reparkedAt > Self.reparkQuiet { windows[i].reparks = 0 }
+        windows[i].reparks += 1
+        windows[i].reparkedAt = now
+        return windows[i].reparks
     }
 
     mutating func raise(_ i: Int) {

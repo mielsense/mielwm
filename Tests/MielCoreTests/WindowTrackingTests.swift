@@ -119,3 +119,18 @@ func builtInAloneOnWorkspace3() -> CanvasState {
     #expect(s.canvasFrame(2)?.offsetBy(dx: -s.slots.origin(3).x, dy: 0) == floating)
     _ = s.advance(1)
 }
+
+// MARK: Windows that fight back
+
+@Test func tileSnapBacksStartOverAfterAQuietSpell() {
+    var s = twoTiles()
+    let moved = left.offsetBy(dx: 30, dy: 30)
+    for _ in 0 ..< 2 {
+        #expect(moves(s.send(.system(.windowFrameChanged(wid(1), moved)))) == [wid(1): left])
+        _ = s.send(.system(.windowFrameChanged(wid(1), left)))
+    }
+    #expect(s.send(.system(.windowFrameChanged(wid(1), moved))).isEmpty) // the third in a row: let it be
+    _ = s.advance(4)
+    // Seconds later it is a new move, and it snaps back again.
+    #expect(moves(s.send(.system(.windowFrameChanged(wid(1), moved.offsetBy(dx: 10, dy: 0))))) == [wid(1): left])
+}
