@@ -100,9 +100,9 @@ private func withChrome(_ canvas: CGImage, _ content: ChromeContent, transition:
         SteadyChrome(model: ChromeModel(steady))
     }.environment(\.chromeStill, true))
     renderer.scale = scale
-    guard let chrome = renderer.cgImage,
+    guard let chrome = renderer.cgImage, let space = CGColorSpace(name: CGColorSpace.sRGB),
           let ctx = CGContext(data: nil, width: canvas.width, height: canvas.height, bitsPerComponent: 8, bytesPerRow: 0,
-                              space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                              space: space,
                               bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue)
     else { return nil }
     let all = CGRect(x: 0, y: 0, width: canvas.width, height: canvas.height)

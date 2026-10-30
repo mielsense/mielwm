@@ -6,7 +6,7 @@ import MielCore
 // CPU drawing for the tags and synthetic windows: a y-down bitmap context,
 // the theme (macOS's dark and light materials), SF Pro and app icons.
 
-let sRGB = CGColorSpace(name: CGColorSpace.sRGB)!
+let sRGB = CGColorSpace(name: CGColorSpace.sRGB)! // built into macOS: never nil
 
 func rgba(_ r: Double, _ g: Double, _ b: Double, _ a: Double = 1) -> CGColor {
     CGColor(colorSpace: sRGB, components: [r, g, b, a])!
