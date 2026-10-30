@@ -160,13 +160,13 @@ final class Controller {
         tap = nil
         swipes.stop()
         configWatcher?.stop()
-        tickTimer?.invalidate()
-        tickTimer = nil
         rescanTimer?.invalidate()
         rescanTimer = nil
         gate?.timeout.cancel()
         gate = nil
         hideOverlays()
+        tickTimer?.invalidate() // after hideOverlays, which schedules ticks: none may come while windows go back
+        (tickTimer, tickPlan) = (nil, .none)
         notices.hideAll()
         for o in overlays.values { o.close() }
         overlays = [:]

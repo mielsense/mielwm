@@ -102,7 +102,7 @@ public extension CanvasState {
     /// something animates, else one at the earliest deadline. A shown overlay
     /// ticks with its frames, which pause when only a retry is left.
     func tickPlan(overlayShown: Bool) -> TickPlan {
-        if !overlayShown, needsTicks, tickDeadline == nil { return .everyFrame }
+        if !overlayShown, !animator.isSettled || notices.fading(at: now) { return .everyFrame }
         let due = [overlayShown ? nil : tickDeadline, nextRetry].compactMap { $0 }.min()
         return due.map { .once(at: $0) } ?? .none
     }

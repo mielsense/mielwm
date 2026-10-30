@@ -7,12 +7,9 @@ extension Controller {
     /// the switcher's delay, a window waiting to be parked again).
     func scheduleTicks() {
         let plan = state.tickPlan(overlayShown: overlayShown)
-        let keep = switch (tickPlan, plan) {
-        case (.none, .none), (.everyFrame, .everyFrame): true
-        case let (.once(due), .once(needed)): due <= needed // a tick that comes early only finds nothing to do
-        default: false
-        }
-        if tickTimer != nil || tickPlan == .none, keep { return }
+        // A tick that comes early only finds nothing to do.
+        let keep = if case let (.once(due), .once(needed)) = (tickPlan, plan) { due <= needed } else { tickPlan == plan }
+        if keep { return }
         tickTimer?.invalidate()
         tickTimer = nil
         tickPlan = plan
