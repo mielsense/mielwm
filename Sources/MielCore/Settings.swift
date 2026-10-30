@@ -153,3 +153,24 @@ public func hexString(_ c: RGB) -> String {
     func byte(_ v: Double) -> Int { min(255, max(0, Int((v * 255).rounded()))) }
     return String(format: "#%02x%02x%02x", byte(c.r), byte(c.g), byte(c.b))
 }
+
+// MARK: - App lists
+
+/// "a,b" as ["a", "b"], blanks dropped.
+public func parseAppList(_ text: String) -> [String] {
+    text.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+}
+
+/// "com.a=1,com.b=12" as a dictionary; malformed pairs and numbers below 1 are dropped.
+public func parseWorkspaceRules(_ text: String) -> [String: Int] {
+    var rules: [String: Int] = [:]
+    for pair in parseAppList(text) {
+        let parts = pair.split(separator: "=", maxSplits: 1).map { $0.trimmingCharacters(in: .whitespaces) }
+        if parts.count == 2, let n = Int(parts[1]), n >= 1 { rules[parts[0]] = n }
+    }
+    return rules
+}
+
+public func formatWorkspaceRules(_ rules: [String: Int]) -> String {
+    rules.sorted { $0.key < $1.key }.map { "\($0.key)=\($0.value)" }.joined(separator: ",")
+}

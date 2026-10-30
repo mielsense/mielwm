@@ -1,6 +1,170 @@
 import CoreGraphics
 import Foundation
 
+// MARK: - What Render draws
+
+public struct SceneWindow: Hashable, Sendable {
+    public var id: WindowID
+    public var canvasFrame: CGRect
+    public var title: String
+    public var appName: String
+    public var bundleID: String?
+    public var dim: Double // 0 full emphasis ... 1 fully receded
+    public var isSelected: Bool
+    public var isFocused: Bool
+    public var isPinned: Bool // pinned windows ignore the camera: canvasFrame is a desk frame
+
+    public init(id: WindowID, canvasFrame: CGRect, title: String, appName: String,
+                bundleID: String? = nil, dim: Double = 0, isSelected: Bool = false,
+                isFocused: Bool = false, isPinned: Bool = false) {
+        self.id = id
+        self.canvasFrame = canvasFrame
+        self.title = title
+        self.appName = appName
+        self.bundleID = bundleID
+        self.dim = dim
+        self.isSelected = isSelected
+        self.isFocused = isFocused
+        self.isPinned = isPinned
+    }
+}
+
+/// A workspace's frame on the canvas: the screen-sized area its tiles fill.
+public struct SceneWorkspace: Hashable, Sendable {
+    public var number: Int? // 1...9, nil past 9
+    public var canvasFrame: CGRect
+    public var mode: LayoutMode // .tiles or .stack
+    public var isCurrent: Bool // the one the camera rests on (or last rested on)
+    /// Shown in an empty workspace, `{...}` as keycaps ("Workspace 4 is empty  {⌥⇧4} Move a window here").
+    public var emptyMessage = ""
+
+    public init(number: Int?, canvasFrame: CGRect, mode: LayoutMode, isCurrent: Bool = false) {
+        self.number = number
+        self.canvasFrame = canvasFrame
+        self.mode = mode
+        self.isCurrent = isCurrent
+    }
+}
+
+public struct HUDRow: Hashable, Sendable {
+    public var title: String
+    public var detail: String
+    public var bundleID: String? // app icon
+    public var trailing: String // shortcut hint ("⌘1")
+    public var highlights: [Range<Int>] // matched character offsets in `title`
+
+    public init(title: String, detail: String = "", bundleID: String? = nil,
+                trailing: String = "", highlights: [Range<Int>] = []) {
+        self.title = title
+        self.detail = detail
+        self.bundleID = bundleID
+        self.trailing = trailing
+        self.highlights = highlights
+    }
+}
+
+public struct HelpSection: Hashable, Sendable {
+    public var title: String
+    public var entries: [(keys: String, action: String)]
+
+    public init(title: String, entries: [(keys: String, action: String)]) {
+        self.title = title
+        self.entries = entries
+    }
+
+    public static func == (a: HelpSection, b: HelpSection) -> Bool {
+        a.title == b.title && a.entries.elementsEqual(b.entries) { $0.keys == $1.keys && $0.action == $1.action }
+    }
+
+    public func hash(into h: inout Hasher) {
+        h.combine(title)
+        for e in entries { h.combine(e.keys); h.combine(e.action) }
+    }
+}
+
+public struct HUDModel: Hashable, Sendable {
+    public enum Mode: Hashable, Sendable { case hidden, search, switcher, help }
+
+    public var mode: Mode = .hidden
+    public var query = ""
+    public var markedText = "" // input-method composition in progress (a dead key before its letter)
+    public var placeholder = "Search windows"
+    public var rows: [HUDRow] = [] // search results or switcher entries
+    public var selectedRow: Int?
+    public var footer = "" // search: how many more results
+    public var readout = "" // top right: zoom, window count, display
+    public var hints = "" // bottom: the keys that work now
+    public var help: [HelpSection] = []
+    public var toast: String? // short notice, e.g. "Tidied 12 windows"
+
+    public init() {}
+}
+
+public struct MinimapModel: Hashable, Sendable {
+    public var windows: [(frame: CGRect, dim: Double)] // canvas frames
+    public var focusedIndex: Int?
+    public var viewport: CGRect // canvas rect the desk currently shows
+    public var showsArrangeButton = true
+    public var workspaces: [CGRect] = [] // canvas frames of the workspaces
+
+    public init(windows: [(frame: CGRect, dim: Double)], focusedIndex: Int?, viewport: CGRect) {
+        self.windows = windows
+        self.focusedIndex = focusedIndex
+        self.viewport = viewport
+    }
+
+    public static func == (a: MinimapModel, b: MinimapModel) -> Bool {
+        a.windows.map(\.frame) == b.windows.map(\.frame) && a.windows.map(\.dim) == b.windows.map(\.dim)
+            && a.focusedIndex == b.focusedIndex && a.viewport == b.viewport
+            && a.showsArrangeButton == b.showsArrangeButton && a.workspaces == b.workspaces
+    }
+
+    public func hash(into h: inout Hasher) {
+        h.combine(viewport.origin.x); h.combine(viewport.origin.y); h.combine(focusedIndex)
+        h.combine(windows.count)
+    }
+}
+
+/// Everything one overlay (one display) draws in one frame.
+public struct Scene: Equatable, Sendable {
+    public var screen: ScreenInfo // the display being drawn
+    public var desk: CGRect // union of all screen frames
+    public var camera: Camera
+    /// 0 = the plain desktop at 100% (no lens, no backdrop, no chrome),
+    /// 1 = fully zoomed-out overview. Lens, dim, grid and chrome scale with it.
+    public var transition: Double
+    public var opacity: Double // the whole overlay, for the landing fade
+    public var windows: [SceneWindow] // back to front
+    public var look: Look
+    public var minimap: MinimapModel?
+    public var hud: HUDModel
+    public var dropIndicator: CGRect? // canvas rect where a dragged window will land
+    public var time: Double // seconds, for the window names' fades
+    public var workspaces: [SceneWorkspace] = [] // drawn behind the windows, with the transition
+    /// A search is on: windows that match get an outline. Its own field, since
+    /// the HUD is drawn elsewhere (the overlay's native views).
+    public var searching = false
+
+    public init(screen: ScreenInfo, desk: CGRect, camera: Camera, transition: Double,
+                opacity: Double = 1, windows: [SceneWindow], look: Look,
+                minimap: MinimapModel? = nil, hud: HUDModel = HUDModel(),
+                dropIndicator: CGRect? = nil, time: Double = 0) {
+        self.screen = screen
+        self.desk = desk
+        self.camera = camera
+        self.transition = transition
+        self.opacity = opacity
+        self.windows = windows
+        self.look = look
+        self.minimap = minimap
+        self.hud = hud
+        self.dropIndicator = dropIndicator
+        self.time = time
+    }
+}
+
+// MARK: - Building a scene
+
 public extension CanvasState {
     /// Everything one overlay draws this frame.
     func scene(for screen: ScreenInfo, time: Double? = nil) -> Scene {

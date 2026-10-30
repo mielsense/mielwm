@@ -41,17 +41,6 @@ struct FullscreenEntry: Hashable, Sendable {
 }
 
 /// What undo puts back: frames and the workspaces.
-struct UndoEntry: Sendable {
-    var frames: [WindowID: CGRect]
-    var workspaces: [Workspace]
-}
-
-struct Checkpoint: Hashable, Sendable {
-    var kind: String
-    var window: WindowID?
-    var time: Double
-}
-
 /// Everything Core knows. Change it only through `send` / `reduce`.
 public struct CanvasState: Sendable {
     static let expectationLifetime = 1.0 // seconds a setFrame has to show up

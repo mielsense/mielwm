@@ -19,7 +19,7 @@ mielwm draws on four surfaces, with three drawing technologies. They share the v
 | Surface | Drawn with | Code |
 | --- | --- | --- |
 | Settings, onboarding, About, sheets | SwiftUI, from `Design` and the components | `Sources/mielwm/*Pane.swift`, `SettingsWindow.swift`, `Onboarding.swift` |
-| The overview's HUD, live and in `mielwm snapshot` | SwiftUI over the Metal canvas, `Design` values times the HUD scale. Snapshots use the solid material, since Liquid glass only draws on screen. | `Sources/mielwm/ChromeViews.swift`, `OverlayChrome.swift` |
+| The overview's HUD, live and in `mielwm snapshot` | SwiftUI over the Metal canvas, `Design` values times the HUD scale. Snapshots use the solid material, since Liquid glass only draws on screen. | `Sources/mielwm/ChromeViews.swift`, `ChromeSurface.swift`, `OverlayChrome.swift` |
 | Notices over the desktop | AppKit drawing from `Design` values | `Sources/mielwm/NoticeDrawing.swift`, `NoticePanel.swift` |
 | Window names, workspace pills and empty-workspace messages on the canvas | Core Text into Metal textures, after the lens so text never bends | `Sources/MielRender/TagPainter.swift` |
 
