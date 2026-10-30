@@ -29,7 +29,7 @@ A workspace lays its windows out one of two ways, and any window can float inste
 
 ### Tiles
 
-Tiles split the screen between the workspace's windows, side by side on a wide display and above each other on a tall one. The gaps come from Settings > Layout & workspaces, and match AeroSpace's by default: 8 points between windows and 12 around the edge.
+Tiles split the screen between the workspace's windows, side by side on a wide display and above each other on a tall one. The gaps come from Settings > Layout, and match AeroSpace's by default: 8 points between windows and 12 around the edge.
 
 A tiled window can't be dragged smaller than its tile. Drag the edge between two tiles to move it, or use `⌥=` and `⌥-` to grow and shrink the focused tile. `⌥⇧` with an arrow swaps a window with its neighbour, and past the last tile it moves to the next workspace.
 
@@ -47,7 +47,7 @@ Some apps always float, because their windows don't make sense as tiles: System 
 
 ## New windows
 
-A new window joins the workspace you're on, next to the focused window. It takes the workspace's layout, which is tiles unless you change it in Settings > Layout & workspaces.
+A new window joins the workspace you're on, next to the focused window. It takes the workspace's layout, which is tiles unless you change it in Settings > Layout.
 
 Workspace rules send an app's windows to a fixed workspace, so Spotify can always open on 2 and Discord on 1. Add them in Settings, or import your AeroSpace `on-window-detected` rules ([AeroSpace and Barik](aerospace.md)).
 
@@ -60,3 +60,13 @@ When mielwm starts, every window that's already open gets a workspace of its own
 ## More than one display
 
 The workspace you go to lands on the display under the pointer. The other displays keep showing whatever part of the canvas sits there. Gaps can differ on the built-in display and the others, for a menu bar that only covers one of them.
+
+## A status bar at the top
+
+Settings > Layout > Top edge decides how much room the tiles leave at the top of each display.
+
+- Automatic, the default, finds a status bar such as Barik or SketchyBar along the top of each display and adds its height to the top gap. A display without one gets the top gap alone. Next to the setting you see what it found on the display the Settings window is on, like "Barik, 40 pt". mielwm looks again when an app opens or quits and when displays change.
+- Same as other edges uses the top gap alone on every display.
+- Custom keeps the top gap for the built-in display and takes your own number for the others.
+
+A menu bar that hides itself needs nothing. macOS already leaves its room when it shows.

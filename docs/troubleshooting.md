@@ -32,7 +32,7 @@ A tiled window also snaps back when you drag it smaller than its tile. That's on
 
 ## An app behaves badly when tiled
 
-Some apps don't like being resized by someone else, and flicker or ignore the size. Float that window with `⌥.`, or add the app under Settings > Layout & workspaces > Floating apps so all its windows float.
+Some apps don't like being resized by someone else, and flicker or ignore the size. Float that window with `⌥.`, or add the app under Settings > Windows > Floating apps so all its windows float.
 
 ## A window isn't managed at all
 
@@ -52,7 +52,7 @@ macOS's own three-finger swipe between full-screen apps is still on. Set it to f
 
 ## Barik doesn't show mielwm's workspaces
 
-- Check that Work with Barik is on in Settings > Layout & workspaces.
+- Check that Work with Barik is on in Settings > AeroSpace & Barik.
 - If the switch asked you to open Barik first, Barik had no config file yet. Open Barik once, quit it, and turn the switch on again.
 - If you moved mielwm.app, quit and reopen mielwm. It points Barik at the new place when it starts.
 

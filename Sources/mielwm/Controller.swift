@@ -30,6 +30,8 @@ final class Controller {
     var onChange: (() -> Void)?
     /// The settings action (a shortcut or `mielwm settings`): the app opens its window.
     var onSettings: ((SettingsPane?) -> Void)? // nil: the last pane
+    /// The displays changed, or a status bar on one came or went.
+    var onScreens: (() -> Void)?
     /// The menu bar's workspace numbers changed.
     var onWorkspaces: ((WorkspaceStatus) -> Void)?
     var reportedWorkspaces: WorkspaceStatus?
@@ -68,6 +70,8 @@ final class Controller {
     var fadeStart: Double?
     var tickTimer: Timer?
     var tickTimerDeadline: Double? // a one-shot tick timer's deadline; nil while it ticks every frame
+    var wakeTimer: Timer? // one tick at `wakeAt`
+    var wakeAt: Double?
     var keyCaptureFallback = false
 
     /// MIELWM_TIMINGS: logs how long each action's moves take, from the action to the last move confirmed.
@@ -158,6 +162,8 @@ final class Controller {
         configWatcher?.stop()
         tickTimer?.invalidate()
         tickTimer = nil
+        wakeTimer?.invalidate()
+        wakeTimer = nil
         gate?.timeout.cancel()
         gate = nil
         hideOverlays()
@@ -207,7 +213,7 @@ final class Controller {
     /// Reports, text and modifiers never bring the overlay up: no need to try them on a copy first.
     private func mayOpenOverlay(_ input: CoreInput) -> Bool {
         switch input {
-        case .system(.windowFrameChanged), .system(.windowTitleChanged), .modifiersChanged, .text, .markedText: false
+        case .system(.windowFrameChanged), .system(.windowTitleChanged), .system(.unmanagedFocus), .modifiersChanged, .text, .markedText: false
         default: true
         }
     }
@@ -233,6 +239,8 @@ final class Controller {
             switch c {
             case .focus:
                 if mode != .normal { continue } // tests never take the user's focus
+                now.append(c)
+            case .close, .minimize:
                 now.append(c)
             case let .setFrame(id, _):
                 commandSerial[id, default: 0] += 1

@@ -32,6 +32,11 @@ public extension CanvasState {
         case "focus" where args.count == 3 && args[1] == "--window-id":
             guard let n = UInt32(args[2]) else { return .unknown }
             return .input(windows.first { $0.id.number == n }.map { .landOn($0.id) })
+        case "workspace-back-and-forth", "close", "macos-native-minimize", "resize", "focus":
+            // The commands that do here what they do in AeroSpace, by the same words. Not through
+            // aeroSpaceCommand: the import maps ±50 to ⌥= and ⌥-, and its move and layout aren't AeroSpace's.
+            let command = args == ["macos-native-minimize"] ? "minimize" : args.joined(separator: " ")
+            return Action(command: command).map { .input(.action($0)) } ?? .unknown
         default:
             return .unknown
         }
@@ -67,6 +72,17 @@ public enum BarikConfig {
     /// The files Barik reads, in its order: it uses the first that exists.
     public static func candidates(home: URL) -> [URL] {
         [home.appendingPathComponent(".barik-config.toml"), home.appendingPathComponent(".config/barik/config.toml")]
+    }
+
+    /// How tall Barik draws its bar, from experimental.foreground.height: a
+    /// number, "menu-bar" (`menuBar`), or Barik's default of 55. Barik's
+    /// window covers the whole display, so its size does not say.
+    public static func barHeight(_ text: String, menuBar: Double) -> Double {
+        for entry in parseTOML(text) where (entry.section.isEmpty ? entry.key : entry.section + "." + entry.key) == "experimental.foreground.height" {
+            if case let .number(n) = entry.value { return n }
+            if case .string("menu-bar") = entry.value { return menuBar }
+        }
+        return 55
     }
 
     /// `text` with aerospace.path set to `path`, and the value it had, as

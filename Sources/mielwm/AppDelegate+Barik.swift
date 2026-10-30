@@ -23,16 +23,21 @@ extension AppDelegate {
             _ = Self.barikNoConfigAlert().runModal()
             return
         }
-        guard Self.barikAlert(on: on, config: barik.config).runModal() == .alertFirstButtonReturn else { return }
+        guard Self.barikAlert(on: on, config: barik.config, icon: on && model.settings.menuBarStyle == .all).runModal() == .alertFirstButtonReturn else { return }
         do {
             try on ? barik.turnOn() : barik.turnOff()
-            model.apply(["integrations:barik": Settings.entry("integrations:barik", .flag(on))])
+            var changes = ["integrations:barik": Settings.entry("integrations:barik", .flag(on))]
+            if on, model.settings.menuBarStyle == .all { // Barik shows the numbers; the icon keeps them from showing twice
+                changes.merge(MenuBarStyle.icon.configChanges) { $1 }
+            }
+            model.apply(changes)
         } catch {
             model.problem = "Barik: \(Self.describe(error))"
         }
     }
 
-    static func barikAlert(on: Bool, config: URL?) -> NSAlert {
+    /// `icon`: turning on also sets mielwm's menu bar item to its icon.
+    static func barikAlert(on: Bool, config: URL?, icon: Bool = false) -> NSAlert {
         let alert = NSAlert.mielwm()
         let file = config.map { ($0.path as NSString).abbreviatingWithTildeInPath } ?? "Barik's config"
         if on {
@@ -41,7 +46,7 @@ extension AppDelegate {
                 mielwm will set aerospace.path in \(file) to its own aerospace command, after saving a copy \
                 next to it. Then it starts a hidden helper called AeroSpace and relaunches Barik, so Barik \
                 shows mielwm's workspaces.
-                """
+                """ + (icon ? " mielwm's own menu bar item changes to its icon, so the workspaces don't show twice." : "")
             alert.addButton(withTitle: "Turn On")
         } else {
             alert.messageText = "Stop working with Barik?"

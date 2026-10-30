@@ -44,7 +44,9 @@ func parseSettings(config: Data?, configName: String = "config.json") -> LoadedS
             result.errors.append("\(name): expected an object at the top")
             return
         }
-        for (key, raw) in flatten(dict) {
+        let entries = flatten(dict), names = Set(entries.map(\.0))
+        for (key, raw) in entries {
+            if key == "menubar:workspaces", names.contains("menubar:style") { continue } // the newer key decides
             if key.hasPrefix("keys:") {
                 let chord = String(key.dropFirst(5))
                 guard let command = raw as? String else { result.errors.append("\(name): binding '\(chord)' needs an action string"); continue }
@@ -59,7 +61,8 @@ func parseSettings(config: Data?, configName: String = "config.json") -> LoadedS
                 continue
             }
             guard let value = settingValue(raw) else { result.errors.append("\(name): '\(key)' has an unsupported value"); continue }
-            if let error = result.settings.set(value, forKey: key) { result.errors.append("\(name): \(error)") }
+            let error = key.hasPrefix("rules:") ? result.settings.setRule(key, value) : result.settings.set(value, forKey: key)
+            if let error { result.errors.append("\(name): \(error)") }
         }
     }
     apply(config, name: configName)

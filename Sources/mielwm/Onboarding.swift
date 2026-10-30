@@ -92,23 +92,30 @@ final class OnboardingModel: ObservableObject {
 
 struct OnboardingView: View {
     @ObservedObject var model: OnboardingModel
+    @Environment(\.colorSchemeContrast) private var contrast
 
     var body: some View {
         VStack(spacing: 0) {
-            Image(nsImage: appIcon()).resizable().frame(width: 88, height: 88).accessibilityHidden(true)
-            Text("Welcome to mielwm").font(.system(size: 24, weight: .semibold)).padding(.top, 12)
-            Text("Your windows on one endless canvas, tiled in workspaces.")
-                .font(.system(size: 13)).foregroundStyle(.secondary).padding(.top, 4)
+            IconTile(image: appIcon(), size: 80)
+                .shadow(color: .black.opacity(0.18), radius: 5, y: 2)
+            Text("Welcome to mielwm").font(Design.headerTitle).padding(.top, Design.Space.m)
+            Text("Your windows on one endless canvas, tiled in workspaces. mielwm needs two permissions to work.")
+                .font(Design.row)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, Design.Space.xs)
             VStack(spacing: 0) {
                 PermissionRow(title: "Accessibility", detail: "To move and focus windows, and to hear your shortcuts.",
-                              symbol: "accessibility", color: Color(nsColor: .systemBlue), granted: model.accessibility, open: model.openAccessibility)
-                Divider().padding(.leading, 52).padding(.trailing, 12)
+                              symbol: "accessibility", tint: Design.Tint.blue, granted: model.accessibility, open: model.openAccessibility)
+                Divider().padding(.leading, Design.Space.m + Design.Tile.row + Design.Space.s + 2)
                 PermissionRow(title: "Screen Recording", detail: "To show live pictures of your windows when you zoom out.",
-                              symbol: "rectangle.inset.filled.badge.record", color: Color(nsColor: .systemRed), granted: model.recording, open: model.openRecording)
+                              symbol: "rectangle.inset.filled.badge.record", tint: Design.Tint.red, granted: model.recording, open: model.openRecording)
             }
-            .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color(nsColor: .quaternarySystemFill)))
-            .padding(.top, 24)
-            VStack(alignment: .leading, spacing: 8) {
+            .background(RoundedRectangle(cornerRadius: Design.Radius.group, style: .continuous).fill(Design.groupFill))
+            .overlay(RoundedRectangle(cornerRadius: Design.Radius.group, style: .continuous).strokeBorder(Design.edge(contrast)))
+            .padding(.top, Design.Space.xxl)
+            VStack(alignment: .leading, spacing: Design.Space.s) {
                 if !model.recording {
                     Text("macOS turns Screen Recording on after mielwm restarts, and may ask again now and then. Without it, windows show as plain cards when you zoom out.")
                 }
@@ -116,12 +123,13 @@ struct OnboardingView: View {
                     Label { Text(note) } icon: { Image(systemName: "square.and.arrow.down") }
                 }
             }
-            .font(.callout)
+            .font(Design.secondary)
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.top, 12)
-            HStack {
+            .padding(.horizontal, Design.Space.m)
+            .padding(.top, Design.Space.s)
+            HStack(spacing: Design.Space.m) {
                 Spacer()
                 if !model.recording { Button("Restart mielwm", action: model.restart) }
                 Button("Continue") { model.finish() }
@@ -129,45 +137,42 @@ struct OnboardingView: View {
                     .disabled(!model.accessibility)
             }
             .controlSize(.large)
-            .padding(.top, 20)
+            .padding(.top, Design.Space.xl)
         }
-        .padding(.horizontal, 32)
-        .padding(.top, 36)
-        .padding(.bottom, 24)
+        .padding(.horizontal, Design.Space.xxl + Design.Space.s)
+        .padding(.top, Design.Space.xxl + Design.Space.m)
+        .padding(.bottom, Design.Space.xxl)
         .frame(width: 520)
     }
 }
 
+/// A permission as Privacy & Security lists one: its icon, what it is for, and whether it is allowed.
 struct PermissionRow: View {
     let title: String
     let detail: String
     let symbol: String
-    let color: Color
+    let tint: Color
     let granted: Bool
     let open: () -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: symbol)
-                .font(.system(size: 15, weight: .medium))
-                .foregroundStyle(.white)
-                .frame(width: 28, height: 28)
-                .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(color.gradient))
-                .accessibilityHidden(true)
+        HStack(spacing: Design.Space.s + 2) {
+            IconTile(symbol, tint: tint)
             VStack(alignment: .leading, spacing: 2) {
-                Text(title).fontWeight(.medium)
-                Text(detail).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                Text(title).font(Design.row)
+                Text(detail).font(Design.secondary).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
-            Spacer(minLength: 8)
+            Spacer(minLength: Design.Space.s)
             if granted {
-                Label { Text("Allowed").foregroundStyle(.secondary) } icon: { Image(systemName: "checkmark.circle.fill").foregroundStyle(.green) }
+                StatusBadge(text: "Allowed", symbol: "checkmark.circle.fill", tint: .green)
                     .accessibilityLabel("\(title) is allowed")
             } else {
-                Button("Open System Settings", action: open)
+                Button("Allow…", action: open)
+                    .help("Opens Privacy & Security in System Settings")
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .padding(.horizontal, Design.Space.m)
+        .padding(.vertical, Design.Space.s + 2)
     }
 }
 
@@ -178,6 +183,10 @@ func aeroSpaceImportNote(_ found: AeroSpaceImport) -> String {
     if found.layout != nil || found.orientation != nil { parts.append("layout") }
     if !found.workspaceRules.isEmpty { parts.append("\(found.workspaceRules.count) workspace rules") }
     if !found.floatingApps.isEmpty { parts.append("\(found.floatingApps.count) floating apps") }
+    if found.autoBackAndForth { parts.append("workspace back and forth") }
+    if !found.windowRules.isEmpty { parts.append("\(found.windowRules.count) window rules") }
     let list = parts.count > 1 ? parts.dropLast().joined(separator: ", ") + " and " + parts.last! : parts.joined()
-    return "mielwm took your \(list) from AeroSpace's config. Change them any time in Settings > Layout & workspaces."
+    var place = "in Settings > Layout and Settings > Windows" // which don't edit window rules
+    if !found.windowRules.isEmpty { place = parts.count == 1 ? "in the config file" : place + ", and window rules in the config file" }
+    return "mielwm took your \(list) from AeroSpace's config. Change them any time \(place)."
 }

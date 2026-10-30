@@ -110,9 +110,14 @@ public struct LayoutSnapshot: Hashable, Codable, Sendable {
         try writeJSON(self, to: url)
     }
 
-    /// The saved window a newly seen one is: same bundle id, title and
-    /// ordinal; failing that the first unclaimed one with the same bundle id and title.
-    func match(bundleID: String?, title: String, ordinal: Int, excluding claimed: Set<Int>) -> Int? {
+    /// The saved window a newly seen one is: the same window id and bundle id
+    /// (its app kept running, so the title may have changed); failing that the
+    /// same bundle id, title and ordinal; failing that the first unclaimed one
+    /// with the same bundle id and title.
+    func match(id: WindowID, bundleID: String?, title: String, ordinal: Int, excluding claimed: Set<Int>) -> Int? {
+        if let k = windows.indices.first(where: { !claimed.contains($0) && windows[$0].id == id && windows[$0].bundleID == bundleID }) {
+            return k
+        }
         let same = windows.indices.filter { !claimed.contains($0) && windows[$0].bundleID == bundleID && windows[$0].title == title }
         return same.first { windows[$0].ordinal == ordinal } ?? same.first
     }

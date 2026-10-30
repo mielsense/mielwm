@@ -21,6 +21,8 @@ scripts/build-app.sh --dmg    # also build/mielwm-<version>.dmg
 
 `build-app.sh` signs with a self-signed "mielwm Dev" identity that it creates the first time it runs, in its own keychain at `~/Library/Keychains/mielwm-dev.keychain-db`. macOS ties the Accessibility and Screen Recording permissions to that signature, so they survive rebuilds. The keychain's password is random and kept in your login keychain, so no other user can sign as mielwm. A program running as you can still read it with the `security` tool, the price of a build that never asks for your password. If the identity can't be used, the script signs ad hoc and says so, and macOS then asks for both permissions again after every rebuild.
 
+`build-app.sh` also tells the linker which SDK the app was built with. Plain `swift build` doesn't: SwiftPM records the deployment target, macOS 15, as the SDK, so macOS 26 and later draw a debug build's windows in the old look, without the glass sidebar or the new grouped rows. The code picks its macOS 26 paths by the running system, so a debug build on macOS 26 mixes the two. Check how Settings looks with `--settings-preview` from `build/mielwm.app`, not from `.build/debug`.
+
 ### How the code is laid out
 
 The package has five modules and three executables.
