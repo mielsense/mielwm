@@ -125,16 +125,19 @@ func settingsPreview(_ args: [String]) -> Never {
         model.recording = nil
         model.conflict = nil
         model.expanded = []
-        // The Layout pane's gaps, as they are and with a status bar found on this display.
+        // The Layout pane's diagram and top edge rows: with the status bar this display has (found), and with a sample one.
         settings.show(.layout)
         pump(0.8)
-        if let scroll = detailScrollView(in: settings.window.contentView), let doc = scroll.documentView {
-            doc.scroll(NSPoint(x: 0, y: doc.isFlipped ? 380 : doc.frame.height - 380 - scroll.contentView.bounds.height))
-        }
-        for (file, bar) in [("gaps", nil), ("bar", TopBar(owner: "Barik", height: 40))] {
+        let found = model.screen?.topBar
+        for (file, bar) in [("found", found), ("sample", TopBar(owner: "Barik", height: 40))] {
             model.screen?.topBar = bar
-            pump(0.5)
-            savePNG(settings.window, to: out.appendingPathComponent("settings-layout-\(file)-\(name).png"))
+            for (part, y) in [("diagram", 0.0), ("gaps", 380.0)] {
+                if let scroll = detailScrollView(in: settings.window.contentView), let doc = scroll.documentView {
+                    doc.scroll(NSPoint(x: 0, y: doc.isFlipped ? y : doc.frame.height - y - scroll.contentView.bounds.height))
+                }
+                pump(0.5)
+                savePNG(settings.window, to: out.appendingPathComponent("settings-layout-\(part)-\(file)-\(name).png"))
+            }
         }
         if let saved { try? saved.write(to: paths.config) } else { try? fm.removeItem(at: paths.config) }
         model.reload()
