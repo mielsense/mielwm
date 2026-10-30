@@ -270,7 +270,7 @@ private func tapState() -> TapState {
 
 /// The overview pauses once its displays found nothing new; a picture stored after they
 /// looked but before the pause asked to be woken must still wake it.
-@Test func aPictureStoredBeforeTheWakeIsAskedForWakesAtOnce() async throws {
+@Test(.timeLimit(.minutes(1))) func aPictureStoredBeforeTheWakeIsAskedForWakesAtOnce() async throws {
     let capture = CaptureManager()
     let id = WindowID(pid: 1, number: 7)
     let ctx = try #require(CGContext(data: nil, width: 4, height: 4, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,

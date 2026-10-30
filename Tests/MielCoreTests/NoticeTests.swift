@@ -18,11 +18,11 @@ func stacked(settings: Settings = testSettings(layout: .tiles)) -> CanvasState {
     return s
 }
 
-@Test func workspaceSwitchShowsThePillThenFades() {
+@Test func workspaceSwitchShowsThePillThenFades() throws {
     var s = stacked()
     #expect(s.notices.isEmpty && !s.needsTicks)
     _ = s.send(.action(.workspace(2)))
-    let pill = try! #require(s.notices.workspace)
+    let pill = try #require(s.notices.workspace)
     #expect(pill.content == WorkspaceNotice(numbers: [1, 2], current: 2, mode: .tiles, windowCount: 1))
     #expect(pill.screenID == builtIn.id)
     #expect(pill.opacity(at: s.now) == 1 && s.needsTicks)
@@ -60,12 +60,12 @@ func stacked(settings: Settings = testSettings(layout: .tiles)) -> CanvasState {
     #expect(t.notices.workspace == nil)
 }
 
-@Test func theStackStripFollowsTheFrontWindow() {
+@Test func theStackStripFollowsTheFrontWindow() throws {
     var s = stacked()
     _ = s.send(.action(.workspace(2)))
     #expect(s.notices.stack == nil) // a single window: no strip
     _ = s.send(.action(.workspace(1)))
-    let strip = try! #require(s.notices.stack)
+    let strip = try #require(s.notices.stack)
     #expect(strip.content.entries.map(\.title) == ["Ghostty 1", "Ghostty 2", "Ghostty 3"])
     #expect(strip.content.position == "1 of 3" && strip.content.area == area)
     _ = s.advance(1)
@@ -110,10 +110,10 @@ func stacked(settings: Settings = testSettings(layout: .tiles)) -> CanvasState {
 
 // MARK: Ticks: the overlay's frames and the tick timer may rest only when nothing on screen changes
 
-@Test func aNoticeWaitsForItsFadeThenTicksEveryFrameUntilGone() {
+@Test func aNoticeWaitsForItsFadeThenTicksEveryFrameUntilGone() throws {
     var s = stacked()
     _ = s.send(.action(.workspace(2)))
-    let pill = try! #require(s.notices.workspace)
+    let pill = try #require(s.notices.workspace)
     // Held: no tick every frame, one at the next deadline (the focus the switch asked for lands first).
     #expect(s.needsTicks && (s.tickDeadline ?? .infinity) <= pill.until)
     _ = s.advance(0.65)
