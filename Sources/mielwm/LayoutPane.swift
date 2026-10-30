@@ -127,8 +127,9 @@ struct LayoutPane: View {
     }
 
     private func setTopGapMode(_ mode: TopGapMode) {
-        // Custom starts from what the display has now, so nothing jumps.
-        let custom = model.screen.map { model.settings.topGap(on: $0) } ?? model.settings.gapOuterTopExternal
+        // Custom's number is for the displays other than the built-in one: it starts from what they have now,
+        // the most of them, so a display with a bar keeps its room.
+        let custom = model.screens.filter { !$0.isBuiltIn }.map(model.settings.topGap).max() ?? model.settings.gapOuterTopExternal
         model.set("gaps:outer_top_external", mode == .custom ? .number(custom) : .text(mode.rawValue))
     }
 
