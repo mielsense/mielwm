@@ -108,6 +108,10 @@ public enum WindowCommand: Sendable, Equatable {
     case setFrame(WindowID, CGRect)
     /// Raise the window, make it main and key, activate its app.
     case focus(WindowID)
+    /// Press the window's close button, as a click on it would.
+    case close(WindowID)
+    /// Minimize it to the Dock.
+    case minimize(WindowID)
 }
 
 // MARK: - Live window images
@@ -210,6 +214,7 @@ public enum Action: Hashable, Codable, Sendable {
     case pin
     case grow, shrink
     case resize(ResizeAxis, Int) // AeroSpace's resize: points more (or fewer, below zero)
+    case close, minimize // the window itself (its close button, the Dock)
     case arrange
     case undo, redo
     case refresh

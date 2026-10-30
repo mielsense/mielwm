@@ -35,6 +35,8 @@ These actions have no shortcut until you give them one, in Settings > Keyboard o
 | Action | What it does |
 | --- | --- |
 | Last workspace | Go to the workspace you were on before. Again goes back. With Settings > Layout & workspaces > Workspace key goes back, `⌥1` … `⌥9` on the workspace you're on do this too. |
+| Close window | Close the focused window, as a click on its close button would. The app may still ask to save. |
+| Minimize window | Minimize the focused window to the Dock. |
 | `resize smart +100` | Make the window 100 points bigger. See [the command line](command-line.md) for the forms. |
 
 ## In the overview

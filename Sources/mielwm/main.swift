@@ -12,7 +12,7 @@ let usage = """
                                   move-to-workspace 1-9, layout tiles|stack|floating,
                                   zoom in|out, fit, frame, summon, land, back, fill,
                                   fullscreen, pin, grow, shrink, resize smart|width|height +N|-N,
-                                  arrange, undo, redo, refresh
+                                  close, minimize, arrange, undo, redo, refresh
       mielwm state                the running app's canvas as JSON
       mielwm quit                 quit the running app (every window back on a screen)
       mielwm snapshot --state desktop|overview|overview:<command>|search:<q>|switcher|help

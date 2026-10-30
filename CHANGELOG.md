@@ -11,6 +11,7 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 - Turn on Settings > Layout & workspaces > Workspace key goes back, and the key of the workspace you're on takes you to the one before.
 - Window rules can match an app's name or a window's title, so a Picture-in-Picture or splash window can float or open on a fixed workspace. They live in the config file.
 - `resize` takes an amount and a side, like AeroSpace's `resize smart +100` or `resize width -50`.
+- Close and minimize the focused window from a shortcut or the command line. Neither has a key by default.
 
 ### Fixes
 

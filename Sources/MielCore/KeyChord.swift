@@ -83,7 +83,8 @@ public extension Action {
     /// "tune", "help", "switch next|prev", "focus|nudge|pan left|right|up|down",
     /// "zoom in|out", "fit", "frame", "summon", "land", "back", "fill",
     /// "fullscreen", "pin", "grow", "shrink", "resize smart|width|height +N|-N",
-    /// "arrange", "undo", "redo", "refresh", "noop", "workspace-back-and-forth".
+    /// "close", "minimize", "arrange", "undo", "redo", "refresh", "noop",
+    /// "workspace-back-and-forth".
     init?(command: String) {
         let words = command.trimmingCharacters(in: .whitespaces).split(separator: " ", maxSplits: 1).map(String.init)
         guard let verb = words.first?.lowercased() else { return nil }
@@ -117,6 +118,8 @@ public extension Action {
             guard parts.count == 2, let axis = ResizeAxis(rawValue: String(parts[0])), parts[1].first == "+" || parts[1].first == "-",
                   let amount = Int(parts[1]), amount != 0 else { return nil }
             self = .resize(axis, amount)
+        case ("close", ""): self = .close
+        case ("minimize", ""): self = .minimize
         case ("arrange", ""): self = .arrange
         case ("undo", ""): self = .undo
         case ("redo", ""): self = .redo
@@ -160,6 +163,8 @@ public extension Action {
         case .grow: "grow"
         case .shrink: "shrink"
         case let .resize(axis, amount): "resize \(axis.rawValue) \(amount > 0 ? "+" : "")\(amount)"
+        case .close: "close"
+        case .minimize: "minimize"
         case .arrange: "arrange"
         case .undo: "undo"
         case .redo: "redo"

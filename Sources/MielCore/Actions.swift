@@ -38,6 +38,8 @@ extension CanvasState {
         case .grow: resizeTarget(look.gridSize, tile: 50)
         case .shrink: resizeTarget(-look.gridSize, tile: -50)
         case let .resize(axis, amount): resizeTarget(CGFloat(amount), tile: CGFloat(amount), axis: axis)
+        case .close: if let i = target { outbox.append(.close(windows[i].id)) }
+        case .minimize: if let i = target { outbox.append(.minimize(windows[i].id)) }
         case .arrange: arrangeAll()
         case .undo: showToast(undo(redo: false) ? "Undone  {⌃⇧Z} Redo" : "Nothing to undo")
         case .redo: showToast(undo(redo: true) ? "Redone" : "Nothing to redo")

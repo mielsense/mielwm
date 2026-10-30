@@ -38,6 +38,7 @@ Every action you can bind to a key also works here:
 | `fill`, `fullscreen`, `pin` | Fill the screen, go fullscreen, pin the window. |
 | `grow`, `shrink` | Resize the window. |
 | `resize smart\|width\|height +N\|-N` | Resize by `N` points. `smart` follows the split between tiles, or both sides of a floating window. |
+| `close`, `minimize` | Close the window, or minimize it to the Dock. |
 | `pan left\|right\|up\|down`, `zoom in`, `zoom out` | Move the camera. |
 | `fit`, `frame` | Fit every window, or frame the selected one. |
 | `summon`, `land`, `back` | Bring the selection here, go to it, or go back. |

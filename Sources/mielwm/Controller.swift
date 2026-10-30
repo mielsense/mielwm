@@ -223,6 +223,8 @@ final class Controller {
             case .focus:
                 if mode != .normal { continue } // tests never take the user's focus
                 now.append(c)
+            case .close, .minimize:
+                now.append(c)
             case let .setFrame(id, _):
                 commandSerial[id, default: 0] += 1
                 // Going to a park slot with no live stream: take a still first, so the overview has a picture.

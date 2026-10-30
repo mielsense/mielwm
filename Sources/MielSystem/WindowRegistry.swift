@@ -191,7 +191,7 @@ public final class WindowRegistry {
 extension WindowCommand {
     var window: WindowID {
         switch self {
-        case .setFrame(let id, _), .focus(let id): id
+        case .setFrame(let id, _), .focus(let id), .close(let id), .minimize(let id): id
         }
     }
 }
@@ -375,6 +375,13 @@ final class AppTracker {
             app.set(kAXFrontmostAttribute, kCFBooleanTrue)
             let pid = pid
             DispatchQueue.main.async { NSRunningApplication(processIdentifier: pid)?.activate() }
+        case .close(let id):
+            // The close button, as a click: the app may still ask to save first.
+            guard let window = element(id), let button = window.value(kAXCloseButtonAttribute),
+                  CFGetTypeID(button) == AXUIElementGetTypeID() else { return }
+            AXUIElementPerformAction(button as! AXUIElement, kAXPressAction as CFString)
+        case .minimize(let id):
+            element(id)?.set(kAXMinimizedAttribute, kCFBooleanTrue)
         }
     }
 
