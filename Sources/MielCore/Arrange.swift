@@ -3,6 +3,7 @@ import Foundation
 
 // Tidy every window up on the grid, grouped by what it is for, with no overlaps.
 
+/// One window as the tidy-up sees it: where it is and what kind of app it belongs to.
 public struct ArrangeItem: Hashable, Sendable {
     public var id: WindowID
     public var frame: CGRect
@@ -35,6 +36,7 @@ func contextTokens(title: String, appName: String, extraStopwords: Set<String> =
     return result
 }
 
+/// The tidy-up's grid, and how far it may resize windows so they line up.
 public struct ArrangeOptions: Hashable, Sendable {
     public var grid: Double = 80
     var sizeSimilarity: Double = 0.12

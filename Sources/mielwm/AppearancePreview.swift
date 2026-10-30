@@ -86,6 +86,7 @@ final class AppearancePreview: ObservableObject {
     }
 }
 
+/// The Appearance pane's live picture of the overview.
 struct AppearancePreviewView: View {
     let settings: MielCore.Settings
     let dark: Bool

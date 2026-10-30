@@ -70,6 +70,7 @@ public extension CanvasState {
     /// tick meanwhile, nor to keep the overview's frames awake.
     var nextRetry: Double? { windows.compactMap(\.retryAt).min() }
 
+    /// How the app ticks Core while no overlay draws: not at all, every frame, or once at a time.
     enum TickPlan: Equatable { case none, everyFrame, once(at: Double) }
 
     /// The ticks the app sends without an overlay's frames: every frame while

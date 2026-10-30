@@ -12,6 +12,7 @@ extension View {
     }
 }
 
+/// Draws a panel in the material `Design.ChromeMaterial` picks.
 private struct ChromeSurface<S: InsettableShape>: ViewModifier {
     let shape: S
     let look: Look

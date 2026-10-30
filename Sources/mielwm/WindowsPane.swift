@@ -2,6 +2,7 @@ import AppKit
 import MielCore
 import SwiftUI
 
+/// Settings > Windows: floating apps and workspace rules.
 struct WindowsPane: View {
     @EnvironmentObject var model: SettingsModel
 

@@ -14,6 +14,7 @@ public struct MinimapLayout: Hashable, Sendable {
     public var workspaces: [CGRect] = [] // workspace outlines, same order as the input
     public var viewport: CGRect // the viewport marker
 
+    /// What a click on the minimap does.
     public enum Hit: Hashable, Sendable {
         case arrange
         case jump(CGPoint) // canvas point to center the camera on

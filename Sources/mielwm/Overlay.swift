@@ -97,6 +97,7 @@ final class Overlay {
     }
 }
 
+/// The overlay's Metal view. It draws on its display link, and takes keys, text and the pointer while the overview is open.
 final class OverlayView: NSView, @preconcurrency NSTextInputClient {
     let screenID: UInt32
     private(set) var metal = CAMetalLayer()

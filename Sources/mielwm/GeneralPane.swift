@@ -3,6 +3,7 @@ import MielCore
 import ServiceManagement
 import SwiftUI
 
+/// Settings > General.
 struct GeneralPane: View {
     @EnvironmentObject var model: SettingsModel
     private let bundled = Bundle.main.bundleURL.pathExtension == "app"

@@ -3,6 +3,7 @@ import MielCore
 import MielSystem
 import SwiftUI
 
+/// Settings > Layout.
 struct LayoutPane: View {
     @EnvironmentObject var model: SettingsModel
     @StateObject private var gapFocus = GapFocus()

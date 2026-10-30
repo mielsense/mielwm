@@ -15,6 +15,7 @@ public struct OverviewContext: Sendable {
     }
 }
 
+/// What the overview's search field takes: keys, typed text and text still being composed.
 public enum OverviewInput: Hashable, Sendable {
     case key(NamedKey, Modifiers)
     case text(String) // typed text, already through the input method

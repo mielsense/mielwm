@@ -3,6 +3,7 @@ import MielCore
 import MielSystem
 import SwiftUI
 
+/// Settings > Advanced.
 struct AdvancedPane: View {
     @EnvironmentObject var model: SettingsModel
 

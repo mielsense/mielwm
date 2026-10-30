@@ -62,6 +62,7 @@ struct SteadyChrome: View {
 
 // MARK: - Palette
 
+/// The search panel: the field, and the results or the shortcuts below it.
 private struct Palette: View {
     let content: ChromeContent
 
@@ -114,6 +115,7 @@ private struct QueryField: View {
     }
 }
 
+/// The card of search results under the field.
 private struct Results: View {
     let hud: HUDModel
     let look: Look
@@ -149,6 +151,7 @@ private struct Results: View {
     }
 }
 
+/// One search result: the app icon, the title, where it is and its key.
 private struct ResultRow: View {
     let row: HUDRow
     let selected: Bool
@@ -344,6 +347,7 @@ private struct Chevron: View {
 
 // MARK: - Shared pieces
 
+/// An app's icon, or the generic one.
 private struct AppIcon: View {
     let bundleID: String?
 
@@ -354,6 +358,7 @@ private struct AppIcon: View {
     }
 }
 
+/// The environment key behind `chromeStill`.
 private struct ChromeStillKey: EnvironmentKey { static let defaultValue = false }
 
 extension EnvironmentValues {

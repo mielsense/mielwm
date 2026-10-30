@@ -4,18 +4,19 @@ import Metal
 import MielCore
 import QuartzCore
 
-// Draws one Scene for one display: the world (backdrop, windows) into an
-// offscreen texture, then the lens into the target with the minimap composed
-// after it, then the tags (window names, workspace pills) on top. The
-// overview's chrome is native views over it (Sources/mielwm/ChromeViews.swift),
-// so the Scene's HUD is never drawn here. One Renderer can serve every
-// display; per-display state is keyed by ScreenInfo.id. Use it from one
-// thread (the main thread).
-
+/// Why the renderer could not start.
 public enum RenderError: Error {
     case noDevice
     case setup(String)
 }
+
+/// Draws one Scene for one display: the world (backdrop, windows) into an
+/// offscreen texture, then the lens into the target with the minimap composed
+/// after it, then the tags (window names, workspace pills) on top. The
+/// overview's chrome is native views over it (Sources/mielwm/ChromeViews.swift),
+/// so the Scene's HUD is never drawn here. One Renderer can serve every
+/// display; per-display state is keyed by ScreenInfo.id. Use it from one
+/// thread, the main thread.
 public final class Renderer {
     /// The pixel format of every target: set it on the CAMetalLayer.
     public static let pixelFormat: MTLPixelFormat = .bgra8Unorm

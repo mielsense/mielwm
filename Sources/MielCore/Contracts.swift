@@ -24,6 +24,7 @@ public struct WindowID: Hashable, Codable, Sendable, CustomStringConvertible {
     public var description: String { "\(pid):\(number)" }
 }
 
+/// A display as Core needs it: its frames in global y-down points, its scale and its status bar.
 public struct ScreenInfo: Hashable, Codable, Sendable {
     public var id: UInt32 // CGDirectDisplayID
     public var name: String
@@ -51,6 +52,7 @@ public struct ScreenInfo: Hashable, Codable, Sendable {
     public var bottomInset: CGFloat { max(0, frame.maxY - visibleFrame.maxY) }
 }
 
+/// What Accessibility reports about one window when it appears.
 public struct WindowSnapshot: Hashable, Codable, Sendable {
     public var id: WindowID
     public var bundleID: String?
@@ -145,6 +147,7 @@ extension WindowCommand {
 
 // MARK: - Live window images
 
+/// A window's latest picture for the overview. Unchecked Sendable: neither kind changes once stored.
 public enum WindowFrame: @unchecked Sendable {
     case pixelBuffer(CVPixelBuffer) // live ScreenCaptureKit frame, IOSurface-backed
     case image(CGImage) // still: parked windows, windows past the live stream limit, frames gone quiet

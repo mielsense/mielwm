@@ -20,6 +20,7 @@ enum Design {
     // MARK: - Spacing
     // On a 4 pt grid.
 
+    /// Spacing steps.
     enum Space {
         static let xs: CGFloat = 4, s: CGFloat = 8, m: CGFloat = 12, xl: CGFloat = 20, xxl: CGFloat = 24
     }
@@ -27,6 +28,7 @@ enum Design {
     // MARK: - Radii
     // All continuous.
 
+    /// Corner radii.
     enum Radius {
         /// A grouped box of rows outside a Form (onboarding's steps).
         static let group: CGFloat = 12
@@ -75,6 +77,7 @@ enum Design {
     // `KeyCaps` draws them in SwiftUI; the notices and the canvas draw them
     // by hand from the same values.
 
+    /// The key cap recipe in the app's own types.
     enum KeyCap {
         typealias M = KeyCapMetrics
         static let textSize = M.textSize, tracking = M.tracking

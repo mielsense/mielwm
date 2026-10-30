@@ -1,5 +1,6 @@
 import CoreGraphics
 
+/// The modifier keys held with a key or a click.
 public struct Modifiers: OptionSet, Hashable, Codable, Sendable {
     public let rawValue: UInt8
     public init(rawValue: UInt8) { self.rawValue = rawValue }
@@ -10,6 +11,7 @@ public struct Modifiers: OptionSet, Hashable, Codable, Sendable {
     public static let command = Modifiers(rawValue: 1 << 3)
 }
 
+/// An arrow key's direction, for focus, nudge, pan and moving windows.
 public enum Direction: String, Codable, Sendable, CaseIterable {
     case left, right, up, down
 }

@@ -7,6 +7,7 @@ import Foundation
 //   "rules:pip:title": "Picture-in-Picture"
 // Patterns are regular expressions found anywhere in the text, ignoring case.
 
+/// One rule from the config file: which windows it matches, and the workspace or floating it gives them.
 public struct WindowRule: Hashable, Codable, Sendable {
     var appID: String? // bundle id, exact
     public var app: String? // pattern for the app name

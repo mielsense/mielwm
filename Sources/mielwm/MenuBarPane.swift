@@ -2,6 +2,7 @@ import AppKit
 import MielCore
 import SwiftUI
 
+/// Settings > Menu bar.
 struct MenuBarPane: View {
     @EnvironmentObject var model: SettingsModel
 

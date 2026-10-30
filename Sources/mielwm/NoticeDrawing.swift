@@ -6,6 +6,7 @@ import MielCore
 // radius the outer radius minus the padding, so the curves share a centre.
 // Text is 13 points, secondary text 11; spacing steps by 4.
 
+/// What a notice panel shows.
 enum NoticeContent: Equatable {
     case toast(String)
     case workspace(WorkspaceNotice)

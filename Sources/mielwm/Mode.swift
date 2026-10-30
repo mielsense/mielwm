@@ -1,3 +1,4 @@
+/// How the app runs: managing every window, or one app's for tests.
 enum Mode: Equatable {
     case normal
     /// Tests: no event tap, no overlays, no menu, never takes focus; manages

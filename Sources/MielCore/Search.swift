@@ -131,6 +131,7 @@ func scoreToken(_ field: FoldedText, _ token: [Character]) -> (score: Int, start
     return best
 }
 
+/// A window the search can find.
 public struct SearchCandidate: Hashable, Sendable {
     public var id: WindowID
     public var title: String // as displayed: the app name when the window has no title
@@ -145,6 +146,7 @@ public struct SearchCandidate: Hashable, Sendable {
     }
 }
 
+/// A window the search found, with its score and the letters that matched.
 public struct SearchResult: Hashable, Sendable {
     public var id: WindowID
     var score: Int

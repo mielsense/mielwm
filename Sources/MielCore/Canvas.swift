@@ -35,6 +35,7 @@ struct Expectation: Hashable, Sendable {
     var resent = false
 }
 
+/// A window mielwm made fill the screen, and where it goes back to.
 struct FullscreenEntry: Hashable, Sendable {
     var before: CGRect // canvas frame to go back to
     var suspended = false // ⌃⌥G took the screen back; landing on it again goes fullscreen again

@@ -42,11 +42,13 @@ final class ScreenState {
     }
 }
 
+/// What a window tag's texture depends on.
 struct LabelKey: Hashable {
     var title: String
     var bundleID: String?
 }
 
+/// A drawn window tag, kept while windows show it.
 struct LabelEntry {
     var texture: MTLTexture
     var lastUsed: UInt64

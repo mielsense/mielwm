@@ -4,6 +4,7 @@ import SwiftUI
 
 private let defaults = MielCore.Settings()
 
+/// Settings > Keyboard: every shortcut, and recording new ones.
 struct KeyboardPane: View {
     @EnvironmentObject var model: SettingsModel
 

@@ -145,6 +145,7 @@ final class SeamlessSplitView: NSSplitView {
     }
 }
 
+/// The Settings window's sidebar: its search field and the panes in groups.
 struct SettingsSidebar: View {
     @EnvironmentObject var model: SettingsModel
 
@@ -192,6 +193,7 @@ struct SettingsSidebar: View {
     }
 }
 
+/// The pane the sidebar chose.
 struct SettingsDetail: View {
     @EnvironmentObject var model: SettingsModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion

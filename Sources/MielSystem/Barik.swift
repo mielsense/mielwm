@@ -20,6 +20,7 @@ public protocol BarikApps: AnyObject {
 /// command, keep the AeroSpace helper running, and relaunch Barik.
 @MainActor
 public final class BarikLink {
+    /// Why the link could not be turned on.
     public enum Problem: Error, Equatable {
         case unsupported(String) // aerospace is set in a form mielwm doesn't edit
         case temporaryLocation // mielwm runs from a place gone at quit; Barik would call a dead path

@@ -2,6 +2,7 @@ import AppKit
 import MielCore
 import SwiftUI
 
+/// Settings > AeroSpace: working with AeroSpace-compatible apps, and the import.
 struct IntegrationsPane: View {
     @EnvironmentObject var model: SettingsModel
     private let aeroSpaceURL = AeroSpaceImport.standardURL()

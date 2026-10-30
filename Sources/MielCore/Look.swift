@@ -1,6 +1,7 @@
 import CoreGraphics
 import Foundation
 
+/// An sRGB colour, each channel from 0 to 1.
 public struct RGB: Hashable, Codable, Sendable {
     public var r: Double, g: Double, b: Double
     public init(_ r: Double, _ g: Double, _ b: Double) {
@@ -25,6 +26,7 @@ public enum GlassStyle: String, Hashable, Codable, Sendable, CaseIterable {
     case liquid, frosted
 }
 
+/// How the overview looks, from the appearance settings and the system's: the lens, the grid, the colours and the panels.
 public struct Look: Hashable, Codable, Sendable {
     // Lens (distortion.*)
     public var lensEnabled = true

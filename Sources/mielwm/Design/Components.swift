@@ -212,6 +212,7 @@ struct KeyCaps: View {
     }
 }
 
+/// The environment key behind `keyCapFill`.
 private struct KeyCapFillKey: EnvironmentKey { static let defaultValue = Design.KeyCap.rest }
 
 extension EnvironmentValues {

@@ -60,6 +60,7 @@ final class Onboarding: NSObject, NSWindowDelegate {
     }
 }
 
+/// What the welcome window shows: which permissions are allowed, and the import note.
 @MainActor
 final class OnboardingModel: ObservableObject {
     @Published var accessibility = Permissions.accessibility()
@@ -99,6 +100,7 @@ final class OnboardingModel: ObservableObject {
     }
 }
 
+/// The welcome window's content.
 struct OnboardingView: View {
     @ObservedObject var model: OnboardingModel
     @Environment(\.colorSchemeContrast) private var contrast

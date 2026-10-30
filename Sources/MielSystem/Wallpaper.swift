@@ -2,6 +2,7 @@ import AppKit
 import MielCore
 import ScreenCaptureKit
 
+/// The desktop pictures the overview draws behind the canvas.
 public enum Wallpaper {
     /// The desktop picture of `screen`, decoded (off the main thread) at no
     /// more than the size that covers the screen: a 6K picture would

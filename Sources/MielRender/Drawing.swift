@@ -183,8 +183,10 @@ struct Theme {
 
 // MARK: - Fonts and text
 
+/// The weights canvas text uses.
 enum FontWeight: Hashable { case regular, medium, semibold } // semibold: titles
 
+/// How a run of canvas text is set: its size, weight and tracking.
 struct TextStyle {
     var size: CGFloat
     var weight: FontWeight = .regular
@@ -228,6 +230,7 @@ final class Typesetter {
 
 // MARK: - App icons
 
+/// App icons for window tags, read once per app and size.
 final class IconCache {
     private var icons: [String: CGImage?] = [:]
 

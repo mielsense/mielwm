@@ -2,6 +2,7 @@ import Foundation
 
 // The part of TOML that AeroSpace configs use, enough to import one.
 
+/// A TOML value, as the AeroSpace import reads it.
 indirect enum TOMLValue: Equatable {
     case number(Double), string(String), bool(Bool), array([TOMLValue]), table([String: TOMLValue])
 
@@ -40,6 +41,7 @@ func parseTOML(_ text: String) -> [(section: String, block: Int, key: String, va
     return entries
 }
 
+/// Reads TOML values character by character.
 private struct TOMLReader {
     let chars: [Character]
     var i = 0

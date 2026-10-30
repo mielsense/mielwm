@@ -11,6 +11,7 @@ import VideoToolbox
 /// SCK's async overloads resolve to the wrong symbols under the Command Line
 /// Tools, so every call here uses the completion-handler form.
 public final class CaptureManager: NSObject, WindowFrameSource, @unchecked Sendable {
+    /// How often live window pictures update.
     public enum Rate: Sendable {
         case overview // 60 fps
         case linger // 15 fps: the overlay just closed and may open again
@@ -22,6 +23,7 @@ public final class CaptureManager: NSObject, WindowFrameSource, @unchecked Senda
     private var wake: (@MainActor @Sendable () -> Void)? // see `wakeOnNextPicture`
     private var storedCount: UInt64 = 0 // new pictures so far
 
+    /// One window's picture, and its stream while it has one.
     private struct Slot {
         var frame: WindowFrame?
         var generation: UInt64 = 0

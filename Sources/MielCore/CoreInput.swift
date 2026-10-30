@@ -14,6 +14,7 @@ public enum PointerGesture: Hashable, Sendable {
     public enum Corner: Hashable, Sendable { case topLeft, topRight, bottomLeft, bottomRight }
 }
 
+/// Everything that can happen to the canvas, one at a time, for `CanvasState.send(_:)`.
 public enum CoreInput: Equatable, Sendable {
     case system(SystemEvent)
     case action(Action)
