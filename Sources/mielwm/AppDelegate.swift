@@ -82,7 +82,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         guard let c = controller else { return }
         controller = nil
         stopping = true
-        c.shutdown { [weak self] answered in
+        c.shutdown(quitting: quitWhenStopped) { [weak self] answered in
             guard let self else { return }
             stopping = false
             // Quitting while an app did not answer: the watcher unparks its

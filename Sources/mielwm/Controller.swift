@@ -146,7 +146,7 @@ final class Controller {
 
     /// Quit, toggle off, signals: every window back on a screen, then stop.
     /// `done` gets false when some app did not answer in time.
-    func shutdown(_ done: @escaping (Bool) -> Void) {
+    func shutdown(quitting: Bool, _ done: @escaping (Bool) -> Void) {
         tap?.stop()
         tap = nil
         swipes.stop()
@@ -162,7 +162,7 @@ final class Controller {
         overlays = [:]
         tokens.forEach(NotificationCenter.default.removeObserver)
         workspaceTokens.forEach(NSWorkspace.shared.notificationCenter.removeObserver)
-        let parked = LayoutSnapshot(state) // for the crash watcher, should some app not answer
+        let parked = quitting ? LayoutSnapshot(state) : nil // for the crash watcher, should some app not answer
         let commands = state.send(.unparkAll)
         saveNow()
         ipc?.stop()
@@ -170,8 +170,8 @@ final class Controller {
         let applied = registry.perform(commands) // on main: the registry's app list is main-only
         DispatchQueue.global(qos: .userInitiated).async {
             let answered = applied.wait(timeout: .now() + 2) == .success
-            if !answered {
-                log("some windows did not answer in time; the crash watcher unparks them once mielwm exits")
+            if !answered { log("some windows did not answer in time") }
+            if !answered, let parked { // the crash watcher unparks them once mielwm exits
                 do { try parked.save(to: layoutURL) } catch { log("cannot save the layout: \(error)") }
             }
             // While quitting, AppKit runs the main run loop in modal-panel mode, which the main queue does not reach.
