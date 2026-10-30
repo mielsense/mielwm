@@ -11,7 +11,7 @@ enum Design {
     static let headerTitle = Font.system(size: 22, weight: .semibold)
     /// A row's title, and body text.
     static let row = Font.system(size: rowSize)
-    /// Text under a row or a group, the header card's line, labels under thumbnails.
+    /// Text under a row or a group, labels under thumbnails.
     static let secondary = Font.system(size: secondarySize)
     /// Their sizes, for what AppKit draws and what scales (the overview's chrome, the notices).
     static let rowSize: CGFloat = 13, secondarySize: CGFloat = 11
@@ -25,7 +25,7 @@ enum Design {
     // MARK: Radii, all continuous.
 
     enum Radius {
-        /// A grouped box of rows, the header card.
+        /// A grouped box of rows outside a Form (onboarding's steps).
         static let group: CGFloat = 12
         /// A thumbnail in a visual picker.
         static let thumbnail: CGFloat = 8
@@ -37,7 +37,7 @@ enum Design {
 
     // MARK: Fills. Surfaces separate by fill, not by strokes.
 
-    /// A grouped box, the header card, a thumbnail's backdrop.
+    /// A grouped box of rows outside a Form.
     static let groupFill = Color(nsColor: .quaternarySystemFill)
     /// Increase Contrast draws an edge around filled shapes.
     static func edge(_ contrast: ColorSchemeContrast) -> Color { contrast == .increased ? Color(nsColor: .separatorColor) : .clear }
@@ -65,9 +65,9 @@ enum Design {
 
     // MARK: Key caps
     //
-    // How shortcuts look wherever they appear: the Keyboard pane, the menu's
-    // hints, onboarding, and later the overview's help sheet (drawn by
-    // MielRender, which should copy these numbers).
+    // How shortcuts look wherever they appear: the Keyboard pane, the
+    // overview's chrome and the notices. Over glass the fill is `onGlass`.
+    // MielRender's empty-workspace message copies the radius and the fill.
     // - Glyphs: SF Pro 13 pt regular, the modifiers in the system's order
     //   ⌃⌥⇧⌘, then the key, 1 pt of tracking.
     // - Text: primary at 85% opacity at rest, secondary when empty ("None").

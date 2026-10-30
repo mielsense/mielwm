@@ -134,7 +134,7 @@ extension CanvasState {
             windows[i].reparkedAt = now // the app's answer to this try counts on from it
             sync([windows[i].id], force: true)
         }
-        if let g = graceUntil, now >= g { // (h) the screens settled: put everything where it belongs
+        if let g = graceUntil, now >= g { // the screens settled: put everything where it belongs
             graceUntil = nil
             for i in windows.indices { windows[i].expected = nil; windows[i].pending = nil; windows[i].sent = [] }
             sync(force: true)
@@ -225,7 +225,7 @@ extension CanvasState {
         }
     }
 
-    /// (f) A new window: a saved spot (and workspace) wins; one found in a
+    /// A new window: a saved spot (and workspace) wins; one found in a
     /// park corner (ours or AeroSpace's) or off every screen goes near the
     /// camera without overlap; anything else stays where it is. Then it joins
     /// a workspace or floats (see `placement`).
@@ -272,7 +272,7 @@ extension CanvasState {
         layoutRevision += 1
     }
 
-    /// (a) Our own moves come back as reports: one that matches what we asked
+    /// Our own moves come back as reports: one that matches what we asked
     /// for is ignored, never adopted. While an expectation lives (size, then
     /// position, then size again gives three reports) only the newest report
     /// is kept, and judged if the expectation lapses without a match. A late
@@ -282,7 +282,7 @@ extension CanvasState {
         guard let i = index(id) else { return }
         windows[i].real = frame
         if windows[i].isFullScreen { return } // the screen-sized frame is not a resize to adopt
-        if graceUntil != nil { return } // (h) macOS shuffles windows while screens change
+        if graceUntil != nil { return } // macOS shuffles windows while screens change
         let live = windows[i].expected.flatMap { now <= $0.deadline ? $0 : nil }
         if let live, frame.isClose(to: live.frame, tolerance: Self.frameTolerance) {
             windows[i].expected = nil
@@ -313,7 +313,7 @@ extension CanvasState {
         if windows[i].parked {
             // Another report of its own slot (repeats, stray moves) confirms the park.
             if frame.isClose(to: desiredFrame(windows[i]).frame, tolerance: Self.frameTolerance) { return }
-            // (c) An app pulled a parked window back, or resized it: keep the
+            // An app pulled a parked window back, or resized it: keep the
             // new size and park it again. After two tries in a row, wait 1, 2,
             // 4, 8 and 16 seconds before the next, then leave it until the
             // camera moves again: it still belongs off screen.
@@ -327,7 +327,7 @@ extension CanvasState {
             return
         }
         if answering {
-            // (c) macOS clamped our move (below the menu bar, onto a screen):
+            // macOS clamped our move (below the menu bar, onto a screen):
             // the canvas frame stays. A size it would not take is adopted.
             if !sameSize {
                 windows[i].frame.size = frame.size
@@ -336,7 +336,7 @@ extension CanvasState {
             }
             return
         }
-        // (b) The user dragged it, or the app moved or resized itself: adopt.
+        // The user dragged it, or the app moved or resized itself: adopt.
         // A tiled window keeps its tile, or the user drags the edge it shares with a neighbour.
         if windows[i].workspace != nil {
             if dragging, sameSize { // by its title bar: back once the reports stop, without counting as a try
@@ -350,7 +350,7 @@ extension CanvasState {
         layoutRevision += 1
     }
 
-    /// (d) Focus from outside (Cmd-Tab, the Dock, a click, an app raising
+    /// Focus from outside (Cmd-Tab, the Dock, a click, an app raising
     /// itself). A window on screen stays where it is; one off camera or
     /// parked brings the camera to it. Our own windows don't count, nor do
     /// stray reports while a focus we asked for lands: the last one waits,
@@ -395,7 +395,7 @@ extension CanvasState {
         if let id = pendingFocus, window(id)?.isShown == true { focusedFromOutside(id) }
     }
 
-    /// (h) Screens came or went: keep canvas frames and the camera's offset
+    /// Screens came or went: keep canvas frames and the camera's offset
     /// from the desk, ignore reports for a moment, lay everything out again.
     mutating func screensChanged(_ new: [ScreenInfo]) {
         let old = deskCenter, oldScreens = screens
@@ -416,7 +416,7 @@ extension CanvasState {
         sync()
     }
 
-    /// (g) Every managed window to a frame some screen shows, including
+    /// Every managed window to a frame some screen shows, including
     /// parked ones that are minimized or whose app is hidden.
     mutating func unparkAll() {
         for i in windows.indices where windows[i].isShown || windows[i].parked {

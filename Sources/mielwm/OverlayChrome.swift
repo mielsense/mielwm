@@ -34,8 +34,7 @@ final class ChromeModel: ObservableObject {
 
 /// The overview's floating chrome as native views over the Metal canvas, so
 /// Liquid glass is Apple's own and bends the canvas behind it, not the text.
-/// It takes no clicks, keys or scrolls: the canvas view below it handles
-/// input exactly as before.
+/// It takes no clicks, keys or scrolls: the canvas view below it handles input.
 final class OverlayChrome: NSView {
     /// The palette and the pills fade in with the zoom; the switcher and toasts show at once.
     /// Each has its own model, so a toast or a new selection in the switcher leaves the palette alone.

@@ -2,7 +2,7 @@ import CoreGraphics
 @testable import MielCore
 import Testing
 
-// Rules (a)-(h) of the reducer, against the user's two-display desk.
+// The reducer's rules for what windows and screens report, against the user's two-display desk.
 
 let onBuiltIn = CGRect(x: 100, y: 100, width: 800, height: 600)
 

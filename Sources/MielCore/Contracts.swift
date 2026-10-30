@@ -124,8 +124,9 @@ public func isUserDrag(buttonDown: Bool, sinceMouseDown: Double, sinceDrag: Doub
 /// What Core asks System to do. System runs these off the main thread, one
 /// serial queue per app, and never blocks the caller.
 public enum WindowCommand: Sendable, Equatable {
-    /// Global frame. System applies size, position, size (so moves between
-    /// displays of different sizes land right) and switches
+    /// Global frame. System sets the size, the position and the size again
+    /// (so moves between displays of different sizes land right), or only the
+    /// position when the size is the one it last set, and switches
     /// AXEnhancedUserInterface off around the change.
     case setFrame(WindowID, CGRect)
     /// Raise the window, make it main and key, activate its app.
@@ -140,7 +141,7 @@ public enum WindowCommand: Sendable, Equatable {
 
 public enum WindowFrame: @unchecked Sendable {
     case pixelBuffer(CVPixelBuffer) // live ScreenCaptureKit frame, IOSurface-backed
-    case image(CGImage) // still, for parked windows
+    case image(CGImage) // still: parked windows, windows past the live stream limit, frames gone quiet
 }
 
 /// Implemented by System's capture manager, read by Render every frame.

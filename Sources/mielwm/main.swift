@@ -33,7 +33,7 @@ let usage = """
                                   bar indicator as PNGs, light and dark; --menu also the open
                                   menu; --selftest drives the window's controls instead; --live
                                   keeps the window open 10 s. No canvas, moves nothing
-                                  (development; the README has the rest)
+                                  (development; CONTRIBUTING.md has the rest)
       mielwm --overview-preview [--out <dir>] [--accessibility]
                                   save the overview's search, results, shortcuts, toast and
                                   switcher in each glass style, light and dark, as PNGs of the
