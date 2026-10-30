@@ -25,9 +25,9 @@ public struct WindowRule: Hashable, Codable, Sendable {
         self.workspace = workspace
     }
 
-    /// Every matcher it has fits; a rule with none matches nothing.
+    /// Every matcher it has fits. A rule with no matcher, or nothing to do, matches nothing.
     func matches(_ s: WindowSnapshot) -> Bool {
-        guard appID != nil || app != nil || title != nil else { return false }
+        guard appID != nil || app != nil || title != nil, floating || workspace != nil else { return false }
         if let appID, s.bundleID?.lowercased() != appID.lowercased() { return false }
         return Self.finds(app, in: s.appName) && Self.finds(title, in: s.title)
     }

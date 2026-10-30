@@ -58,7 +58,7 @@ A window rule floats a window or sends it to a workspace by its app's name or it
 | `floating` | `true` makes the window float. |
 | `workspace` | `1` to `9`: the window opens on that workspace. |
 
-A window has to match every matcher a rule has, and a rule with no matcher does nothing. When several rules match, the first by name wins, with numbers in order, so `rule-2` comes before `rule-10`. Rules apply when a window first appears, so a title that changes later doesn't move it. They come before `layout:floating_apps` and `layout:workspace_rules`.
+A window has to match every matcher a rule has. A rule with no matcher, or with neither `floating` nor `workspace`, does nothing and never hides a later rule. When several rules match, the first by name wins, with numbers in order, so `rule-2` comes before `rule-10`. Rules apply when a window first appears, so a title that changes later doesn't move it. They come before `layout:floating_apps` and `layout:workspace_rules`.
 
 Flat keys work too: `"rules:firefox-pip:title": "Picture-in-Picture"`. Settings doesn't edit window rules yet, so they live only in this file.
 

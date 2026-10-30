@@ -49,3 +49,9 @@ import Testing
     let s = makeState([snapshot(1, onBuiltIn)], settings: settings) // at startup each window gets a free workspace
     #expect(s.window(wid(1))?.workspace == 2)
 }
+
+@Test func aRuleThatDoesNothingDoesNotHideALaterOne() {
+    var settings = Settings()
+    settings.windowRules = ["a-matcher-only": WindowRule(app: "ghostty"), "b": WindowRule(app: "ghostty", workspace: 2)]
+    #expect(settings.windowRule(for: snapshot(1, onBuiltIn)) == WindowRule(app: "ghostty", workspace: 2))
+}
