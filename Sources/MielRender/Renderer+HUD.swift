@@ -106,7 +106,7 @@ extension Renderer {
             let r = caret.offsetBy(dx: palette.rect.minX, dy: palette.rect.minY + slide)
             s.caret = (r, ease * opacity)
         }
-        if drawsCaret, let (r, alpha) = s.caret {
+        if let (r, alpha) = s.caret {
             let blink = caretBlink(scene.time)
             var u = SolidUniforms()
             u.rect = SIMD4(r)

@@ -28,8 +28,6 @@ public final class Renderer {
     var theme = Theme(look: Look())
     var lookRevision = 0 // bumps whenever the Look changes, so caches key on an Int instead of hashing it
     let placeholderTexture: MTLTexture
-    /// False: frames leave the caret out (see `caret(screenID:)`), so an idle search field draws none.
-    public var drawsCaret = true
 
     public init(device: MTLDevice? = nil) throws {
         guard let device = device ?? MTLCreateSystemDefaultDevice() else { throw RenderError.noDevice }
@@ -70,19 +68,12 @@ public final class Renderer {
         var still = scene
         still.time = 0
         return still != drawn.scene || generations(scene, frames) != drawn.generations
-            || s.labelAlpha.values.contains { $0 < 0.999 } || (drawsCaret && s.palette?.caret != nil && caretMoved(from: drawn.blink, to: caretBlink(scene.time)))
+            || s.labelAlpha.values.contains { $0 < 0.999 } || (s.palette?.caret != nil && caretMoved(from: drawn.blink, to: caretBlink(scene.time)))
     }
 
     /// The caret's fades in steps of about a 60 Hz frame, ending exactly on and off.
     private func caretMoved(from drawn: Double, to now: Double) -> Bool {
         abs(now - drawn) > 0.2 || ((now == 0 || now == 1) && now != drawn)
-    }
-
-    /// Where the last frame of that display put the search field's caret, in px from
-    /// the top left, its opacity before blinking, and its color (opaque, the display's
-    /// own color space, like the frames); nil when it has none.
-    public func caret(screenID: UInt32) -> (rect: CGRect, alpha: Double, color: SIMD4<Float>)? {
-        screens[screenID]?.caret.map { ($0.rect, $0.alpha, theme.accentRGBA) }
     }
 
     /// The next `needsDraw` of that display is true (its drawable was resized, hidden or replaced).
