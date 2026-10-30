@@ -37,11 +37,14 @@ Every action you can bind to a key also works here:
 | `switch next`, `switch prev` | The recent-windows switcher. |
 | `fill`, `fullscreen`, `pin` | Fill the screen, go fullscreen, pin the window. |
 | `grow`, `shrink` | Resize the window. |
+| `resize smart\|width\|height +N\|-N` | Resize by `N` points. `smart` follows the split between tiles, or both sides of a floating window. |
 | `pan left\|right\|up\|down`, `zoom in`, `zoom out` | Move the camera. |
 | `fit`, `frame` | Fit every window, or frame the selected one. |
 | `summon`, `land`, `back` | Bring the selection here, go to it, or go back. |
 | `arrange`, `undo`, `redo` | Tidy floating windows, undo, redo. |
 | `refresh` | Put every window back where the canvas says. |
+
+`resize` changes a tile only along its split. With tiles side by side, `resize width` moves the split and `resize height` does nothing. A floating window grows around its center, never below 160 by 100 points. AeroSpace's `resize width 800`, which sets a size, isn't supported.
 
 ## Other commands
 

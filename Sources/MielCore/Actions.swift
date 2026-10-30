@@ -35,8 +35,9 @@ extension CanvasState {
         case .fill: toggleFill()
         case .fullscreen: toggleFullscreen()
         case .pin: togglePin()
-        case .grow: resizeTarget(by: look.gridSize)
-        case .shrink: resizeTarget(by: -look.gridSize)
+        case .grow: resizeTarget(look.gridSize, tile: 50)
+        case .shrink: resizeTarget(-look.gridSize, tile: -50)
+        case let .resize(axis, amount): resizeTarget(CGFloat(amount), tile: CGFloat(amount), axis: axis)
         case .arrange: arrangeAll()
         case .undo: showToast(undo(redo: false) ? "Undone  {⌃⇧Z} Redo" : "Nothing to undo")
         case .redo: showToast(undo(redo: true) ? "Redone" : "Nothing to redo")
@@ -340,20 +341,25 @@ extension CanvasState {
         sync([id])
     }
 
-    /// ⌥= / ⌥-: one grid step bigger or smaller, around its center.
-    mutating func resizeTarget(by step: CGFloat) {
+    /// ⌥= / ⌥- and AeroSpace's resize: a floating window `step` bigger or
+    /// smaller around its center (`axis`: both sides, or one), a tile `tile`
+    /// points along the split. Flat tiles can't change across the split.
+    mutating func resizeTarget(_ step: CGFloat, tile change: CGFloat, axis: ResizeAxis = .smart) {
         guard let i = target, windows[i].isResizable else { return }
         let id = windows[i].id
-        if let ws = workspace(of: id) { // tiled: 50 points along the split, AeroSpace's resize smart
-            guard ws.mode == .tiles, let tile = tiles(ws).first(where: { $0.id == id })?.frame else { return }
+        if let ws = workspace(of: id) {
+            let h = isHorizontal(ws)
+            guard ws.mode == .tiles, axis == .smart || (axis == .width) == h,
+                  let tile = tiles(ws).first(where: { $0.id == id })?.frame else { return }
             checkpoint("resize", window: id)
-            return setTileLength(id, to: (isHorizontal(ws) ? tile.width : tile.height) + (step > 0 ? 50 : -50))
+            return setTileLength(id, to: (h ? tile.width : tile.height) + change)
         }
         checkpoint("resize", window: id)
+        let dw = axis == .height ? 0 : step, dh = axis == .width ? 0 : step
         if let pin = windows[i].pinned {
-            windows[i].pinned = pin.resized(by: step).roundedFrame
+            windows[i].pinned = pin.resized(width: dw, height: dh).roundedFrame
         } else {
-            windows[i].frame = windows[i].frame.resized(by: step).roundedFrame
+            windows[i].frame = windows[i].frame.resized(width: dw, height: dh).roundedFrame
         }
         fills[id] = nil
         layoutRevision += 1
@@ -563,8 +569,8 @@ extension Direction {
 }
 
 extension CGRect {
-    /// `step` wider and taller around the same center, never below 160 × 100.
-    func resized(by step: CGFloat) -> CGRect {
-        CGRect(origin: .zero, size: CGSize(width: Swift.max(160, width + step), height: Swift.max(100, height + step))).centered(at: center)
+    /// `dw` wider and `dh` taller around the same center, never below 160 × 100.
+    func resized(width dw: CGFloat, height dh: CGFloat) -> CGRect {
+        CGRect(origin: .zero, size: CGSize(width: Swift.max(160, width + dw), height: Swift.max(100, height + dh))).centered(at: center)
     }
 }

@@ -13,7 +13,8 @@ A few things work differently or aren't there yet:
 - `⌥Tab` is mielwm's recent-windows switcher. `workspace-back-and-forth` is there with no key, so bind it in Settings > Keyboard.
 - `workspace --auto-back-and-forth` is a setting for all the workspace keys, Settings > Layout & workspaces > Workspace key goes back, instead of a flag on each key.
 - `⌥⇧Tab`, which moves a workspace to another monitor in AeroSpace, has no equivalent yet.
-- There are no binding modes like AeroSpace's service mode, and no nested containers. A workspace is tiles or a stack, one level deep.
+- There are no binding modes like AeroSpace's service mode, and no nested containers. A workspace is tiles or a stack, one level deep, so `join-with` and `split` don't exist.
+- `resize` changes a tile only along its split, and only by an amount. `resize width 800`, which sets a size, isn't supported.
 
 Quit AeroSpace before you start mielwm, because two window managers fight over the same windows. mielwm offers to do it and waits until AeroSpace is gone. Set `start-at-login = false` in your AeroSpace config so it stays gone.
 

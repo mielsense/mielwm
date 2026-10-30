@@ -120,7 +120,7 @@ public extension CanvasState {
     private static let anywhereLabels: [(String, String)] = [
         ("overview", "Overview, and back"), ("switch", "Recent windows"), ("focus", "Focus that way"),
         ("nudge", "Move the window that way"), ("fill", "Fill the screen"), ("fullscreen", "Fullscreen"), ("pin", "Pin to the screen"),
-        ("grow", "Grow, shrink"), ("pan", "Pan"), ("zoom", "Zoom"), ("search", "Search"), ("help", "Shortcuts"),
+        ("grow", "Grow, shrink"), ("resize", "Resize"), ("pan", "Pan"), ("zoom", "Zoom"), ("search", "Search"), ("help", "Shortcuts"),
         ("tune", "Appearance settings"), ("fit", "Fit every window"), ("frame", "Frame the selected window"), ("arrange", "Tidy windows"),
         ("undo", "Undo"), ("redo", "Redo"), ("summon", "Bring here"), ("land", "Land"), ("back", "Back"), ("refresh", "Refresh"),
         ("settings", "Settings…"),

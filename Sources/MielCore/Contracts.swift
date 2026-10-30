@@ -209,6 +209,7 @@ public enum Action: Hashable, Codable, Sendable {
     case fullscreen
     case pin
     case grow, shrink
+    case resize(ResizeAxis, Int) // AeroSpace's resize: points more (or fewer, below zero)
     case arrange
     case undo, redo
     case refresh
@@ -222,6 +223,11 @@ public enum Action: Hashable, Codable, Sendable {
     case workspaceBackAndForth // the workspace shown before this one
     case moveToWorkspace(Int) // the window moves there and the camera follows
     case settings // opens the Settings window (handled by the app)
+}
+
+/// Which side `resize` changes: along the tiles' split (smart), or one dimension.
+public enum ResizeAxis: String, Hashable, Codable, Sendable, CaseIterable {
+    case smart, width, height
 }
 
 /// How a workspace lays out its windows. Floating windows belong to none.

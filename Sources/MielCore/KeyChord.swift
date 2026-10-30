@@ -82,8 +82,8 @@ public extension Action {
     /// `mielwm <command>` and binding names: "overview", "search [text]",
     /// "tune", "help", "switch next|prev", "focus|nudge|pan left|right|up|down",
     /// "zoom in|out", "fit", "frame", "summon", "land", "back", "fill",
-    /// "fullscreen", "pin", "grow", "shrink", "arrange", "undo", "redo",
-    /// "refresh", "noop", "workspace-back-and-forth".
+    /// "fullscreen", "pin", "grow", "shrink", "resize smart|width|height +N|-N",
+    /// "arrange", "undo", "redo", "refresh", "noop", "workspace-back-and-forth".
     init?(command: String) {
         let words = command.trimmingCharacters(in: .whitespaces).split(separator: " ", maxSplits: 1).map(String.init)
         guard let verb = words.first?.lowercased() else { return nil }
@@ -111,6 +111,12 @@ public extension Action {
         case ("pin", ""): self = .pin
         case ("grow", ""): self = .grow
         case ("shrink", ""): self = .shrink
+        case ("resize", _):
+            // Only changes: AeroSpace's unsigned "resize width 800" sets a size, which flat tiles can't promise.
+            let parts = rest.lowercased().split(separator: " ")
+            guard parts.count == 2, let axis = ResizeAxis(rawValue: String(parts[0])), parts[1].first == "+" || parts[1].first == "-",
+                  let amount = Int(parts[1]), amount != 0 else { return nil }
+            self = .resize(axis, amount)
         case ("arrange", ""): self = .arrange
         case ("undo", ""): self = .undo
         case ("redo", ""): self = .redo
@@ -153,6 +159,7 @@ public extension Action {
         case .pin: "pin"
         case .grow: "grow"
         case .shrink: "shrink"
+        case let .resize(axis, amount): "resize \(axis.rawValue) \(amount > 0 ? "+" : "")\(amount)"
         case .arrange: "arrange"
         case .undo: "undo"
         case .redo: "redo"
