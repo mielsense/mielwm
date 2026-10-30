@@ -4,6 +4,7 @@
 import Carbon.HIToolbox
 import CoreVideo
 import Foundation
+import os
 import ImageIO
 import MielCore
 @testable import MielIPC
@@ -255,6 +256,30 @@ private func tapState() -> TapState {
     #expect(still.width == 200 && still.height == 100)
     let bytes = try #require(CFDataGetBytePtr(still.dataProvider?.data))
     #expect(abs(Int(bytes[0]) - 200) <= 2 && abs(Int(bytes[1]) - 100) <= 2 && abs(Int(bytes[2]) - 50) <= 2 && bytes[3] == 255)
+}
+
+/// The overview pauses once its displays found nothing new; a picture stored after they
+/// looked but before the pause asked to be woken must still wake it.
+@Test func aPictureStoredBeforeTheWakeIsAskedForWakesAtOnce() async throws {
+    let capture = CaptureManager()
+    let id = WindowID(pid: 1, number: 7)
+    let ctx = try #require(CGContext(data: nil, width: 4, height: 4, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                                     bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue))
+    let image = try #require(ctx.makeImage())
+    let looked = capture.picturesStored
+    capture.store(.image(image), for: id) // between the last look and the pause
+    await withCheckedContinuation { done in capture.wakeOnNextPicture(after: looked) { done.resume() } }
+
+    let woke = OSAllocatedUnfairLock(initialState: false)
+    let waiting = capture.picturesStored
+    await withCheckedContinuation { done in
+        capture.wakeOnNextPicture(after: waiting) { woke.withLock { $0 = true }; done.resume() }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            #expect(!woke.withLock { $0 }) // nothing new yet
+            capture.store(.image(image), for: id)
+        }
+    }
+    #expect(woke.withLock { $0 })
 }
 
 @Test func framesWithTheSamePixelsAreTheSamePicture() throws {

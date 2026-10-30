@@ -62,7 +62,7 @@ func settingsSelfTest(_ model: SettingsModel, _ window: SettingsWindow, _ paths:
         ("animation:enabled", .flag(false)), ("blur", .flag(true)), ("canvas:grid_enabled", .flag(false)),
         // The user's file has the minimap off: on is the default, so it leaves the file.
         ("canvas:minimap_enabled", .flag(true)), ("canvas:remember_layout", .flag(false)), ("distortion:enabled", .flag(false)),
-        ("menubar:workspaces", .flag(false)), ("navigator:labels", .flag(false)), ("navigator:pointer", .flag(false)),
+        ("navigator:labels", .flag(false)), ("navigator:pointer", .flag(false)),
         ("wallpaper", .flag(false)), ("window:shadow", .flag(false)), ("blur_strength", .number(0.4)),
         ("canvas:background_dim", .number(0.5)), ("canvas:grid_opacity", .number(0.3)), ("canvas:initial_zoom", .number(0.5)),
         ("distortion:edge_scale", .number(1.3)), ("distortion:strength", .number(0.2)), ("window:rounding", .number(20)),
@@ -71,7 +71,9 @@ func settingsSelfTest(_ model: SettingsModel, _ window: SettingsWindow, _ paths:
         ("layout:workspace_rules", .text("com.apple.finder=4")), ("navigator:accent", .text("#123456")),
         ("gaps:inner_horizontal", .number(20)), ("gaps:inner_vertical", .number(22)), ("gaps:outer_left", .number(4)),
         ("gaps:outer_right", .number(6)), ("gaps:outer_bottom", .number(30)), ("gaps:outer_top", .number(2)),
-        ("gaps:outer_top_external", .number(40)),
+        ("gaps:outer_top_external", .number(40)), ("menubar:style", .text("current")),
+        ("input:move_modifier", .text("ctrl+cmd")), ("input:pan_sensitivity", .number(2)), ("input:scroll_factor", .number(0.5)),
+        ("layout:auto_back_and_forth", .flag(true)), ("layout:cross_workspaces", .flag(true)),
     ]
     for (key, value) in values { model.set(key, value) }
     model.flush()

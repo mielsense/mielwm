@@ -93,21 +93,6 @@ func appIcon() -> NSImage {
     }
 }
 
-@MainActor
-var aboutOptions: [NSApplication.AboutPanelOptionKey: Any] {
-    [
-        .applicationName: "mielwm",
-        .applicationVersion: appVersion,
-        .version: "",
-        .applicationIcon: appIcon(),
-        .credits: NSAttributedString(string: "Every window on one endless canvas.", attributes: [
-            .font: NSFont.systemFont(ofSize: NSFont.smallSystemFontSize),
-            .foregroundColor: NSColor.secondaryLabelColor,
-            .paragraphStyle: { let p = NSMutableParagraphStyle(); p.alignment = .center; return p }(),
-        ]),
-    ]
-}
-
 var appVersion: String {
     let info = Bundle.main.infoDictionary
     guard let version = info?["CFBundleShortVersionString"] as? String else { return "Development build" }

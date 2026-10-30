@@ -138,7 +138,7 @@ final class Session {
     private func record(_ event: SystemEvent) {
         events.append(event)
         let step: FixtureStep? = switch event {
-        case .windowFrameChanged(watched, let frame): FixtureStep(t: now(), event: "frameChanged", frame: frame)
+        case .windowFrameChanged(watched, let frame, _): FixtureStep(t: now(), event: "frameChanged", frame: frame)
         case .windowMinimized(watched, let value): FixtureStep(t: now(), event: "minimized", value: value)
         case .windowFocused(watched): FixtureStep(t: now(), event: "focused")
         case .windowTitleChanged(watched, _): FixtureStep(t: now(), event: "title")
@@ -379,6 +379,47 @@ struct WindowTests {
         #expect(s.performAndWait([.setFrame(id, start)]))
     }
 
+    /// The overview parks a window with the picture it has and takes a fresh still while it moves.
+    @Test func stillsTakenWhileParkingAreComplete() async throws {
+        let start = CGRect(x: 320, y: 240, width: 480, height: 320)
+        let s = try Session([start])
+        defer { s.end() }
+        let id = try #require(try await s.start(count: 1).first).id
+        let screen = try #require(Displays.screens().first { $0.frame.intersects(start) })
+        let capture = CaptureManager()
+        func still() async throws -> [Bool] {
+            await withCheckedContinuation { done in capture.captureStills([id]) { done.resume() } }
+            guard case .image(let image)? = capture.latestFrame(for: id) else { throw CancellationError() }
+            #expect(image.width == Int(start.width * screen.scale) && image.height == Int(start.height * screen.scale))
+            return try opaqueGrid(image)
+        }
+        let before = try await still()
+        s.perform([.setFrame(id, parkFrame(start, on: screen))])
+        let moving = try await still()
+        await s.settle()
+        let parked = try await still()
+        #expect(before.filter { $0 }.count > before.count / 2)
+        #expect(moving == before && parked == before)
+        #expect(s.performAndWait([.setFrame(id, start)]))
+    }
+
+    @Test func aMoveThatKeepsTheSizeOnlySetsThePosition() async throws {
+        let start = CGRect(x: 240, y: 200, width: 420, height: 300)
+        let s = try Session([start])
+        defer { s.end() }
+        let id = try #require(try await s.start(count: 1).first).id
+        await s.settle()
+        let calls = axCalls.withLock { $0 }
+        let moved = start.offsetBy(dx: 80, dy: 40)
+        #expect(s.performAndWait([.setFrame(id, moved)]))
+        // AXEnhancedUserInterface read, the position; size, position, size would make 4. One report read may slip in.
+        #expect(axCalls.withLock { $0 } - calls <= 3)
+        #expect(await s.until { s.frame(id) == moved })
+        let resized = CGRect(x: 260, y: 220, width: 500, height: 340)
+        #expect(s.performAndWait([.setFrame(id, resized)]))
+        #expect(await s.until { s.frame(id) == resized })
+    }
+
     @Test func streamOfAVisibleWindow() async throws {
         let start = CGRect(x: 260, y: 200, width: 600, height: 400)
         let s = try Session([start])
@@ -458,4 +499,17 @@ private func blindTracker(_ s: Session) -> (AppTracker, Seen, () -> Void) {
 /// The bottom-right corner of `screen` with 1 pt showing, as AeroSpace parks.
 private func parkFrame(_ frame: CGRect, on screen: ScreenInfo) -> CGRect {
     CGRect(x: screen.frame.maxX - 1, y: screen.frame.maxY - 1, width: frame.width, height: frame.height)
+}
+
+/// Whether each point of a 16x16 grid over `image` is opaque: a picture with parts missing differs.
+private func opaqueGrid(_ image: CGImage) throws -> [Bool] {
+    let width = image.width, height = image.height
+    let ctx = try #require(CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4,
+                                     space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
+    ctx.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+    let pixels = try #require(ctx.data).assumingMemoryBound(to: UInt8.self)
+    return (0 ..< 256).map { i in
+        let x = (i % 16 * 2 + 1) * width / 32, y = (i / 16 * 2 + 1) * height / 32
+        return pixels[(y * width + x) * 4 + 3] > 250
+    }
 }

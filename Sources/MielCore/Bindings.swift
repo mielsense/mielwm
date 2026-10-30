@@ -12,14 +12,15 @@ public extension Settings {
     /// The modifiers of the chords that open the overview, when there are
     /// two or more of them: holding them warms the window captures, as the
     /// key is about to follow. One alone (⌥ for ⌥Space) is held for too
-    /// many other things to start every capture each time.
+    /// many other things to start every capture each time, and so are the
+    /// modifiers that move and resize windows (⌃⌥ by default): every drag.
     var warmModifiers: Set<Modifiers> {
         Set(chords.compactMap { chord, action in
             switch action {
             case .toggleOverview, .search, .help: chord.modifiers.rawValue.nonzeroBitCount >= 2 ? chord.modifiers : nil
             default: nil
             }
-        })
+        }).subtracting([moveModifiers])
     }
 
     /// The chords bound to `action`, in a stable order.

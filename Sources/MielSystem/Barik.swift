@@ -27,7 +27,7 @@ public final class BarikLink {
     }
 
     /// BarikEnhanced, then upstream Barik.
-    public static let bundleIDs = ["com.mateocerquetella.BarikEnhanced", "Pansy.Barik"]
+    public nonisolated static let bundleIDs = ["com.mateocerquetella.BarikEnhanced", "Pansy.Barik"]
     static let previousKey = "barikPreviousPath" // aerospace.path as it was, in TOML
 
     let home: URL, shim: String, helper: URL, apps: BarikApps, defaults: UserDefaults

@@ -24,6 +24,7 @@ public final class WindowRegistry {
     private var activePid: pid_t?
     private var lastFocused: WindowID?
     private var screens: [ScreenInfo] = []
+    private var screenCheck: DispatchWorkItem?
 
     public init(pidFilter: Int32? = nil, onEvent: @escaping (SystemEvent) -> Void) {
         self.pidFilter = pidFilter
@@ -40,10 +41,19 @@ public final class WindowRegistry {
         screens = Displays.screens()
 
         let workspace = NSWorkspace.shared.notificationCenter
-        observe(workspace, NSWorkspace.didLaunchApplicationNotification) { [weak self] app in self?.track(app) }
+        observe(workspace, NSWorkspace.didLaunchApplicationNotification) { [weak self] app in
+            self?.track(app)
+            self?.checkScreensSoon()
+        }
         observe(workspace, NSWorkspace.didTerminateApplicationNotification) { [weak self] app in
             self?.untrack(app.processIdentifier)
+            self?.checkScreensSoon()
         }
+        // Leaving a full screen Space shows a bar that was hidden there.
+        let spaces = workspace.addObserver(forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.checkScreensSoon()
+        }
+        tokens.append((workspace, spaces))
         observe(workspace, NSWorkspace.didHideApplicationNotification) { [weak self] app in
             self?.deliver(.appHidden(pid: app.processIdentifier, true))
         }
@@ -56,7 +66,10 @@ public final class WindowRegistry {
         }
         let token = NotificationCenter.default.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main
-        ) { [weak self] _ in self?.report(Displays.screens()) }
+        ) { [weak self] _ in
+            self?.checkScreens()
+            self?.checkScreensSoon() // a status bar moves its window after the change
+        }
         tokens.append((NotificationCenter.default, token))
 
         if let pid = pidFilter {
@@ -67,7 +80,20 @@ public final class WindowRegistry {
         if let pid = NSWorkspace.shared.frontmostApplication?.processIdentifier { activated(pid) }
     }
 
+    private func checkScreens() {
+        report(Displays.screens(keeping: screens))
+    }
+
+    /// Once things settle: a status bar app shows its window a moment after it starts.
+    private func checkScreensSoon() {
+        screenCheck?.cancel()
+        let work = DispatchWorkItem { [weak self] in self?.checkScreens() }
+        screenCheck = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: work)
+    }
+
     public func stop() {
+        screenCheck?.cancel()
         for (center, token) in tokens { center.removeObserver(token) }
         tokens = []
         let group = DispatchGroup()
@@ -94,7 +120,7 @@ public final class WindowRegistry {
     /// Reports the screens even when they look the same, so Core waits out its
     /// grace period and then puts every window back, and rereads every window list.
     public func woke() {
-        report(Displays.screens(), always: true)
+        report(Displays.screens(keeping: screens), always: true)
         rescan()
     }
 
@@ -156,8 +182,12 @@ public final class WindowRegistry {
     private func activated(_ pid: pid_t) {
         activePid = pid
         lastFocused = nil
-        trackers[pid]?.reportFocus() // first: it adopts the focused window on its own
-        trackers[pid]?.rescan()
+        if let tracker = trackers[pid] {
+            tracker.reportFocus() // first: it adopts the focused window on its own
+            tracker.rescan()
+        } else {
+            deliver(.unmanagedFocus(pid: pid))
+        }
     }
 
     /// Keeps `windows` current and drops what Core must never see: events
@@ -170,7 +200,7 @@ public final class WindowRegistry {
             windows[snapshot.id] = snapshot
         case .windowClosed(let id):
             guard windows.removeValue(forKey: id) != nil else { return }
-        case .windowFrameChanged(let id, let frame):
+        case .windowFrameChanged(let id, let frame, _):
             guard windows[id] != nil else { return }
             windows[id]?.frame = frame
         case .windowTitleChanged(let id, let title):
@@ -185,6 +215,9 @@ public final class WindowRegistry {
         case .windowFocused(let id):
             guard id.pid == activePid, id != lastFocused, windows[id] != nil else { return }
             lastFocused = id
+        case .unmanagedFocus(let pid):
+            guard pid == activePid else { return }
+            lastFocused = nil // coming back to the same window is news again
         case .appHidden(let pid, _):
             guard trackers[pid] != nil else { return }
         case .appTerminated, .screensChanged:
@@ -221,7 +254,7 @@ public final class Applied: @unchecked Sendable {
 extension WindowCommand {
     var window: WindowID {
         switch self {
-        case .setFrame(let id, _), .focus(let id): id
+        case .setFrame(let id, _), .focus(let id), .close(let id), .minimize(let id): id
         }
     }
 }
@@ -263,6 +296,7 @@ final class AppTracker {
     /// Not standard or not movable when last read, so Core skips them. Rescans
     /// read them again: some apps report AXUnknown or AXDialog at first.
     private var ignored: Set<WindowID> = []
+    private var sizes: [WindowID: CGSize] = [:] // last size read or written, so a move that keeps it sets only the position
 
     init(pid: pid_t, bundleID: String?, appName: String, observerThread: RunLoopThread,
          post: @escaping (SystemEvent) -> Void) {
@@ -337,15 +371,19 @@ final class AppTracker {
         case kAXUIElementDestroyedNotification:
             if let id = ids[element] { forget(id, element) }
         case kAXMovedNotification, kAXResizedNotification:
-            guard let id = ids[element], let frame = frame(of: element) else { return }
+            guard let id = ids[element], let (frame, isFullScreen) = frame(of: element) else { return }
+            sizes[id] = frame.size
             let was = fullScreen.contains(id)
-            let on = element.value(kAXFullScreen) as? Bool ?? was // a failed read changes nothing
+            let on = isFullScreen ?? was // a failed read changes nothing
             let changed = on != was
             if changed, on { // before the screen-sized frame, so Core does not take it for a resize
                 fullScreen.insert(id)
                 post(.windowFullScreen(id, true))
             }
-            post(.windowFrameChanged(id, frame))
+            func since(_ type: CGEventType) -> Double { CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: type) }
+            let dragging = isUserDrag(buttonDown: NSEvent.pressedMouseButtons & 1 != 0, sinceMouseDown: since(.leftMouseDown),
+                                      sinceDrag: since(.leftMouseDragged), sinceMouseUp: since(.leftMouseUp))
+            post(.windowFrameChanged(id, frame, dragging: dragging))
             if changed, !on { // after, so Core knows where macOS put it back
                 fullScreen.remove(id)
                 post(.windowFullScreen(id, false))
@@ -388,6 +426,7 @@ final class AppTracker {
         ids[element] = nil
         fullScreen.remove(id)
         ignored.remove(id)
+        sizes[id] = nil
         post(.windowClosed(id))
     }
 
@@ -413,12 +452,19 @@ final class AppTracker {
         case .setFrame(let id, let frame):
             // Core may have sent it before hearing the window went full screen.
             guard !fullScreen.contains(id), let window = element(id) else { return true }
+            // shortcut: an app that resizes a window without kAXResizedNotification keeps that size on
+            // the next same-size move; set the size every time if such an app turns up.
+            guard sizes[id] != frame.size else { // the same size: a move alone (parking, workspace switches)
+                return window.set(kAXPositionAttribute, axValue(frame.origin)) != .cannotComplete
+            }
             // Size first so a move onto a smaller display is not clamped,
             // size again in case the old position limited the first one.
-            let results = [window.set(kAXSizeAttribute, axValue(frame.size)),
-                           window.set(kAXPositionAttribute, axValue(frame.origin)),
-                           window.set(kAXSizeAttribute, axValue(frame.size))]
-            return !results.contains(.cannotComplete) // what a timeout returns; a refused size is an answer
+            let first = window.set(kAXSizeAttribute, axValue(frame.size))
+            let moved = window.set(kAXPositionAttribute, axValue(frame.origin))
+            let last = window.set(kAXSizeAttribute, axValue(frame.size))
+            // A write that failed (a busy app timing out) leaves the size unknown, so the next move sets it again.
+            sizes[id] = last == .success ? frame.size : nil
+            return ![first, moved, last].contains(.cannotComplete) // what a timeout returns; a refused size is an answer
         case .focus(let id):
             guard let window = element(id) else { return true }
             if window.value(kAXMinimizedAttribute) as? Bool == true { window.set(kAXMinimizedAttribute, kCFBooleanFalse) }
@@ -429,12 +475,21 @@ final class AppTracker {
             let pid = pid
             DispatchQueue.main.async { NSRunningApplication(processIdentifier: pid)?.activate() }
             return true // nobody waits on focus
+        case .close(let id):
+            // The close button, as a click: the app may still ask to save first.
+            guard let window = element(id), let button = window.value(kAXCloseButtonAttribute),
+                  CFGetTypeID(button) == AXUIElementGetTypeID() else { return true }
+            AXUIElementPerformAction(button as! AXUIElement, kAXPressAction as CFString)
+            return true
+        case .minimize(let id):
+            element(id)?.set(kAXMinimizedAttribute, kCFBooleanTrue)
+            return true
         }
     }
 
     private func postFocus() {
         guard let value = app.value(kAXFocusedWindowAttribute), CFGetTypeID(value) == AXUIElementGetTypeID(),
-              let id = adopt(value as! AXUIElement) else { return }
+              let id = adopt(value as! AXUIElement) else { return post(.unmanagedFocus(pid: pid)) } // the desktop, a sheet, a panel
         post(.windowFocused(id))
     }
 
@@ -457,6 +512,7 @@ final class AppTracker {
         ids[element] = id
         if snapshot.isFullScreen { fullScreen.insert(id) }
         if isIgnored(snapshot) { ignored.insert(id) }
+        sizes[id] = snapshot.frame.size
         if let observer, let refcon {
             for name in windowNotifications {
                 AXObserverAddNotification(observer, element, name as CFString, refcon.toOpaque())
@@ -479,9 +535,10 @@ final class AppTracker {
                               isMovable: element.isSettable(kAXPositionAttribute), isFullScreen: v[6] as? Bool ?? false)
     }
 
-    private func frame(of element: AXUIElement) -> CGRect? {
-        let v = element.values([kAXPositionAttribute, kAXSizeAttribute])
+    /// The frame, and whether it is in full screen (nil when that read failed), in one round trip.
+    private func frame(of element: AXUIElement) -> (CGRect, Bool?)? {
+        let v = element.values([kAXPositionAttribute, kAXSizeAttribute, kAXFullScreen])
         guard let origin = cgPoint(v[0]), let size = cgSize(v[1]) else { return nil }
-        return CGRect(origin: origin, size: size)
+        return (CGRect(origin: origin, size: size), v[2] as? Bool)
     }
 }

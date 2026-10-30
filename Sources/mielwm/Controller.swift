@@ -20,12 +20,18 @@ final class Controller {
     let mode: Mode
     let paths = ConfigPaths.standard()
     let layoutURL: URL
-    var state: CanvasState
+    var state: CanvasState {
+        didSet { if framesPaused { wakeFrames() } } // inputs and the appearance alike: the paused overview draws again
+    }
+    var framesPaused = false // some overlay's display link waits for `wakeFrames`
+    var pictureChecks: [UInt32: UInt64] = [:] // per display, the pictures stored when it last looked for new ones
     var configErrors: [String]
     /// The menu refreshes on this.
     var onChange: (() -> Void)?
     /// The settings action (a shortcut or `mielwm settings`): the app opens its window.
     var onSettings: ((SettingsPane?) -> Void)? // nil: the last pane
+    /// The displays changed, or a status bar on one came or went.
+    var onScreens: (() -> Void)?
     /// The menu bar's workspace numbers changed.
     var onWorkspaces: ((WorkspaceStatus) -> Void)?
     var reportedWorkspaces: WorkspaceStatus?
@@ -65,7 +71,14 @@ final class Controller {
     var tickTimer: Timer?
     var rescanTimer: Timer?
     var rescanPauses: Set<String> = [] // "displays" asleep, "session" inactive
+    var tickTimerDeadline: Double? // a one-shot tick timer's deadline; nil while it ticks every frame
+    var wakeTimer: Timer? // one tick at `wakeAt`
+    var wakeAt: Double?
     var keyCaptureFallback = false
+
+    /// MIELWM_TIMINGS: logs how long each action's moves take, from the action to the last move confirmed.
+    static let logsTimings = ProcessInfo.processInfo.environment["MIELWM_TIMINGS"] != nil
+    var timing: (start: Double, firstMove: Double?, lastPark: Double?, moves: Int, ax: Int)?
 
     // Pointer gestures.
     var panLast: CGPoint?
@@ -155,6 +168,8 @@ final class Controller {
         tickTimer = nil
         rescanTimer?.invalidate()
         rescanTimer = nil
+        wakeTimer?.invalidate()
+        wakeTimer = nil
         gate?.timeout.cancel()
         gate = nil
         hideOverlays()
@@ -210,7 +225,7 @@ final class Controller {
     /// Reports, text and modifiers never bring the overlay up: no need to try them on a copy first.
     private func mayOpenOverlay(_ input: CoreInput) -> Bool {
         switch input {
-        case .system(.windowFrameChanged), .system(.windowTitleChanged), .modifiersChanged, .text, .markedText: false
+        case .system(.windowFrameChanged), .system(.windowTitleChanged), .system(.unmanagedFocus), .modifiersChanged, .text, .markedText: false
         default: true
         }
     }
@@ -223,34 +238,47 @@ final class Controller {
     private func step(_ input: CoreInput) {
         let before = state
         let commands = state.send(input)
+        if Self.logsTimings { noteTiming(input, commands) }
         perform(commands, before: before)
         let focusSent = commands.contains { if case .focus = $0 { true } else { false } }
-        update(from: before, focusSent: focusSent)
+        let tick = if case .tick = input { true } else { false }
+        update(from: before, focusSent: focusSent, tick: tick)
     }
 
     private func perform(_ commands: [WindowCommand], before: CanvasState) {
-        var now: [WindowCommand] = [], later: [(WindowID, WindowCommand, Int)] = []
+        var now: [WindowCommand] = [], later: [(WindowID, WindowCommand, Int)] = [], refresh: [WindowID] = [], parksNow = false
         for c in commands {
             switch c {
             case .focus:
                 if mode != .normal { continue } // tests never take the user's focus
                 now.append(c)
+            case .close, .minimize:
+                now.append(c)
             case let .setFrame(id, _):
                 commandSerial[id, default: 0] += 1
-                // Going to a park slot with no live stream: take a still first, so the overview has a picture.
-                if renderer != nil, !streamsLive, state.window(id)?.parked == true, before.window(id)?.parked == false {
-                    later.append((id, c, commandSerial[id]!))
-                } else {
-                    now.append(c)
+                let parking = state.window(id)?.parked == true && before.window(id)?.parked == false
+                // Going to a park slot with no live stream: the overview needs a picture. One it already has
+                // will do, so the window leaves with the others and a fresh still follows; with none, take one first.
+                if renderer != nil, !streamsLive, parking {
+                    if capture.latestFrame(for: id) == nil {
+                        later.append((id, c, commandSerial[id]!))
+                        continue
+                    }
+                    refresh.append(id)
                 }
+                parksNow = parksNow || parking
+                now.append(c)
             }
         }
         if !now.isEmpty { registry.perform(now) }
+        if parksNow { timing?.lastPark = CACurrentMediaTime() }
+        if !refresh.isEmpty { capture.captureStills(refresh, scale: stillScale) }
         guard !later.isEmpty else { return }
         var done = false
         let finish = { [weak self] in
             guard let self, !done else { return }
             done = true
+            self.timing?.lastPark = CACurrentMediaTime()
             // A newer command for the same window wins.
             self.registry.perform(later.filter { self.commandSerial[$0.0] == $0.2 }.map(\.1))
         }
@@ -258,8 +286,18 @@ final class Controller {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { MainActor.assumeIsolated { finish() } }
     }
 
+    /// MIELWM_TIMINGS: an action starts the clock; the moves it causes, now or when its flight lands, count.
+    private func noteTiming(_ input: CoreInput, _ commands: [WindowCommand]) {
+        let now = CACurrentMediaTime()
+        if case .action = input, timing?.firstMove == nil { timing = (now, nil, nil, 0, axCalls.withLock { $0 }) }
+        let moves = commands.filter { if case .setFrame = $0 { true } else { false } }.count
+        guard moves > 0, timing != nil else { return }
+        timing!.moves += moves
+        if timing!.firstMove == nil { timing!.firstMove = now }
+    }
+
     /// What follows every input: overlays, keyboard, tap, files, ticking.
-    private func update(from before: CanvasState, focusSent: Bool) {
+    private func update(from before: CanvasState, focusSent: Bool, tick: Bool) {
         if state.isOverview != before.isOverview {
             state.isOverview ? didOpenOverview() : didCloseOverview(focusSent: focusSent)
         }
@@ -275,10 +313,17 @@ final class Controller {
                 restingSince = state.now
             }
         }
-        updateTap()
+        if let t = timing, let first = t.firstMove, !state.movesInFlight, state.animator.isSettled {
+            timing = nil
+            let ms = { (end: Double) in String(format: "%.0f ms", (end - t.start) * 1000) }
+            log("timing: \(t.moves) moves, first after \(ms(first)), last park after \(t.lastPark.map(ms) ?? "none"), "
+                + "all confirmed after \(ms(CACurrentMediaTime())), \(axCalls.withLock { $0 } - t.ax) AX calls")
+        }
+        // Ticks run every frame and seldom change what the tap or the menu bar shows: check only when they could have.
+        if !tick || state.isOverview != before.isOverview || state.overview.switcher != before.overview.switcher { updateTap() }
         if state.layoutRevision != savedLayoutRevision { scheduleSave() }
         scheduleTicks()
-        reportWorkspaces()
+        if !tick || state.layoutRevision != before.layoutRevision || state.currentWorkspace != before.currentWorkspace { reportWorkspaces() }
     }
 
     /// The overlay draws windows (not only the ⌥Tab strip over the real desktop).

@@ -1,14 +1,16 @@
 import Foundation
 
 /// What mielwm can take over from an AeroSpace config: gaps, the default
-/// layout and orientation, per-app workspace and floating rules, and the
-/// main-mode keys whose commands mielwm has.
+/// layout and orientation, per-app workspace and floating rules, rules by
+/// app name or title, and the main-mode keys whose commands mielwm has.
 public struct AeroSpaceImport: Hashable, Sendable {
     public var gaps: [String: Double] = [:] // gaps:* keys
     public var layout: LayoutMode?
     public var orientation: TileOrientation?
     public var workspaceRules: [String: Int] = [:] // bundle id → workspace
     public var floatingApps: [String] = []
+    public var windowRules: [String: WindowRule] = [:] // by app name or title, named by their block
+    public var autoBackAndForth = false // a workspace key used --auto-back-and-forth
     public var bindings: [String: String] = [:] // mielwm chord → command
 
     public var isEmpty: Bool { self == AeroSpaceImport() }
@@ -24,7 +26,8 @@ public struct AeroSpaceImport: Hashable, Sendable {
     /// Reads the forms above; everything else, and anything it can't read, is skipped.
     public init(toml text: String) {
         var floating: [String] = []
-        var windowRules: [Int: (app: String?, run: [String])] = [:]
+        struct Block { var app, name, title: String?, run: [String] = [] } // one [[on-window-detected]]
+        var blocks: [Int: Block] = [:]
         for entry in parseTOML(text) {
             let path = entry.section.isEmpty ? entry.key : entry.section + "." + entry.key
             if path.hasPrefix("gaps."), let name = Self.gapNames[String(path.dropFirst(5))] {
@@ -40,23 +43,40 @@ public struct AeroSpaceImport: Hashable, Sendable {
             } else if path == "default-root-container-orientation", case let .string(s) = entry.value {
                 orientation = TileOrientation(rawValue: s)
             } else if entry.section == "on-window-detected" {
-                if entry.key == "if.app-id", case let .string(id) = entry.value { windowRules[entry.block, default: (nil, [])].app = id }
-                if entry.key == "run" { windowRules[entry.block, default: (nil, [])].run = entry.value.strings }
+                let text = entry.value.strings.first
+                switch entry.key {
+                case "if.app-id": blocks[entry.block, default: Block()].app = text
+                case "if.app-name-regex-substring": blocks[entry.block, default: Block()].name = text
+                case "if.window-title-regex-substring": blocks[entry.block, default: Block()].title = text
+                case "run": blocks[entry.block, default: Block()].run = entry.value.strings
+                default: break
+                }
             } else if entry.section == "mode.main.binding", let chord = aeroSpaceChord(entry.key),
-                      let command = entry.value.strings.first.flatMap(aeroSpaceCommand) {
+                      let first = entry.value.strings.first, let command = aeroSpaceCommand(first),
+                      Settings.defaultBindings[chord.description]?.hasPrefix("switch ") != true { // ⌥Tab stays the window switcher
                 bindings[chord.description] = command
+                if first.split(separator: " ").contains("--auto-back-and-forth") { autoBackAndForth = true }
             }
         }
-        for (_, rule) in windowRules.sorted(by: { $0.key < $1.key }) {
-            guard let app = rule.app else { continue }
+        for (number, rule) in blocks.sorted(by: { $0.key < $1.key }).map(\.value).enumerated() {
+            var workspace: Int?, floats = false
             for command in rule.run {
                 let words = command.split(separator: " ")
                 if words.first == "move-node-to-workspace", let n = words.last.flatMap({ Int($0) }), (1 ... 9).contains(n) {
-                    workspaceRules[app] = n
-                } else if words.starts(with: ["layout", "floating"]), !floating.contains(app) {
-                    floating.append(app)
+                    workspace = n
+                } else if words.starts(with: ["layout", "floating"]) {
+                    floats = true
                 }
             }
+            if rule.name != nil || rule.title != nil { // by name or title: a window rule
+                guard workspace != nil || floats, [rule.name, rule.title].compactMap({ $0 }).allSatisfy(isPattern) else { continue }
+                windowRules["aerospace-\(number + 1)"] =
+                    WindowRule(appID: rule.app, app: rule.name, title: rule.title, floating: floats, workspace: floats ? nil : workspace)
+                continue
+            }
+            guard let app = rule.app else { continue }
+            if let workspace { workspaceRules[app] = workspace }
+            if floats, !floating.contains(app) { floating.append(app) }
         }
         floatingApps = floating
     }
@@ -83,6 +103,18 @@ public struct AeroSpaceImport: Hashable, Sendable {
             list += floatingApps.filter { !list.contains($0) }
             put("layout:floating_apps", .text(list.joined(separator: ",")))
         }
+        // Rules from an earlier import go first; the ones this import has are written over them.
+        for name in settings.windowRules.keys where name.hasPrefix("aerospace-") {
+            for field in WindowRule.fields { changes["rules:\(name):\(field)"] = .some(nil) }
+        }
+        for (name, rule) in windowRules {
+            let fields: [String: SettingValue?] = [
+                "app_id": rule.appID.map(SettingValue.text), "app": rule.app.map(SettingValue.text), "title": rule.title.map(SettingValue.text),
+                "floating": rule.floating ? .flag(true) : nil, "workspace": rule.workspace.map { .number(Double($0)) },
+            ]
+            for (field, value) in fields { changes["rules:\(name):\(field)"] = value }
+        }
+        if autoBackAndForth { put("layout:auto_back_and_forth", .flag(true)) }
         if keys {
             for (chord, command) in bindings {
                 if let c = KeyChord(chord) { changes["keys:\(c)"] = Settings.bindingEntry(c, command) }
@@ -125,6 +157,10 @@ public struct AeroSpaceImport: Hashable, Sendable {
             lines.append("Workspace rules: " + rules.map { "\($0.0) → \($0.1)" }.joined(separator: ", ") + ".")
         }
         if !floatingApps.isEmpty { lines.append("Floating apps: " + floatingApps.map(appName).joined(separator: ", ") + ".") }
+        if !windowRules.isEmpty {
+            lines.append("\(windowRules.count) window \(windowRules.count == 1 ? "rule" : "rules") by app name or title.")
+        }
+        if autoBackAndForth { lines.append("Going to the workspace you are on goes back to the one before.") }
         if !bindings.isEmpty {
             let changed = bindings.filter { chord, command in KeyChord(chord).flatMap { Settings.bindingEntry($0, command) } != nil }.count
             lines.append("\(bindings.count) shortcuts" + (changed == 0 ? ", all the same as mielwm's." : ", \(changed) of them different from mielwm's."))
@@ -164,8 +200,9 @@ func aeroSpaceChord(_ key: String) -> KeyChord? {
 }
 
 /// An AeroSpace command as the mielwm action that does the same; nil if there is none.
+/// `--auto-back-and-forth` is a setting in mielwm (layout:auto_back_and_forth).
 func aeroSpaceCommand(_ command: String) -> String? {
-    let words = command.split(separator: " ").map(String.init)
+    let words = command.split(separator: " ").map(String.init).filter { $0 != "--auto-back-and-forth" }
     let direction = words.count == 2 ? Direction(rawValue: words[1]) : nil
     let mapped: String? = switch words.first ?? "" {
     case "focus": direction.map { "focus \($0.rawValue)" }
@@ -175,7 +212,12 @@ func aeroSpaceCommand(_ command: String) -> String? {
     case "layout" where words.count > 1:
         ["tiles": "layout tiles", "tiling": "layout tiles", "accordion": "layout stack", "floating": "layout floating"][words[1]]
     case "fullscreen" where words.count == 1: "fullscreen"
-    case "resize" where words.count == 3 && words[1] == "smart": words[2].hasPrefix("-") ? "shrink" : "grow"
+    case "resize" where words.count == 3 && words[1] == "smart" && ["-50", "+50"].contains(words[2]): // mielwm's ⌥- and ⌥=
+        words[2] == "-50" ? "shrink" : "grow"
+    case "resize" where words.count == 3: "resize \(words[1]) \(words[2])"
+    case "workspace-back-and-forth" where words.count == 1: "workspace-back-and-forth"
+    case "close" where words.count == 1: "close"
+    case "macos-native-minimize" where words.count == 1: "minimize"
     default: nil
     }
     return mapped.flatMap { Action(command: $0) != nil ? $0 : nil }

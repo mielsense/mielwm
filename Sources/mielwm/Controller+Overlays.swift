@@ -43,6 +43,7 @@ extension Controller {
         guard let renderer else { return }
         renderer.setWallpaper(image, screenID: screen.id)
         renderer.prepare(state.scene(for: screen))
+        wakeFrames()
     }
 
     /// Once the overlay has been hidden a while: its GPU memory goes, made
@@ -120,21 +121,69 @@ extension Controller {
             scene.dropIndicator = nil
         }
         scene.opacity = opacity
+        pictureChecks[screenID] = capture.picturesStored // before the look, so a picture landing during it counts as new
         overlay.draw(scene, renderer: renderer, frames: capture)
+        // Settled with nothing new to draw on any display: no frames (nor ticks, which would
+        // wake them) until an input, a state change or a new picture.
+        if overlay.idleFrames > Overlay.idleAfter, !state.needsTicks, restingSince == nil, fadeStart == nil,
+           overlays.values.allSatisfy({ $0.idleFrames > Overlay.idleAfter }) {
+            for o in overlays.values { o.view.link?.isPaused = true }
+            framesPaused = true
+            let looked = overlays.keys.compactMap { pictureChecks[$0] }.min() ?? 0 // the display that looked longest ago
+            capture.wakeOnNextPicture(after: looked) { [weak self] in MainActor.assumeIsolated { self?.wakeFrames() } }
+        }
     }
 
-    /// Ticks without an overlay (moves awaiting confirmation, the switcher's delay).
+    func wakeFrames() {
+        framesPaused = false
+        guard overlayShown else { return }
+        for o in overlays.values { o.wake() }
+    }
+
+    /// Ticks without an overlay (moves awaiting confirmation, the switcher's delay):
+    /// 60 a second while something animates, else one at the earliest deadline.
     func scheduleTicks() {
         let wanted = !overlayShown && state.needsTicks
-        if wanted, tickTimer == nil {
-            tickTimer = Timer(timeInterval: 1.0 / 60, repeats: true) { [weak self] _ in
-                MainActor.assumeIsolated { self?.input(.tick(CACurrentMediaTime())) }
-            }
-            RunLoop.main.add(tickTimer!, forMode: .common)
-        } else if !wanted, let t = tickTimer {
-            t.invalidate()
-            tickTimer = nil
+        scheduleWake(wanted ? nil : state.nextWake)
+        let deadline = wanted ? state.tickDeadline : nil
+        let keep = switch (tickTimerDeadline, deadline) {
+        case (nil, nil): true
+        case let (due?, needed?): due <= needed // a tick that comes early only finds nothing to do
+        default: false
         }
+        if wanted, tickTimer != nil, keep { return }
+        tickTimer?.invalidate()
+        tickTimer = nil
+        guard wanted else { return }
+        let tick: @Sendable (Timer) -> Void = { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                if self.tickTimerDeadline != nil { self.tickTimer = nil } // a one-shot, done: replaced timers never fire
+                self.input(.tick(CACurrentMediaTime()))
+            }
+        }
+        tickTimerDeadline = deadline
+        let t = deadline.map { Timer(timeInterval: max(0, $0 - CACurrentMediaTime()) + 0.002, repeats: false, block: tick) }
+            ?? Timer(timeInterval: 1.0 / 60, repeats: true, block: tick)
+        RunLoop.main.add(t, forMode: .common)
+        tickTimer = t
+    }
+
+    /// A window waiting to be parked again needs one tick then, not sixty a second meanwhile,
+    /// and it must not keep the overview's frames awake while it waits.
+    private func scheduleWake(_ wake: Double?) {
+        guard wake != wakeAt else { return }
+        wakeTimer?.invalidate()
+        wakeTimer = nil
+        wakeAt = wake
+        guard let wake else { return }
+        wakeTimer = Timer(timeInterval: max(0, wake - CACurrentMediaTime()), repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.wakeAt = nil
+                self?.input(.tick(CACurrentMediaTime()))
+            }
+        }
+        RunLoop.main.add(wakeTimer!, forMode: .common)
     }
 
     func didOpenOverview() {
