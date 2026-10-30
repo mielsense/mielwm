@@ -146,8 +146,7 @@ extension AppDelegate {
     }
 
     @objc private func about() {
-        NSApp.activate(ignoringOtherApps: true)
-        NSApp.orderFrontStandardAboutPanel(options: aboutOptions)
+        showSettings(at: .about) // one About, the Settings pane
     }
 
     @objc private func showConfigProblems() {

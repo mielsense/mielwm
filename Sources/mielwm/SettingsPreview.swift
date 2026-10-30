@@ -6,7 +6,7 @@ import SwiftUI
 /// Opens the Settings window, the onboarding and About without the canvas
 /// (no event tap, nothing moves), saves each as a PNG in light and dark,
 /// then quits. It works on a copy of the config, so nothing it does is saved.
-/// `--live <pane>` instead leaves the Settings window on screen for 10 s
+/// `--live <pane> [--search <text>] [--scroll <points>]` instead leaves the Settings window on screen for 10 s
 /// and prints its window number, for `screencapture -l`.
 @MainActor
 func settingsPreview(_ args: [String]) -> Never {
@@ -31,6 +31,7 @@ func settingsPreview(_ args: [String]) -> Never {
             DispatchQueue.main.asyncAfter(deadline: .now() + seconds) { MainActor.assumeIsolated(step) }
         }
         settings.show(pane)
+        if let query = value("--search", in: args) { model.paneQuery = query } // the sidebar's search, typed in
         var at = 1.5
         if let then = value("--then", in: args).flatMap(SettingsPane.init) { // a second pane, as a click would
             if args.contains("--reopen") {
@@ -48,6 +49,11 @@ func settingsPreview(_ args: [String]) -> Never {
                 v.subviews.forEach(activate)
             }
             settings.window.contentView?.superview.map(activate)
+            // Scrolled down by this many points, to see what passes under the title bar.
+            if let y = value("--scroll", in: args).flatMap(Double.init), let scroll = detailScrollView(in: settings.window.contentView),
+               let doc = scroll.documentView {
+                doc.scroll(NSPoint(x: 0, y: doc.isFlipped ? y : doc.frame.height - y - scroll.contentView.bounds.height))
+            }
             // Bold stripes just behind the window, so its translucency shows in a screenshot.
             if args.contains("--stripes") {
                 let stripes = NSWindow(contentRect: settings.window.frame.insetBy(dx: -40, dy: -40), styleMask: .borderless, backing: .buffered, defer: false)
@@ -92,9 +98,9 @@ func settingsPreview(_ args: [String]) -> Never {
                 savePNG(settings.window, to: out.appendingPathComponent(file + "-end.png"))
             }
         }
-        // The AeroSpace import, as the Layout pane asks about it.
+        // The AeroSpace import, as the AeroSpace & Barik pane asks about it.
         if let toml = AeroSpaceImport.standardURL().flatMap({ try? String(contentsOf: $0, encoding: .utf8) }) {
-            settings.show(.layout)
+            settings.show(.integrations)
             pump(0.5)
             model.aeroSpaceFound = AeroSpaceImport(toml: toml)
             pump(0.8)
@@ -139,6 +145,16 @@ func settingsPreview(_ args: [String]) -> Never {
                 savePNG(settings.window, to: out.appendingPathComponent("settings-layout-\(part)-\(file)-\(name).png"))
             }
         }
+        // The sidebar's search, and the Keyboard pane's.
+        model.paneQuery = "gap"
+        pump(0.5)
+        savePNG(settings.window, to: out.appendingPathComponent("settings-search-\(name).png"))
+        model.paneQuery = ""
+        model.keyQuery = "workspace"
+        settings.show(.keyboard)
+        pump(0.6)
+        savePNG(settings.window, to: out.appendingPathComponent("settings-keyboard-search-\(name).png"))
+        model.keyQuery = ""
         if let saved { try? saved.write(to: paths.config) } else { try? fm.removeItem(at: paths.config) }
         model.reload()
         settings.window.orderOut(nil)
@@ -149,12 +165,6 @@ func settingsPreview(_ args: [String]) -> Never {
         savePNG(onboarding, to: out.appendingPathComponent("onboarding-\(name).png"))
         onboarding.orderOut(nil)
 
-        NSApp.orderFrontStandardAboutPanel(options: aboutOptions)
-        pump(0.6)
-        if let about = NSApp.windows.first(where: { $0.isVisible && $0 !== settings.window && $0 !== onboarding }) {
-            savePNG(about, to: out.appendingPathComponent("about-\(name).png"))
-            about.close()
-        }
         saveMenuBarPreview(dark: name == "dark", to: out.appendingPathComponent("menubar-\(name).png"))
         for (file, alert) in [("alert-aerospace", AppDelegate.aeroSpaceAlert(swipe: true, note: nil)),
                               ("alert-config", AppDelegate.configProblemsAlert(["config.json: unknown setting 'canvas:grid_colour'"]))] {

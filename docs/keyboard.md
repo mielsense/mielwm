@@ -22,7 +22,7 @@ Every shortcut mielwm has, and how to change them. The defaults are AeroSpace's 
 | `⌥-`, `⌥=` | Shrink, grow the window. |
 | `⌃⌥` + drag | Move a window with the left button, resize it with the right. |
 
-Focus and move stop at the edge of the workspace, the way AeroSpace's do. To have them go on into the next workspace, turn on Settings > Layout & workspaces > Focus and move past the edge. In the overview the arrows always reach every window.
+Focus and move stop at the edge of the workspace, the way AeroSpace's do. To have them go on into the next workspace, turn on Settings > Layout > Focus and move past the edge. In the overview the arrows always reach every window.
 
 `⌥0`, `⌥⇧0` and `⌥;` do nothing on purpose, so they never type º, ‚ or … by accident.
 
@@ -34,7 +34,7 @@ These actions have no shortcut until you give them one, in Settings > Keyboard o
 
 | Action | What it does |
 | --- | --- |
-| Last workspace | Go to the workspace you were on before. Again goes back. With Settings > Layout & workspaces > Workspace key goes back, `⌥1` … `⌥9` on the workspace you're on do this too. |
+| Last workspace | Go to the workspace you were on before. Again goes back. With Settings > Layout > Workspace key goes back, `⌥1` … `⌥9` on the workspace you're on do this too. |
 | Close window | Close the focused window, as a click on its close button would. The app may still ask to save. |
 | Minimize window | Minimize the focused window to the Dock. |
 | `resize smart +100` | Make the window 100 points bigger. See [the command line](command-line.md) for the forms. |
@@ -65,7 +65,7 @@ The `⌃` versions, like `⌃0` and `⌃Z`, work too, and so does `F1` for the k
 
 ## Changing shortcuts
 
-Open Settings > Keyboard. Click a shortcut and press the new keys. `Esc` cancels and `Delete` removes it. The arrow next to a changed row restores its default, and Restore defaults does every row.
+Open Settings > Keyboard. Click a shortcut and press the new keys. `Esc` cancels and `Delete` removes it. The arrow next to a changed row restores its default, and Restore defaults does every row. The search field at the top finds a shortcut by name.
 
 ![The Keyboard pane in Settings](images/settings-keyboard-dark.png)
 

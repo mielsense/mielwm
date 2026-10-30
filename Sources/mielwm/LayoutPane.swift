@@ -5,34 +5,31 @@ import SwiftUI
 
 struct LayoutPane: View {
     @EnvironmentObject var model: SettingsModel
-    private let aeroSpaceURL = AeroSpaceImport.standardURL()
+    @StateObject private var gapFocus = GapFocus()
 
     var body: some View {
         let s = model.settings
         Form {
+            Section { PaneHeader(pane: .layout) }
             Section {
-                Picker("Layout", selection: Binding(get: { s.defaultLayout }, set: { model.set("layout:default", .text($0.rawValue)) })) {
-                    Text("Tiles").tag(LayoutMode.tiles)
-                    Text("Stack").tag(LayoutMode.stack)
-                    Text("Floating").tag(LayoutMode.floating)
-                }
-                Picker("Orientation", selection: Binding(get: { s.orientation }, set: { model.set("layout:orientation", .text($0.rawValue)) })) {
-                    Text("Automatic").tag(TileOrientation.auto)
-                    Text("Side by side").tag(TileOrientation.horizontal)
-                    Text("Above each other").tag(TileOrientation.vertical)
-                }
+                VisualPicker(title: "Layout", selection: Binding(get: { s.defaultLayout }, set: { model.set("layout:default", .text($0.rawValue)) }),
+                             options: [LayoutMode.tiles, .stack, .floating], name: \.title) { LayoutThumbnail(layout: $0) }
+                VisualPicker(title: "Orientation", selection: Binding(get: { s.orientation }, set: { model.set("layout:orientation", .text($0.rawValue)) }),
+                             options: [TileOrientation.auto, .horizontal, .vertical], name: \.title) { OrientationThumbnail(orientation: $0) }
             } header: {
                 Text("New windows")
             } footer: {
                 Text("Automatic puts tiles side by side on a wide display and above each other on a tall one.").settingsFooter()
             }
             Section("Gaps") {
-                GapDiagram(settings: s, screen: model.screen).frame(height: 132).frame(maxWidth: .infinity).padding(.vertical, 4)
-                GapField(title: "Between windows, side by side", key: "gaps:inner_horizontal")
-                GapField(title: "Between windows, above each other", key: "gaps:inner_vertical")
-                GapField(title: "Left edge", key: "gaps:outer_left")
-                GapField(title: "Right edge", key: "gaps:outer_right")
-                GapField(title: "Bottom edge", key: "gaps:outer_bottom")
+                GapDiagram(settings: s, screen: model.screen, focus: gapFocus)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, Design.Space.s)
+                GapField(title: "Between windows, side by side", key: "gaps:inner_horizontal", focus: gapFocus)
+                GapField(title: "Between windows, above each other", key: "gaps:inner_vertical", focus: gapFocus)
+                GapField(title: "Left edge", key: "gaps:outer_left", focus: gapFocus)
+                GapField(title: "Right edge", key: "gaps:outer_right", focus: gapFocus)
+                GapField(title: "Bottom edge", key: "gaps:outer_bottom", focus: gapFocus)
                 Picker(selection: Binding(get: { s.topGapMode }, set: setTopGapMode)) {
                     Text("Automatic").tag(TopGapMode.auto)
                     Text("Same as other edges").tag(TopGapMode.same)
@@ -41,29 +38,10 @@ struct LayoutPane: View {
                     Text("Top edge")
                     Text(topEdgeNote).monospacedDigit()
                 }
-                GapField(title: s.topGapMode == .custom ? "Top gap, built-in display" : "Top gap", key: "gaps:outer_top")
-                if s.topGapMode == .custom { GapField(title: "Top gap, other displays", key: "gaps:outer_top_external") }
+                GapField(title: s.topGapMode == .custom ? "Top gap, built-in display" : "Top gap", key: "gaps:outer_top", focus: gapFocus)
+                if s.topGapMode == .custom { GapField(title: "Top gap, other displays", key: "gaps:outer_top_external", focus: gapFocus) }
             }
             Section {
-                Toggle(isOn: model.flag("input:swipe_workspaces")) {
-                    Text("Swipe between workspaces")
-                    Text("Three fingers left or right on the trackpad go to the next or previous workspace, with a click you can feel.")
-                }
-                if s.swipeWorkspaces, systemThreeFingerSwipe() {
-                    LabeledContent {
-                        Button("Open Trackpad Settings…") {
-                            NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.Trackpad-Settings.extension")!)
-                        }
-                    } label: {
-                        Label("macOS swipes with three fingers too", systemImage: "exclamationmark.triangle.fill")
-                            .symbolRenderingMode(.multicolor)
-                        Text("Its swipe between full-screen apps bounces the screen as you swipe. In More Gestures, set it to four fingers.")
-                    }
-                }
-            } header: {
-                Text("Trackpad")
-            }
-            Section("Workspaces") {
                 Toggle(isOn: model.flag("layout:auto_back_and_forth")) {
                     Text("Workspace key goes back")
                     Text("The key of the workspace you're on takes you to the one before.")
@@ -72,57 +50,9 @@ struct LayoutPane: View {
                     Text("Focus and move past the edge")
                     Text("At the edge of a workspace, ⌥ arrows and ⌥⇧ arrows go on into the next one instead of stopping.")
                 }
-            }
-            Section {
-                ForEach(parseWorkspaceRules(s.workspaceRules).sorted { ($0.value, AppInfo(bundleID: $0.key).name) < ($1.value, AppInfo(bundleID: $1.key).name) }, id: \.key) { id, number in
-                    AppRow(bundleID: id, remove: { setRule(id, nil) }) {
-                        Picker("Workspace", selection: Binding(get: { number }, set: { setRule(id, $0) })) {
-                            ForEach(1 ... 9, id: \.self) { Text("Workspace \($0)").tag($0) }
-                        }
-                        .labelsHidden()
-                        .fixedSize()
-                    }
-                }
-                AddAppMenu { setRule($0, 1) }
             } header: {
-                Text("Workspace rules")
-            } footer: {
-                Text("New windows of these apps open on their workspace.").settingsFooter()
+                Text("Workspaces")
             }
-            Section {
-                ForEach(parseAppList(s.floatingApps), id: \.self) { id in
-                    AppRow(bundleID: id) { removeFloating(id) }
-                }
-                AddAppMenu { addFloating($0) }
-            } header: {
-                Text("Floating apps")
-            } footer: {
-                Text("Windows of these apps float above the tiles.").settingsFooter()
-            }
-            Section {
-                Toggle(isOn: Binding(get: { s.barik }, set: { model.onBarik($0) })) {
-                    Text("Work with Barik")
-                    Text(model.barikAvailable ? "Barik's menu bar shows mielwm's workspaces and windows. mielwm asks before it edits Barik's config and relaunches Barik."
-                        : "Works when mielwm runs from mielwm.app.")
-                }
-                .disabled(!model.barikAvailable)
-                LabeledContent {
-                    Button("Import…") { readAeroSpace() }.disabled(aeroSpaceURL == nil)
-                } label: {
-                    Text("Import from AeroSpace")
-                    Text(aeroSpaceURL.map { "Gaps, layout, rules and shortcuts from \(($0.path as NSString).abbreviatingWithTildeInPath)." }
-                        ?? "No AeroSpace config found.")
-                }
-            }
-        }
-        .alert(model.aeroSpaceFound.map { $0.isEmpty ? "Nothing to import" : "Import from AeroSpace?" } ?? "",
-               isPresented: Binding(get: { model.aeroSpaceFound != nil }, set: { if !$0 { model.aeroSpaceFound = nil } })) {
-            if let f = model.aeroSpaceFound, !f.isEmpty {
-                Button("Import") { model.apply(f.changes(onto: model.settings, keys: true)); model.aeroSpaceFound = nil }
-            }
-            Button(model.aeroSpaceFound?.isEmpty == false ? "Cancel" : "OK", role: .cancel) { model.aeroSpaceFound = nil }
-        } message: {
-            Text(model.aeroSpaceFound.map { $0.isEmpty ? "The AeroSpace config has no gaps, layout, rules or shortcuts mielwm can use." : $0.summary { AppInfo(bundleID: $0).name }.joined(separator: "\n\n") } ?? "")
         }
     }
 
@@ -142,29 +72,88 @@ struct LayoutPane: View {
         let custom = model.screens.filter { !$0.isBuiltIn }.map(model.settings.topGap).max() ?? model.settings.gapOuterTopExternal
         model.set("gaps:outer_top_external", mode == .custom ? .number(custom) : .text(mode.rawValue))
     }
+}
 
-    private func readAeroSpace() {
-        guard let url = aeroSpaceURL else { return }
-        do { model.aeroSpaceFound = AeroSpaceImport(toml: try String(contentsOf: url, encoding: .utf8)) } catch {
-            model.problem = "Can't read \(url.lastPathComponent): \(error.localizedDescription)"
+extension LayoutMode {
+    var title: String {
+        switch self {
+        case .tiles: "Tiles"
+        case .stack: "Stack"
+        case .floating: "Floating"
         }
     }
+}
 
-    private func addFloating(_ id: String) {
-        var list = parseAppList(model.settings.floatingApps)
-        guard !list.contains(id) else { return }
-        list.append(id)
-        model.set("layout:floating_apps", .text(list.joined(separator: ",")))
+extension TileOrientation {
+    var title: String {
+        switch self {
+        case .auto: "Automatic"
+        case .horizontal: "Side by side"
+        case .vertical: "Above each other"
+        }
     }
+}
 
-    private func removeFloating(_ id: String) {
-        model.set("layout:floating_apps", .text(parseAppList(model.settings.floatingApps).filter { $0 != id }.joined(separator: ",")))
+/// Tiles side by side, a fanned stack, or loose overlapping windows.
+struct LayoutThumbnail: View {
+    let layout: LayoutMode
+
+    var body: some View {
+        MiniDesktop(menuBar: 4) {
+            GeometryReader { g in
+                let w = g.size.width, h = g.size.height, gap: CGFloat = 3, top: CGFloat = 4 + gap
+                switch layout {
+                case .tiles:
+                    let tile = (w - gap * 3) / 2
+                    MiniWindow().frame(width: tile, height: h - top - gap).offset(x: gap, y: top)
+                    MiniWindow().frame(width: tile, height: h - top - gap).offset(x: gap * 2 + tile, y: top)
+                case .stack:
+                    ForEach(0 ..< 3) { i in
+                        let inset = CGFloat(2 - i) * 3
+                        MiniWindow(lights: i == 2).frame(width: w - gap * 2 - inset * 2, height: h - top - gap - inset)
+                            .offset(x: gap + inset, y: top + inset * 0.2)
+                            .opacity(i == 2 ? 1 : 0.7)
+                    }
+                case .floating:
+                    MiniWindow().frame(width: w * 0.5, height: h * 0.5).offset(x: w * 0.08, y: h * 0.2)
+                    MiniWindow().frame(width: w * 0.48, height: h * 0.52).offset(x: w * 0.42, y: h * 0.38)
+                }
+            }
+        }
     }
+}
 
-    private func setRule(_ id: String, _ number: Int?) {
-        var rules = parseWorkspaceRules(model.settings.workspaceRules)
-        rules[id] = number
-        model.set("layout:workspace_rules", .text(formatWorkspaceRules(rules)))
+/// Which way tiles split: both ways by display shape, columns, or rows.
+struct OrientationThumbnail: View {
+    let orientation: TileOrientation
+
+    var body: some View {
+        MiniDesktop(menuBar: 4) {
+            GeometryReader { g in
+                let w = g.size.width, h = g.size.height, gap: CGFloat = 3, top: CGFloat = 4 + gap
+                let inner = CGSize(width: w - gap * 2, height: h - top - gap)
+                switch orientation {
+                case .auto:
+                    // A wide display split into columns beside a tall one split into rows.
+                    let wide = inner.width * 0.62, tall = inner.width - wide - gap
+                    let col = (wide - gap) / 2, row = (inner.height - gap) / 2
+                    MiniWindow(lights: false).frame(width: col, height: inner.height).offset(x: gap, y: top)
+                    MiniWindow(lights: false).frame(width: col, height: inner.height).offset(x: gap * 2 + col, y: top)
+                    MiniWindow(lights: false).frame(width: tall, height: row).offset(x: gap * 2 + wide, y: top)
+                    MiniWindow(lights: false).frame(width: tall, height: row).offset(x: gap * 2 + wide, y: top + row + gap)
+                case .horizontal:
+                    let col = (inner.width - gap * 2) / 3
+                    ForEach(0 ..< 3) { i in
+                        MiniWindow(lights: false).frame(width: col, height: inner.height).offset(x: gap + CGFloat(i) * (col + gap), y: top)
+                    }
+                case .vertical:
+                    let row = (inner.height - gap * 2) / 3
+                    ForEach(0 ..< 3) { i in
+                        MiniWindow(lights: false).frame(width: inner.width, height: row).offset(x: gap, y: top + CGFloat(i) * (row + gap))
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -172,7 +161,9 @@ struct LayoutPane: View {
 struct GapField: View {
     let title: String
     let key: String
+    let focus: GapFocus // written, not watched: only the diagram redraws
     @EnvironmentObject var model: SettingsModel
+    @FocusState private var editing: Bool
 
     var body: some View {
         let value = model.number(key)
@@ -182,152 +173,15 @@ struct GapField: View {
                     .labelsHidden()
                     .textFieldStyle(.roundedBorder)
                     .multilineTextAlignment(.trailing)
+                    .focused($editing)
                     .frame(width: 48)
                 Stepper(title, value: value, in: 0 ... 400, step: 2).labelsHidden()
                 Text("pt").foregroundStyle(.secondary).frame(width: 16, alignment: .leading)
             }
         }
+        // Pointing at a field, or typing in it, lights up its gap in the diagram.
+        .onHover { focus.hover(key, $0) }
+        .onChange(of: editing) { focus.edit(key, $1) }
     }
 }
 
-/// A display with two tiles, drawn with the gaps as they are set.
-struct GapDiagram: View {
-    let settings: MielCore.Settings
-    let screen: ScreenInfo? // the top gap and status bar on this display
-
-    private var topGap: Double { screen.map(settings.topGap) ?? settings.gapOuterTop }
-
-    var body: some View {
-        Canvas { context, size in
-            let w = min(size.width, (size.height - 8) * 1.6)
-            let screen = CGRect(x: (size.width - w) / 2, y: 4, width: w, height: size.height - 8)
-            let k = 0.5 // half size, so the gaps read at a glance
-            context.fill(Path(roundedRect: screen, cornerRadius: 7), with: .color(.secondary.opacity(0.1)))
-            context.stroke(Path(roundedRect: screen.insetBy(dx: 0.5, dy: 0.5), cornerRadius: 7), with: .color(.secondary.opacity(0.35)), lineWidth: 1)
-            let s = settings, top = topGap
-            if s.topGapMode == .auto, let bar = self.screen?.topBar { // the status bar the gap makes room for
-                let band = CGRect(x: screen.minX, y: screen.minY, width: screen.width, height: bar.height * k)
-                context.fill(Path(roundedRect: band, cornerRadii: RectangleCornerRadii(topLeading: 7, topTrailing: 7)), with: .color(.secondary.opacity(0.25)))
-            }
-            let area = CGRect(x: screen.minX + s.gapOuterLeft * k, y: screen.minY + top * k,
-                              width: screen.width - (s.gapOuterLeft + s.gapOuterRight) * k,
-                              height: screen.height - (top + s.gapOuterBottom) * k)
-            guard area.width > 8, area.height > 8 else { return }
-            let tileWidth = max(1, (area.width - s.gapInnerHorizontal * k) / 2)
-            let rightHeight = max(1, (area.height - s.gapInnerVertical * k) / 2)
-            let tiles = [CGRect(x: area.minX, y: area.minY, width: tileWidth, height: area.height),
-                         CGRect(x: area.maxX - tileWidth, y: area.minY, width: tileWidth, height: rightHeight),
-                         CGRect(x: area.maxX - tileWidth, y: area.maxY - rightHeight, width: tileWidth, height: rightHeight)]
-            for tile in tiles {
-                context.fill(Path(roundedRect: tile, cornerRadius: 4), with: .color(.accentColor.opacity(0.2)))
-                context.stroke(Path(roundedRect: tile.insetBy(dx: 0.5, dy: 0.5), cornerRadius: 4), with: .color(.accentColor.opacity(0.75)), lineWidth: 1)
-            }
-        }
-        .accessibilityLabel("A display with three windows and the gaps around them, \(Int(topGap)) pt at the top")
-    }
-}
-
-/// An app by bundle id: icon, name, then `trailing` and a remove button.
-struct AppRow<Trailing: View>: View {
-    let bundleID: String
-    let remove: () -> Void
-    @ViewBuilder var trailing: Trailing
-
-    init(bundleID: String, remove: @escaping () -> Void, @ViewBuilder trailing: () -> Trailing = { EmptyView() }) {
-        self.bundleID = bundleID
-        self.remove = remove
-        self.trailing = trailing()
-    }
-
-    var body: some View {
-        let app = AppInfo(bundleID: bundleID)
-        HStack(spacing: 8) {
-            Image(nsImage: app.icon).resizable().frame(width: 22, height: 22)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(app.name)
-                if !app.installed { Text("Not installed").font(.caption).foregroundStyle(.secondary) }
-            }
-            Spacer()
-            trailing
-            Button(action: remove) { Image(systemName: "minus.circle.fill").foregroundStyle(.secondary).imageScale(.medium) }
-                .buttonStyle(.borderless)
-                .help("Remove \(app.name)")
-                .accessibilityLabel("Remove \(app.name)")
-        }
-        .help(bundleID)
-    }
-}
-
-struct AppInfo {
-    let name: String
-    let icon: NSImage
-    let installed: Bool
-    @MainActor private static var known: [String: AppInfo] = [:] // views ask on every redraw; a lookup reads the disk
-
-    @MainActor init(bundleID: String) {
-        if let info = Self.known[bundleID] {
-            self = info
-            return
-        }
-        self.init(looking: bundleID)
-        if installed { Self.known[bundleID] = self } // an app not found may be installed later
-    }
-
-    private init(looking bundleID: String) {
-        // The running copy first: Launch Services may know an old one (a renamed backup) under the same id.
-        let running = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first
-        if let url = running?.bundleURL ?? NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
-            // The app's own name, not the file's: a copy renamed on disk keeps its real name.
-            let bundle = Bundle(url: url)
-            name = running?.localizedName ?? bundle?.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
-                ?? bundle?.object(forInfoDictionaryKey: "CFBundleName") as? String
-                ?? FileManager.default.displayName(atPath: url.path).replacingOccurrences(of: ".app", with: "")
-            icon = NSWorkspace.shared.icon(forFile: url.path)
-            installed = true
-        } else {
-            name = bundleID
-            icon = NSWorkspace.shared.icon(for: .applicationBundle)
-            installed = false
-        }
-    }
-}
-
-/// "Add app": a running app, or any app from Finder.
-struct AddAppMenu: View {
-    let add: (String) -> Void
-
-    var body: some View {
-        Menu {
-            let apps = NSWorkspace.shared.runningApplications
-                .filter { $0.activationPolicy == .regular && $0.bundleIdentifier != nil && $0.bundleIdentifier != Bundle.main.bundleIdentifier }
-                .sorted { ($0.localizedName ?? "").localizedStandardCompare($1.localizedName ?? "") == .orderedAscending }
-            Section("Open apps") {
-                ForEach(apps, id: \.processIdentifier) { app in
-                    Button(app.localizedName ?? app.bundleIdentifier!) { add(app.bundleIdentifier!) }
-                }
-            }
-            Divider()
-            Button("Choose an app…") { choose() }
-        } label: {
-            Label("Add app", systemImage: "plus")
-        }
-        .menuStyle(.borderlessButton)
-        .fixedSize()
-    }
-
-    private func choose() {
-        let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.applicationBundle]
-        panel.directoryURL = URL(fileURLWithPath: "/Applications")
-        guard panel.runModal() == .OK, let url = panel.url, let id = Bundle(url: url)?.bundleIdentifier else { return }
-        add(id)
-    }
-}
-
-/// macOS's own three-finger swipe between full-screen apps (Trackpad > More Gestures), built in or Magic Trackpad.
-func systemThreeFingerSwipe() -> Bool {
-    ["com.apple.AppleMultitouchTrackpad", "com.apple.driver.AppleBluetoothMultitouch.trackpad"].contains { domain in
-        CFPreferencesAppSynchronize(domain as CFString)
-        return (CFPreferencesCopyAppValue("TrackpadThreeFingerHorizSwipeGesture" as CFString, domain as CFString) as? Int) == 2
-    }
-}

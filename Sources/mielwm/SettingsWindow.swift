@@ -12,16 +12,23 @@ final class SettingsWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
 
     let model: SettingsModel
     let window: NSWindow
+    private let sidebarView: NSView
     private var title: AnyCancellable?
+    private var titleShown: AnyCancellable?
     private var placed = false // where it was last time, or centered on the first show
 
     init(model: SettingsModel) {
         self.model = model
         // AppKit's split view: its sidebar item is the real translucent sidebar, full height under the title bar.
         let split = NSSplitViewController()
-        split.splitView = SeamlessSplitView()
-        split.splitView.isVertical = true
-        let sidebar = NSSplitViewItem(sidebarWithViewController: NSHostingController(rootView: SettingsSidebar().environmentObject(model)))
+        // macOS 26 floats the sidebar as glass with no divider of its own.
+        if #unavailable(macOS 26) {
+            split.splitView = SeamlessSplitView()
+            split.splitView.isVertical = true
+        }
+        let sidebarController = NSHostingController(rootView: SettingsSidebar().environmentObject(model))
+        sidebarView = sidebarController.view
+        let sidebar = NSSplitViewItem(sidebarWithViewController: sidebarController)
         sidebar.canCollapse = false
         sidebar.minimumThickness = Self.sidebarWidth
         sidebar.maximumThickness = Self.sidebarWidth
@@ -38,7 +45,9 @@ final class SettingsWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
         toolbar.allowsUserCustomization = false
         window.toolbar = toolbar
         window.toolbarStyle = .unified
-        window.titlebarAppearsTransparent = true // the title sits on the pane's own background, as in System Settings
+        // Before macOS 26 the title sits on the pane's own background, and TitlebarEdge stops rows at its edge.
+        // On 26 the title bar must stay a title bar: only then does the system fade and blur rows scrolling under it.
+        if #unavailable(macOS 26) { window.titlebarAppearsTransparent = true }
         window.setContentSize(NSSize(width: Self.width, height: 640))
         window.contentMinSize = NSSize(width: Self.width, height: 440)
         window.contentMaxSize = NSSize(width: Self.width, height: 4000)
@@ -48,6 +57,8 @@ final class SettingsWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
         placed = model.remembersPane && window.setFrameUsingName("Settings")
         if model.remembersPane { window.setFrameAutosaveName("Settings") }
         title = model.$pane.sink { [weak window] in window?.title = $0.title }
+        // As in System Settings, the name shows in the title bar once the header card that has it scrolls away.
+        titleShown = model.$pastHeader.sink { [weak window] in window?.titleVisibility = $0 ? .visible : .hidden }
     }
 
     func show(_ pane: SettingsPane? = nil) {
@@ -60,9 +71,17 @@ final class SettingsWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
             placed = true
         }
         NSApp.mainMenu = SettingsWindow.mainMenu // ⌘W, ⌘Q and editing keys while it is open
+        let opening = !window.isVisible
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
         model.readScreen(window.screen)
+        // On opening, the sidebar list has the focus, as in System Settings, not the search field it
+        // starts with. Brought forward again, the focus stays where the user left it.
+        if opening {
+            DispatchQueue.main.async { [self] in // after the list's first layout
+                if let list = firstView(NSTableView.self, in: sidebarView) { window.makeFirstResponder(list) }
+            }
+        }
     }
 
     // The title sits over the detail pane, after the sidebar's edge.
@@ -109,7 +128,14 @@ final class SettingsWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
     }()
 }
 
-/// No divider: the sidebar's translucency already sets it apart, as in System Settings.
+/// The first view of `type` in `view`'s tree, depth first.
+func firstView<T: NSView>(_ type: T.Type, in view: NSView) -> T? {
+    if let found = view as? T { return found }
+    for sub in view.subviews { if let found = firstView(type, in: sub) { return found } }
+    return nil
+}
+
+/// Before macOS 26, no divider: the sidebar's translucency already sets it apart, as in System Settings.
 final class SeamlessSplitView: NSSplitView {
     override func layout() {
         super.layout()
@@ -122,49 +148,105 @@ struct SettingsSidebar: View {
     @EnvironmentObject var model: SettingsModel
 
     var body: some View {
-        List(SettingsPane.allCases, id: \.self, selection: Binding(get: { model.pane }, set: { if let p = $0 { model.pane = p } })) { pane in
-            Label { Text(pane.title) } icon: { PaneIcon(pane: pane) }
+        let query = model.paneQuery
+        // Each group's panes the search finds, with the setting it found in them.
+        let groups = SettingsPane.groups.map { $0.compactMap { pane in
+            let m = pane.match(query)
+            return m.matches ? (pane: pane, keyword: m.keyword) : nil
+        } }
+        VStack(spacing: 0) {
+            SearchField(text: $model.paneQuery, label: "Search settings")
+                .padding(.horizontal, 10)
+                .padding(.top, 6)
+                .padding(.bottom, 4)
+            List(selection: Binding(get: { model.pane }, set: { if let p = $0 { model.pane = p } })) {
+                ForEach(Array(groups.enumerated()), id: \.offset) { _, found in
+                    if !found.isEmpty {
+                        Section {
+                            ForEach(found, id: \.pane) { pane, keyword in
+                                Label {
+                                    VStack(alignment: .leading, spacing: 0) {
+                                        Text(pane.title)
+                                        if let keyword {
+                                            Text(keyword).font(Design.secondary).foregroundStyle(.secondary)
+                                        }
+                                    }
+                                } icon: {
+                                    pane.icon(size: Design.Tile.sidebar)
+                                }
+                                .tag(pane)
+                            }
+                        }
+                    }
+                }
+            }
+            .listStyle(.sidebar)
+            .scrollContentBackground(.hidden)
+            .overlay {
+                if groups.allSatisfy(\.isEmpty) {
+                    Text("No results").font(Design.row).foregroundStyle(.secondary)
+                }
+            }
         }
-        .listStyle(.sidebar)
-        .scrollContentBackground(.hidden)
     }
 }
 
 struct SettingsDetail: View {
     @EnvironmentObject var model: SettingsModel
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        Group {
-            switch model.pane {
-            case .general: GeneralPane()
-            case .layout: LayoutPane()
-            case .keyboard: KeyboardPane()
-            case .appearance: AppearancePane()
-            case .advanced: AdvancedPane()
-            }
+        ZStack {
+            pane
+                .id(model.pane)
+                .transition(.opacity)
         }
+        .animation(Design.paneChange(reduceMotion: reduceMotion), value: model.pane)
         .formStyle(.grouped)
-        // The title bar is clear: scrolled rows stop at its edge, under a hairline as in System Settings.
-        .onScrollGeometryChange(for: Bool.self, of: { $0.contentOffset.y + $0.contentInsets.top > 1 }) { model.scrolled = $1 }
-        .clipped()
-        .overlay(alignment: .top) { if model.scrolled { Divider() } }
+        .onScrollGeometryChange(for: Int.self, of: { g in
+            let y = g.contentOffset.y + g.contentInsets.top
+            return y > 120 ? 2 : y > 1 ? 1 : 0
+        }) { _, at in
+            if model.scrolled != (at > 0) { model.scrolled = at > 0 }
+            if model.pastHeader != (at > 1) { model.pastHeader = at > 1 }
+        }
+        .modifier(TitlebarEdge(scrolled: model.scrolled))
         .alert("Can't save the settings", isPresented: Binding(get: { model.problem != nil }, set: { if !$0 { model.problem = nil } })) {
             Button("OK") { model.problem = nil }
         } message: {
             Text(model.problem ?? "")
         }
     }
+
+    @ViewBuilder private var pane: some View {
+        switch model.pane {
+        case .general: GeneralPane()
+        case .layout: LayoutPane()
+        case .windows: WindowsPane()
+        case .overview: OverviewPane()
+        case .keyboard: KeyboardPane()
+        case .trackpad: TrackpadPane()
+        case .appearance: AppearancePane()
+        case .menubar: MenuBarPane()
+        case .integrations: IntegrationsPane()
+        case .advanced: AdvancedPane()
+        case .about: AboutPane()
+        }
+    }
 }
 
-struct PaneIcon: View {
-    let pane: SettingsPane
+/// Where scrolled rows meet the title bar. macOS 26 fades and blurs them under the title bar by itself
+/// (its scroll edge effect); before, they stop at its edge under a hairline, as System Settings does there.
+private struct TitlebarEdge: ViewModifier {
+    let scrolled: Bool
 
-    var body: some View {
-        Image(systemName: pane.symbol)
-            .font(.system(size: 11, weight: .semibold))
-            .foregroundStyle(.white)
-            .frame(width: 20, height: 20)
-            .background(RoundedRectangle(cornerRadius: 5, style: .continuous).fill(pane.color.gradient))
-            .accessibilityHidden(true)
+    func body(content: Content) -> some View {
+        if #available(macOS 26, *) {
+            content
+        } else {
+            content
+                .clipped()
+                .overlay(alignment: .top) { if scrolled { Divider() } }
+        }
     }
 }

@@ -45,16 +45,24 @@ BUILD=$(git rev-list --count HEAD 2>/dev/null || echo 1)
 APP=build/mielwm.app
 
 echo "== swift build -c release"
+# SwiftPM's build system records the deployment target as the SDK version. macOS
+# 26 and later then draw the app in its old look, without the glass sidebar.
+SDK_VERSION=$(xcrun --sdk macosx --show-sdk-version)
+# The oldest macOS, from Package.swift's .macOS(.vNN).
+MIN_MACOS=$(sed -n 's/.*\.macOS(\.v\([0-9]*\)).*/\1/p' Package.swift).0
+# A miss would link minos 0.0 and ship an app that claims to run on any macOS.
+[[ $MIN_MACOS =~ ^[0-9]+\.0$ ]] || { echo "can't read the macOS version from Package.swift" >&2; exit 1; }
+STAMP=(-Xlinker -platform_version -Xlinker macos -Xlinker "$MIN_MACOS" -Xlinker "$SDK_VERSION")
 # Short output, but a failed build stops here: never sign and ship the last good binary.
 for product in mielwm mielwm-aerospace; do
-    if ! build_log=$(swift build -c release --product $product 2>&1); then
+    if ! build_log=$(swift build -c release --product $product "${STAMP[@]}" 2>&1); then
         echo "$build_log" | grep -E "error" || echo "$build_log" | tail -20
         echo "build failed" >&2
         exit 1
     fi
     echo "$build_log" | grep -E "error|Build complete" || true
 done
-BIN_DIR=$(swift build -c release --show-bin-path)
+BIN_DIR=$(swift build -c release --show-bin-path "${STAMP[@]}")
 BIN=$BIN_DIR/mielwm
 [ -x "$BIN" ] && [ -x "$BIN_DIR/mielwm-aerospace" ] || { echo "build failed" >&2; exit 1; }
 
@@ -76,7 +84,7 @@ cat > "$APP/Contents/Info.plist" <<EOF
     <key>CFBundlePackageType</key><string>APPL</string>
     <key>CFBundleShortVersionString</key><string>$VERSION</string>
     <key>CFBundleVersion</key><string>$BUILD</string>
-    <key>LSMinimumSystemVersion</key><string>15.0</string>
+    <key>LSMinimumSystemVersion</key><string>$MIN_MACOS</string>
     <key>LSUIElement</key><true/>
     <key>NSHighResolutionCapable</key><true/>
     <key>NSAccessibilityUsageDescription</key>
@@ -104,7 +112,7 @@ cat > "$HELPER/Contents/Info.plist" <<EOF
     <key>CFBundlePackageType</key><string>APPL</string>
     <key>CFBundleShortVersionString</key><string>$VERSION</string>
     <key>CFBundleVersion</key><string>$BUILD</string>
-    <key>LSMinimumSystemVersion</key><string>15.0</string>
+    <key>LSMinimumSystemVersion</key><string>$MIN_MACOS</string>
     <key>LSUIElement</key><true/>
 </dict>
 </plist>

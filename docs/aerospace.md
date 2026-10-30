@@ -11,7 +11,7 @@ The model is close too. A workspace tiles its windows, a window can float, and a
 A few things work differently or aren't there yet:
 
 - `⌥Tab` is mielwm's recent-windows switcher. `workspace-back-and-forth` is there with no key, so bind it in Settings > Keyboard.
-- `workspace --auto-back-and-forth` is a setting for all the workspace keys, Settings > Layout & workspaces > Workspace key goes back, instead of a flag on each key.
+- `workspace --auto-back-and-forth` is a setting for all the workspace keys, Settings > Layout > Workspace key goes back, instead of a flag on each key.
 - `⌥⇧Tab`, which moves a workspace to another monitor in AeroSpace, has no equivalent yet.
 - There are no binding modes like AeroSpace's service mode, and no nested containers. A workspace is tiles or a stack, one level deep, so `join-with` and `split` don't exist.
 - `resize` changes a tile only along its split, and only by an amount. `resize width 800`, which sets a size, isn't supported.
@@ -21,7 +21,7 @@ Quit AeroSpace before you start mielwm, because two window managers fight over t
 
 ## Import your AeroSpace config
 
-Settings > Layout & workspaces > Import from AeroSpace reads `~/.config/aerospace/aerospace.toml`, or `~/.aerospace.toml`, shows what it found, and applies it when you confirm. It understands:
+Settings > AeroSpace & Barik > Import from AeroSpace reads `~/.config/aerospace/aerospace.toml`, or `~/.aerospace.toml`, shows what it found, and applies it when you confirm. It understands:
 
 - `[gaps]`, including the per-monitor form. `monitor."built-in"` becomes the built-in display's top gap, and the plain value the other displays'.
 - `default-root-container-layout`, with `accordion` becoming a stack, and `default-root-container-orientation`.
@@ -39,7 +39,7 @@ The very first time mielwm starts, before any config exists, it imports the gaps
 
 1. Open Barik at least once, so it writes its config file.
 2. Make sure mielwm runs from your Applications folder. From the disk image or straight from Downloads, the switch asks you to move it first, because that copy disappears when mielwm quits.
-3. Turn on Settings > Layout & workspaces > Work with Barik, and confirm.
+3. Turn on Settings > AeroSpace & Barik > Work with Barik, and confirm.
 
 Barik relaunches, and a few seconds later it shows mielwm's workspaces and the windows on each. Clicking a workspace or a window switches to it.
 

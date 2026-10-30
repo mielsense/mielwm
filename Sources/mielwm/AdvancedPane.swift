@@ -8,63 +8,60 @@ struct AdvancedPane: View {
 
     var body: some View {
         Form {
+            Section { PaneHeader(pane: .advanced) }
             if !model.errors.isEmpty {
                 Section {
-                    Label {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Some settings could not be read")
-                            ForEach(model.errors, id: \.self) { Text($0).font(.callout).foregroundStyle(.secondary).textSelection(.enabled) }
-                            Text("mielwm uses the defaults for those.").font(.callout).foregroundStyle(.secondary)
+                    HStack(alignment: .top, spacing: Design.Space.s + 2) {
+                        IconTile("exclamationmark.triangle.fill", tint: Design.Tint.orange)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Some settings could not be read").font(Design.row)
+                            ForEach(model.errors, id: \.self) { Text($0).font(Design.secondary).foregroundStyle(.secondary).textSelection(.enabled) }
+                            Text("mielwm uses the defaults for those.").font(Design.secondary).foregroundStyle(.secondary)
                         }
-                    } icon: {
-                        Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.yellow)
                     }
                 }
             }
             Section {
-                LabeledContent {
-                    HStack {
+                SettingsRow("Config file", subtitle: (model.paths.config.path as NSString).abbreviatingWithTildeInPath,
+                            icon: IconTile("doc.text.fill", tint: Design.Tint.gray)) {
+                    HStack(spacing: Design.Space.s) {
                         Button("Show in Finder") { revealConfigFile(model.paths.config) }
                         Button("Open") { openConfigFile(model.paths.config) }
                     }
-                } label: {
-                    Text("Config file")
-                    Text((model.paths.config.path as NSString).abbreviatingWithTildeInPath)
+                }
+                SettingsRow("Command-line tool", subtitle: cliNote, icon: IconTile("terminal.fill", tint: Design.Tint.graphite)) {
+                    HStack(spacing: Design.Space.s) {
+                        switch model.cliStatus {
+                        case .installed:
+                            StatusBadge(text: "Installed", symbol: "checkmark.circle.fill", tint: .green)
+                            Button("Remove") { model.cliStatus = CLITool.remove() }
+                        default:
+                            Button("Install") { install() }
+                        }
+                    }
                 }
             } footer: {
                 Text("Settings are saved there as you change them, and edits to the file show up here. Some settings exist only in the file. [Configuration file](https://wm.miel.my/docs/configuration) lists them all.").settingsFooter()
             }
             Section {
-                LabeledContent {
-                    switch model.cliStatus {
-                    case .installed: Button("Remove") { model.cliStatus = CLITool.remove() }
-                    default: Button("Install") { install() }
-                    }
-                } label: {
-                    Text("Command-line tool")
-                    switch model.cliStatus {
-                    case let .installed(at): Text("Installed as \(at). Try “\(CLITool.name) overview”.")
-                    case let .taken(at): Text("\(at) is another file. Install replaces it.")
-                    case .missing: Text("Links “\(CLITool.name)” into ~/.local/bin, to drive mielwm from Terminal.")
-                    }
-                }
-            }
-            Section {
-                LabeledContent {
+                SettingsRow("Reset all settings", subtitle: "Every setting and shortcut back to its default.",
+                            icon: IconTile("arrow.counterclockwise", tint: Design.Tint.red)) {
                     Button("Reset…") { model.confirmReset = true }
-                } label: {
-                    Text("Reset all settings")
-                    Text("Every setting and shortcut back to its default.")
                 }
-            }
-            Section {
-                LabeledContent("Version", value: appVersion)
             }
         }
         .confirmationDialog("Reset all settings?", isPresented: $model.confirmReset) {
             Button("Reset", role: .destructive) { model.resetAll() }
         } message: {
             Text("config.json goes to the Trash, so you can get it back.")
+        }
+    }
+
+    private var cliNote: String {
+        switch model.cliStatus {
+        case let .installed(at): "Installed as \(at). Try “\(CLITool.name) overview”."
+        case let .taken(at): "\(at) is another file. Install replaces it."
+        case .missing: "Links “\(CLITool.name)” into ~/.local/bin, to drive mielwm from Terminal."
         }
     }
 
