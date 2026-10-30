@@ -332,3 +332,26 @@ func tempDir() throws -> URL {
     settings.moveModifier = "cmd+shift"
     #expect(settings.warmModifiers == [[.control, .option]])
 }
+
+// MARK: - Keys that take a word
+
+@Test func wordKeysTakeTheirWordsInAnyCaseAndNameThemOtherwise() {
+    var s = Settings()
+    #expect(s.set(.text("Lines"), forKey: "canvas:grid_style") == nil && !s.look.gridDots)
+    #expect(s.set(.number(1), forKey: "canvas:grid_style") == nil && s.look.gridDots) // older configs used a number
+    #expect(s.set(.text("Bezier"), forKey: "animation:curve") == nil && s.animationCurve == .bezier)
+    #expect(s.set(.text("STACK"), forKey: "layout:default") == nil && s.defaultLayout == .stack)
+    #expect(s.set(.text("vertical"), forKey: "layout:orientation") == nil && s.orientation == .vertical)
+    #expect(s.set(.text("plaid"), forKey: "canvas:grid_style") == #"'canvas:grid_style' takes "dots" or "lines""#)
+    #expect(s.set(.flag(true), forKey: "animation:curve") == #"'animation:curve' takes "spring" or "bezier""#)
+    #expect(s.set(.text("grid"), forKey: "layout:default") == #"'layout:default' takes "tiles", "stack" or "floating""#)
+    #expect(s.set(.number(2), forKey: "layout:orientation") == #"'layout:orientation' takes "auto", "horizontal" or "vertical""#)
+    #expect(s.defaultLayout == .stack && s.orientation == .vertical) // a wrong value changes nothing
+}
+
+@Test func settingValuesKeepTheirKindThroughJSON() throws {
+    let values: [SettingValue] = [.number(0.5), .flag(true), .text("dots")]
+    let data = try JSONEncoder().encode(values)
+    #expect(String(decoding: data, as: UTF8.self) == #"[0.5,true,"dots"]"#)
+    #expect(try JSONDecoder().decode([SettingValue].self, from: data) == values)
+}
