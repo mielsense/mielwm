@@ -10,9 +10,10 @@ let area = CGRect(x: 12, y: 50, width: 1488, height: 850) // the built-in's tile
 let left = CGRect(x: 12, y: 50, width: 740, height: 850), right = CGRect(x: 760, y: 50, width: 740, height: 850)
 
 /// Tiling on, past the startup window, so new windows join the current workspace.
-func tilingState(_ windows: [WindowSnapshot] = [], settings: Settings = testSettings(layout: .tiles)) -> CanvasState {
-    var s = CanvasState(screens: [builtIn, external], settings: settings, ownPID: 1, now: 0)
-    s.activeScreenID = builtIn.id
+func tilingState(_ windows: [WindowSnapshot] = [], settings: Settings = testSettings(layout: .tiles),
+                 screens: [ScreenInfo] = [builtIn, external]) -> CanvasState {
+    var s = CanvasState(screens: screens, settings: settings, ownPID: 1, now: 0)
+    s.activeScreenID = screens.first?.id
     _ = s.send(.tick(20))
     for w in windows { _ = s.send(.system(.windowAppeared(w))) }
     return s

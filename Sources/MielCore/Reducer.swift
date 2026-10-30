@@ -115,7 +115,7 @@ extension CanvasState {
         }
         if let g = graceUntil, now >= g { // (h) the screens settled: put everything where it belongs
             graceUntil = nil
-            for i in windows.indices { windows[i].expected = nil; windows[i].pending = nil }
+            for i in windows.indices { windows[i].expected = nil; windows[i].pending = nil; windows[i].sent = [] }
             sync(force: true)
         }
         if toast != nil, now >= toastUntil { toast = nil }
@@ -125,7 +125,9 @@ extension CanvasState {
     // MARK: System events
 
     mutating func handle(_ event: SystemEvent) {
-        defer { // the search list follows windows coming, going and being renamed
+        defer {
+            refocusIfLost() // the focused window may have closed, minimized or hidden
+            // The search list follows windows coming, going and being renamed.
             switch event {
             case .windowFrameChanged, .windowFocused, .screensChanged: break
             default:
@@ -147,7 +149,6 @@ extension CanvasState {
             windows[i].isMinimized = minimized
             retile(windows[i].workspace) // a minimized window gives up its tile
             if !minimized { sync([id]) }
-            refocusIfLost()
         case let .windowFullScreen(id, on):
             guard let i = index(id) else { return }
             windows[i].isFullScreen = on
@@ -162,7 +163,6 @@ extension CanvasState {
             for i in windows.indices where windows[i].id.pid == pid { windows[i].isHidden = hidden }
             for slot in Set(windows.filter { $0.id.pid == pid }.compactMap(\.workspace)) { retile(slot) }
             if !hidden { sync(Set(windows.filter { $0.id.pid == pid }.map(\.id))) }
-            refocusIfLost()
         case let .appTerminated(pid): remove { $0.id.pid == pid }
         case let .screensChanged(new): screensChanged(new)
         }
@@ -181,7 +181,6 @@ extension CanvasState {
             leave(id) // the rest of its workspace tiles again
         }
         layoutRevision += 1
-        refocusIfLost()
     }
 
     /// The focused window closed, minimized or hid. macOS focuses a window of
@@ -251,7 +250,7 @@ extension CanvasState {
     /// is kept, and judged if the expectation lapses without a match. A late
     /// report of an earlier move of ours (a busy app, many windows moving at
     /// once) is ignored too, unless the user is dragging.
-    mutating func frameChanged(_ id: WindowID, _ frame: CGRect, dragging: Bool = false) {
+    mutating func frameChanged(_ id: WindowID, _ frame: CGRect, dragging: Bool) {
         guard let i = index(id) else { return }
         windows[i].real = frame
         if windows[i].isFullScreen { return } // the screen-sized frame is not a resize to adopt
@@ -342,12 +341,7 @@ extension CanvasState {
         let old = deskCenter
         screens = new
         let shift = CGVector(dx: deskCenter.x - old.x, dy: deskCenter.y - old.y)
-        func moved(_ c: Camera) -> Camera { Camera(center: CGPoint(x: c.center.x + shift.dx, y: c.center.y + shift.dy), zoom: c.zoom) }
-        deskCamera = moved(deskCamera)
-        returnCamera = returnCamera.map(moved)
-        let target = moved(animator.target)
-        animator.warp(to: moved(animator.camera), now: now)
-        animator.fly(to: target, now: now)
+        moveCameras { Camera(center: CGPoint(x: $0.center.x + shift.dx, y: $0.center.y + shift.dy), zoom: $0.zoom) }
         if let id = activeScreenID, !new.contains(where: { $0.id == id }) { activeScreenID = nil }
         for k in workspaces.indices where !new.contains(where: { $0.id == workspaces[k].screenID }) {
             workspaces[k].screenID = nil // its screen left: it lays out for the primary one
@@ -370,6 +364,15 @@ extension CanvasState {
     }
 
     // MARK: Camera moves
+
+    /// Every camera, at rest or flying, through `moved`.
+    mutating func moveCameras(_ moved: (Camera) -> Camera) {
+        deskCamera = moved(deskCamera)
+        returnCamera = returnCamera.map(moved)
+        let target = moved(animator.target)
+        animator.warp(to: moved(animator.camera), now: now)
+        animator.fly(to: target, now: now)
+    }
 
     mutating func fly(to camera: Camera, transition: Double? = nil, velocity: CGVector? = nil) {
         animator.fly(to: camera, transition: transition, now: now, velocity: velocity)
@@ -458,7 +461,7 @@ extension CanvasState {
             if let ws = workspace(of: id), let tile = tiles(ws).first(where: { $0.id == id })?.frame {
                 dragging = nil
                 dropIndicator = nil
-                if !windows[i].frame.size.isClose(to: tile.size) { return userChangedTile(i, to: windows[i].frame) } // resized
+                if !windows[i].frame.size.isClose(to: tile.size) { return userChangedTile(i, to: windows[i].frame, resizing: true) } // resized
                 // Dropped on a workspace: it moves there (or within it); on open canvas it floats there.
                 if let spot = dropSpot(i) { return join(id, spot.slot, at: spot.position) }
                 leave(id)

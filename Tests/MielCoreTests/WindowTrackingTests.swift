@@ -71,8 +71,7 @@ let laptop = ScreenInfo(id: 4, name: "Built-in Retina Display", frame: CGRect(x:
 
 @Test(arguments: [studio.id, laptop.id])
 func noDisplayShowsANeighbouringWorkspace(_ shownOn: UInt32) {
-    var s = CanvasState(screens: [studio, laptop], settings: testSettings(layout: .tiles), ownPID: 1, now: 0)
-    _ = s.send(.tick(20))
+    var s = tilingState(screens: [studio, laptop])
     for n in [1, 3] { // the neighbours lay out for the wide display
         s.activeScreenID = studio.id
         _ = s.send(.action(.workspace(n)))
@@ -88,9 +87,7 @@ func noDisplayShowsANeighbouringWorkspace(_ shownOn: UInt32) {
 
 /// Workspace 3 current with a tile and a floating window, on the built-in display alone.
 func builtInAloneOnWorkspace3() -> CanvasState {
-    var s = CanvasState(screens: [builtIn], settings: testSettings(layout: .tiles), ownPID: 1, now: 0)
-    s.activeScreenID = builtIn.id
-    _ = s.send(.tick(20))
+    var s = tilingState(screens: [builtIn])
     _ = s.send(.action(.workspace(3)))
     _ = s.send(.system(.windowAppeared(snapshot(1, onBuiltIn))))
     _ = s.send(.system(.windowAppeared(snapshot(2, onBuiltIn, app: "Calculator", bundle: "com.apple.calculator"))))

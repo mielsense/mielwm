@@ -37,14 +37,14 @@ public struct SlotGrid: Hashable, Codable, Sendable {
     }
 
     /// Far enough apart that whichever screen a workspace is shown on, its
-    /// neighbours stay off every screen, plus a gap. The next one must clear
-    /// the whole desk; the one before, shown on the rightmost screen, must
-    /// clear the desk's left end, and it can be as wide as the widest screen.
+    /// neighbours stay off every screen, plus a gap: the one before, shown on
+    /// the rightmost screen and as wide as the widest, clears the desk's left
+    /// end. That is at least the desk's width, so the next one clears it too.
     static func step(for screens: [ScreenInfo]) -> CGFloat {
         let desk = deskRect(screens)
         guard !desk.isNull else { return 240 }
         let reach = screens.map { $0.frame.minX - desk.minX }.max()! + screens.map(\.frame.width).max()!
-        return max(desk.width, reach).rounded() + 240
+        return reach.rounded() + 240
     }
 
     func origin(_ slot: Int) -> CGPoint { CGPoint(x: origin.x + CGFloat(slot - 1) * step, y: origin.y) }
@@ -283,21 +283,20 @@ extension CanvasState {
     mutating func widenSlots() {
         let step = SlotGrid.step(for: screens), old = slots
         guard step > old.step else { return }
-        func moved(_ c: Camera) -> Camera {
-            let x = restingSlot(c).map { old.origin($0.slot).x } ?? c.center.x
+        let before = self // where each camera rests is read off the old grid
+        moveCameras { c in
+            let x = before.restingSlot(c).map { old.origin($0.slot).x } ?? c.center.x
             return Camera(center: CGPoint(x: c.center.x + old.shift(x, toStep: step), y: c.center.y), zoom: c.zoom)
         }
         func moved(_ r: CGRect) -> CGRect { r.offsetBy(dx: old.shift(r.midX, toStep: step), dy: 0) }
-        deskCamera = moved(deskCamera)
-        returnCamera = returnCamera.map(moved)
-        let target = moved(animator.target)
-        animator.warp(to: moved(animator.camera), now: now)
-        animator.fly(to: target, now: now)
         for i in windows.indices {
             windows[i].frame = moved(windows[i].frame)
             windows[i].floatingFrame = windows[i].floatingFrame.map(moved)
         }
-        for k in saved?.windows.indices ?? 0 ..< 0 { saved!.windows[k].frame = moved(saved!.windows[k].frame) }
+        if var s = saved {
+            for k in s.windows.indices { s.windows[k].frame = moved(s.windows[k].frame) }
+            saved = s
+        }
         slots.step = step
         layoutRevision += 1
         retileAll()
@@ -358,7 +357,7 @@ extension CanvasState {
     /// A resize along the split axis by the user (`resizing`) moves the edge
     /// it shares with the neighbour that way; anything else snaps back to the
     /// tile. An app that keeps refusing gets its way after a couple of tries.
-    mutating func userChangedTile(_ i: Int, to frame: CGRect, resizing: Bool = true) {
+    mutating func userChangedTile(_ i: Int, to frame: CGRect, resizing: Bool) {
         let id = windows[i].id
         guard let ws = workspace(of: id) else { return }
         let t = tiles(ws)
