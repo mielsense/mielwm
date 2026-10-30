@@ -74,7 +74,10 @@ Run `scripts/e2e.sh` when you change window handling, and `scripts/benchmark.sh`
 
 - New behaviour goes in `Sources/MielCore` first, with its tests. It's pure, so it's easy to test.
 - `MielCore` never imports AppKit and never touches windows, timers or the clock. Time comes in as an input.
-- Match the file you're in. Files are small, with one concern each.
+- Match the file you're in. Files are small, with one concern each, and named after the type they hold. An extension that adds one concern to a type goes in `Type+Concern.swift`, like `Controller+Tap.swift`. In `MielCore` nearly everything extends `CanvasState`, so its files take the concern's name alone, like `Gestures.swift` and `Undo.swift`.
+- Files have no header. Imports come first, then, when the file needs one, a `//` comment that says what it holds. Every type gets a `///` comment that says what it is for. Sections are `// MARK: - Title`, in sentence case.
+- No force unwraps, `try!` or `as!` outside tests unless a comment says why they can't fail. An error is handled, logged, or left with a comment that says why it doesn't matter.
+- A number that tunes behaviour, like a delay, gets a name and a comment.
 - Log with `log(_:)` from `MielSystem`. Never log window titles.
 - Every API must exist on macOS 15. Guard anything newer with `#available`.
 - Every module builds in the Swift 6 language mode, with its strict concurrency checks. A callback that runs on the main thread says so with `@MainActor`, and one that crosses threads is `@Sendable`. `@unchecked Sendable` and `nonisolated(unsafe)` need a comment that says why they are safe.
