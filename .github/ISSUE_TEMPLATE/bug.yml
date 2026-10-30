@@ -6,25 +6,32 @@ body:
     id: what
     attributes:
       label: What happened
-      description: What you did, what you expected and what happened instead.
+      description: What you did, what you expected and what happened instead. Steps that make it happen again help most.
     validations:
       required: true
   - type: input
     id: version
     attributes:
       label: mielwm version
-      description: About mielwm in the menu bar shows it.
+      description: About mielwm, in the menu bar item, shows it.
     validations:
       required: true
   - type: input
     id: macos
     attributes:
       label: macOS version
+      description: Apple menu > About This Mac.
     validations:
       required: true
   - type: textarea
     id: state
     attributes:
-      label: mielwm's view of your windows
-      description: The output of `mielwm --list-windows --json`, if it's relevant.
+      label: How mielwm saw your windows
+      description: The output of `mielwm --list-windows --json`, if the bug is about windows. Window titles are in it, so remove any you'd rather not share.
       render: json
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: The output of `log show --last 10m --predicate 'subsystem == "my.miel.mielwm"'`, run soon after the bug. It holds no window titles.
+      render: text

@@ -1,0 +1,4 @@
+# Collapsed in pull request diffs, left out of the language stats.
+website/pnpm-lock.yaml linguist-generated
+# Barik's own code, MIT, for scripts/barik-test.sh. Each file names its source.
+scripts/barik/** linguist-vendored
