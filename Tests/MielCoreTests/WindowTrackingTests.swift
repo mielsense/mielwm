@@ -54,6 +54,16 @@ func losingTheFocusedWindowKeepsTheWorkspace(_ how: String) {
 
 // MARK: Reports nobody dragged
 
+@Test func aResizeReportedJustAfterReleaseMovesTheSplit() {
+    var s = twoTiles()
+    // The app reports the last step of the drag 0.2 s after the button came up.
+    let late = isUserDrag(buttonDown: false, sinceMouseUp: 0.2)
+    _ = s.send(.system(.windowFrameChanged(wid(1), CGRect(x: 12, y: 50, width: 840, height: 850), dragging: late)))
+    #expect(s.canvasFrame(1) == CGRect(x: 12, y: 50, width: 840, height: 850))
+    #expect(!isUserDrag(buttonDown: false, sinceMouseUp: 2)) // long after a click it is the app's own
+    #expect(isUserDrag(buttonDown: true, sinceMouseUp: 30))
+}
+
 @Test func appResizingItselfSnapsBackWithoutMovingTheSplit() {
     var s = twoTiles()
     // An Electron app restores its saved bounds: wider, with no mouse button down.

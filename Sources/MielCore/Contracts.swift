@@ -82,8 +82,9 @@ public struct WindowSnapshot: Hashable, Codable, Sendable {
 public enum SystemEvent: Sendable, Equatable {
     case windowAppeared(WindowSnapshot)
     case windowClosed(WindowID)
-    /// `dragging`: the left mouse button was down, so the user may be dragging
-    /// it. Only then does a resize move the split with a neighbour tile.
+    /// `dragging`: the left mouse button was down or just came up (see
+    /// `isUserDrag`), so the user may be dragging it. Only then does a resize
+    /// move the split with a neighbour tile.
     case windowFrameChanged(WindowID, CGRect, dragging: Bool = false)
     case windowTitleChanged(WindowID, String)
     case windowMinimized(WindowID, Bool)
@@ -96,6 +97,16 @@ public enum SystemEvent: Sendable, Equatable {
     case appHidden(pid: Int32, Bool)
     case appTerminated(pid: Int32)
     case screensChanged([ScreenInfo])
+}
+
+/// Seconds after the left button comes up that frame reports still belong to
+/// the user's drag: slow apps report its last steps late, some resize only on release.
+public let dragGrace = 0.5
+
+/// Whether a frame report is part of a user drag (`windowFrameChanged`'s
+/// `dragging`), from the left button as the report comes in.
+public func isUserDrag(buttonDown: Bool, sinceMouseUp: Double) -> Bool {
+    buttonDown || sinceMouseUp < dragGrace
 }
 
 /// What Core asks System to do. System runs these off the main thread, one
