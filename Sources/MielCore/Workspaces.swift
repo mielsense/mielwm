@@ -266,7 +266,6 @@ extension CanvasState {
             }
             guard windows[i].frame != f else { continue }
             windows[i].frame = f
-            windows[i].reparks = 0 // a new tile gets new tries
             moved.insert(id)
         }
         guard !moved.isEmpty else { return }
@@ -380,14 +379,14 @@ extension CanvasState {
                 }
             }
         }
-        retile(ws.slot) // a gesture may have moved the canvas frame
-        guard let j = index(id) else { return }
-        if countRepark(j) <= Self.maxReparks {
-            sync([id], force: true)
-        } else {
-            windows[j].frame.size = frame.size
+        // Given in: the tile keeps the size the app insists on. Retiling first would undo that and fight again.
+        guard countRepark(i) <= Self.maxReparks else {
+            windows[i].frame.size = frame.size
             layoutRevision += 1
+            return
         }
+        retile(ws.slot) // a gesture may have moved the canvas frame
+        sync([id], force: true)
     }
 
     /// Weights become tile lengths with `id` at `length`; `neighbour` (else

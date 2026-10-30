@@ -151,3 +151,17 @@ func builtInAloneOnWorkspace3() -> CanvasState {
     _ = s.send(.system(.windowFrameChanged(wid(1), dragged)))
     #expect(s.canvasFrame(1) == dragged)
 }
+
+@Test func aTileThatGaveInStaysGivenInThroughStrayReports() {
+    var s = twoTiles()
+    let refused = CGRect(x: 12, y: 50, width: 740, height: 700) // a maximum height, say
+    var n = 0, commands = s.send(.system(.windowFrameChanged(wid(1), refused)))
+    while n < 8, moves(commands)[wid(1)] != nil {
+        n += 1
+        // The app answers each tile we send with its own height, then repeats it (Electron's stray moves).
+        _ = s.send(.system(.windowFrameChanged(wid(1), refused)))
+        commands = s.advance(1.5) + s.send(.system(.windowFrameChanged(wid(1), refused)))
+    }
+    #expect(n <= Int(CanvasState.maxReparks))
+    #expect(s.canvasFrame(1)?.size == refused.size)
+}
