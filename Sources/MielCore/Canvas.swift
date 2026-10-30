@@ -108,6 +108,7 @@ public struct CanvasState: Sendable {
     var lastCheckpoint: Checkpoint?
     var graceUntil: Double?
     var expectedFocus: (id: WindowID, until: Double)?
+    var pendingFocus: WindowID? // reported focused while hidden or minimized: it gets focus once it shows
     var dragging: WindowID?
     var saved: LayoutSnapshot?
     var claimed = Set<Int>()

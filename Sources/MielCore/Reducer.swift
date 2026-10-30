@@ -135,7 +135,7 @@ extension CanvasState {
             guard let i = index(id) else { return }
             windows[i].isMinimized = minimized
             retile(windows[i].workspace) // a minimized window gives up its tile
-            if !minimized { sync([id]) }
+            if !minimized { sync([id]); focusPending() }
         case let .windowFullScreen(id, on):
             guard let i = index(id) else { return }
             windows[i].isFullScreen = on
@@ -149,7 +149,7 @@ extension CanvasState {
         case let .appHidden(pid, hidden):
             for i in windows.indices where windows[i].id.pid == pid { windows[i].isHidden = hidden }
             for slot in Set(windows.filter { $0.id.pid == pid }.compactMap(\.workspace)) { retile(slot) }
-            if !hidden { sync(Set(windows.filter { $0.id.pid == pid }.map(\.id))) }
+            if !hidden { sync(Set(windows.filter { $0.id.pid == pid }.map(\.id))); focusPending() }
         case let .appTerminated(pid): remove { $0.id.pid == pid }
         case let .screensChanged(new): screensChanged(new)
         }
@@ -290,8 +290,13 @@ extension CanvasState {
     /// stray reports while a focus we asked for lands.
     mutating func focusedFromOutside(_ id: WindowID) {
         guard id.pid != ownPID else { return }
-        guard let i = index(id), windows[i].isShown else { return focusLeft(id.pid) } // a dialog or sheet, say
+        guard let i = index(id), windows[i].isShown else { // a dialog or sheet, say, or a window about to show
+            focusLeft(id.pid)
+            if index(id) != nil { pendingFocus = id } // macOS can report focus before the unhide or unminimize
+            return
+        }
         if let f = expectedFocus, f.id != id, now < f.until { return }
+        pendingFocus = nil
         focused = id
         mru.note(id)
         raise(i)
@@ -312,6 +317,12 @@ extension CanvasState {
         guard pid != ownPID, !isOverview, !overview.isOpen else { return }
         if let f = expectedFocus, now < f.until { return }
         focused = nil
+        pendingFocus = nil
+    }
+
+    /// The window last reported focused while it was not shown, now that it is.
+    mutating func focusPending() {
+        if let id = pendingFocus, window(id)?.isShown == true { focusedFromOutside(id) }
     }
 
     /// (h) Screens came or went: keep canvas frames and the camera's offset

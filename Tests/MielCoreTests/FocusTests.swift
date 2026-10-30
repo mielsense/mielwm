@@ -30,3 +30,23 @@ import Testing
     #expect(s.focused == nil)
     #expect(s.send(.action(.fill)).isEmpty)
 }
+
+@Test func focusOnAHiddenOrMinimizedWindowLandsOnceItShows() {
+    let other = wid(2, pid: 200)
+    var s = focusedState()
+    _ = s.send(.system(.windowAppeared(snapshot(2, onBuiltIn, pid: 200))))
+    _ = s.send(.system(.appHidden(pid: 200, true)))
+    _ = s.send(.system(.windowFocused(other))) // ⌘Tab to the hidden app: focus is reported before it unhides
+    #expect(s.focused == nil)
+    _ = s.send(.system(.appHidden(pid: 200, false)))
+    #expect(s.focused == other)
+    _ = s.send(.system(.windowMinimized(other, true)))
+    _ = s.send(.system(.windowFocused(other))) // a click on it in the Dock
+    _ = s.send(.system(.windowMinimized(other, false)))
+    #expect(s.focused == other)
+    _ = s.send(.system(.windowMinimized(other, true)))
+    _ = s.send(.system(.windowFocused(other)))
+    _ = s.send(.system(.windowFocused(wid(1)))) // focus moved on before it came back
+    _ = s.send(.system(.windowMinimized(other, false)))
+    #expect(s.focused == wid(1))
+}
