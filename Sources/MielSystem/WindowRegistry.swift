@@ -56,13 +56,7 @@ public final class WindowRegistry {
         }
         let token = NotificationCenter.default.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main
-        ) { [weak self] _ in
-            guard let self else { return }
-            let now = Displays.screens()
-            guard now != self.screens else { return }
-            self.screens = now
-            self.onEvent(.screensChanged(now))
-        }
+        ) { [weak self] _ in self?.report(Displays.screens()) }
         tokens.append((NotificationCenter.default, token))
 
         if let pid = pidFilter {
@@ -94,6 +88,21 @@ public final class WindowRegistry {
     /// only the differences are reported.
     public func rescan() {
         trackers.values.forEach { $0.rescan() }
+    }
+
+    /// After waking: macOS has moved windows while displays went and came.
+    /// Reports the screens even when they look the same, so Core waits out its
+    /// grace period and then puts every window back, and rereads every window list.
+    public func woke() {
+        report(Displays.screens(), always: true)
+        rescan()
+    }
+
+    /// Through the cache, so a change and the change back are both reported.
+    func report(_ now: [ScreenInfo], always: Bool = false) {
+        guard always || now != screens else { return }
+        screens = now
+        onEvent(.screensChanged(now))
     }
 
     /// Fire and forget. Commands for one app run in order on its queue. The

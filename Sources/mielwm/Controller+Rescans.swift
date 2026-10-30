@@ -18,15 +18,8 @@ extension Controller {
         // sleep, and the overdue tick would put windows back before displays return.
         for name in [NSWorkspace.didWakeNotification, NSWorkspace.screensDidWakeNotification] {
             workspaceTokens.append(center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
-                MainActor.assumeIsolated { self?.woke() }
+                MainActor.assumeIsolated { self?.registry.woke() }
             })
         }
-    }
-
-    /// Like a screen change: Core ignores frame reports for a moment, then puts
-    /// every window back in its spot. The app list does not change across sleep.
-    private func woke() {
-        system(.screensChanged(Displays.screens()))
-        registry.rescan()
     }
 }
