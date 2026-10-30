@@ -18,6 +18,34 @@ extension CGColor {
 
 /// Premultiplied BGRA bitmap with a y-down coordinate system, uploaded as a
 /// `.bgra8Unorm` texture.
+/// A rounded rectangle with continuous corners, as macOS draws its own: the
+/// curve starts 1.53 radii from the corner and eases into the straight edge
+/// instead of meeting it at a circle's tangent. Where there is no room for
+/// that (a capsule), the corners are circular.
+func continuousRoundedPath(_ r: CGRect, _ radius: CGFloat) -> CGPath {
+    let radius = max(0, min(radius, r.width / 2, r.height / 2))
+    let k: CGFloat = 1.52866483
+    guard radius > 0, radius * k <= min(r.width, r.height) / 2 else {
+        return CGPath(roundedRect: r, cornerWidth: radius, cornerHeight: radius, transform: nil)
+    }
+    let p = CGMutablePath()
+    // One corner, turning from the edge along `a` to the edge along `b`, `c` its point.
+    func corner(_ c: CGPoint, _ a: CGVector, _ b: CGVector) {
+        func at(_ u: CGFloat, _ v: CGFloat) -> CGPoint { CGPoint(x: c.x + (a.dx * u + b.dx * v) * radius, y: c.y + (a.dy * u + b.dy * v) * radius) }
+        p.addLine(to: at(k, 0))
+        p.addCurve(to: at(0.63149399, 0.07491100), control1: at(1.08849296, 0), control2: at(0.86840694, 0))
+        p.addCurve(to: at(0.07491100, 0.63149399), control1: at(0.37282392, 0.16905899), control2: at(0.16905899, 0.37282392))
+        p.addCurve(to: at(0, k), control1: at(0, 0.86840694), control2: at(0, 1.08849296))
+    }
+    p.move(to: CGPoint(x: r.minX + radius * k, y: r.minY))
+    corner(CGPoint(x: r.maxX, y: r.minY), CGVector(dx: -1, dy: 0), CGVector(dx: 0, dy: 1))
+    corner(CGPoint(x: r.maxX, y: r.maxY), CGVector(dx: 0, dy: -1), CGVector(dx: -1, dy: 0))
+    corner(CGPoint(x: r.minX, y: r.maxY), CGVector(dx: 1, dy: 0), CGVector(dx: 0, dy: -1))
+    corner(CGPoint(x: r.minX, y: r.minY), CGVector(dx: 0, dy: 1), CGVector(dx: 1, dy: 0))
+    p.closeSubpath()
+    return p
+}
+
 final class Bitmap {
     let ctx: CGContext
     let width: Int
@@ -52,8 +80,7 @@ final class Bitmap {
     // MARK: shapes
 
     func roundedPath(_ r: CGRect, _ radius: CGFloat) -> CGPath {
-        let radius = max(0, min(radius, r.width / 2, r.height / 2))
-        return CGPath(roundedRect: r, cornerWidth: radius, cornerHeight: radius, transform: nil)
+        continuousRoundedPath(r, radius)
     }
 
     func fill(_ path: CGPath, _ color: CGColor) {
@@ -202,7 +229,7 @@ struct Theme {
 
 // MARK: - Fonts and text
 
-enum FontWeight: Hashable { case regular, medium }
+enum FontWeight: Hashable { case regular, medium, semibold } // semibold: titles
 
 struct TextStyle {
     var size: CGFloat
@@ -222,7 +249,7 @@ final class Typesetter {
     func font(_ style: TextStyle) -> CTFont {
         let key = FontKey(size: (style.size * 4).rounded() / 4, weight: style.weight)
         if let f = fonts[key] { return f }
-        let font = NSFont.monospacedDigitSystemFont(ofSize: max(key.size, 1), weight: style.weight == .medium ? .medium : .regular) as CTFont
+        let font = NSFont.monospacedDigitSystemFont(ofSize: max(key.size, 1), weight: [.regular: .regular, .medium: .medium, .semibold: .semibold][style.weight]!) as CTFont
         fonts[key] = font
         return font
     }

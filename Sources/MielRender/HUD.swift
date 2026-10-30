@@ -117,15 +117,15 @@ final class HUDPainter {
     private func keycapStyle(_ size: CGFloat) -> TextStyle { TextStyle(size: size, weight: .medium) }
 
     private func keycapWidth(_ key: String, _ style: TextStyle) -> CGFloat {
-        max(measure(key, style) + style.size * 0.84, style.size * 1.6)
+        max(measure(key, style) + style.size * 0.84, (style.size * 1.6).rounded())
     }
 
-    /// One key in a small rounded box. Returns its width.
+    /// One key as a light capsule behind its glyphs. Returns its width.
     @discardableResult
     private func keycap(_ b: Bitmap, _ key: String, _ style: TextStyle, x: CGFloat, cy: CGFloat, onAccent: Bool, _ theme: Theme) -> CGFloat {
         let w = keycapWidth(key, style), h = (style.size * 1.6).rounded()
         let box = CGRect(x: x, y: (cy - h / 2).rounded(), width: w, height: h)
-        b.fill(b.roundedPath(box, style.size * 0.36), onAccent ? rgba(1, 1, 1, 0.22) : theme.fill)
+        b.fill(b.roundedPath(box, h / 2), onAccent ? rgba(1, 1, 1, 0.22) : theme.fill)
         let color = onAccent ? theme.onAccent : theme.textDim
         let tw = measure(key, style)
         text(b, key, style, color, x: box.midX - tw / 2, cy: cy)
@@ -343,10 +343,10 @@ final class HUDPainter {
     /// A macOS keyboard-shortcuts sheet: a title, then columns of sections,
     /// each row "Action … keycaps".
     private func drawHelp(_ b: Bitmap, _ columns: [[HelpSection]], _ r: CGRect, s: CGFloat, _ theme: Theme) {
-        let title = TextStyle(size: 18 * s, weight: .medium)
-        let header = TextStyle(size: 13 * s, weight: .medium)
+        let title = TextStyle(size: 18 * s, weight: .semibold)
+        let header = TextStyle(size: 13 * s, weight: .semibold)
         let row = TextStyle(size: 13 * s)
-        let keyStyle = TextStyle(size: 12 * s)
+        let keyStyle = TextStyle(size: 11 * s)
         let pad = 24 * s, columnGap = 28 * s
         text(b, "Shortcuts", title, theme.text, x: r.minX + pad, cy: r.minY + Self.helpTitle / 2 * s + 2 * s)
         let n = CGFloat(max(columns.count, 1))
@@ -497,10 +497,10 @@ final class HUDPainter {
         return b.texture(device: device)
     }
 
-    /// A workspace's tag: its number in medium 14 and its mode in 12, in a
+    /// A workspace's tag: its number in semibold 13 and its mode in 11, in a
     /// pill; the current workspace's pill in the accent color.
     func workspaceLabel(number: Int?, mode: LayoutMode, current: Bool, scale s: CGFloat, _ theme: Theme) -> MTLTexture? {
-        let numberStyle = TextStyle(size: 14 * s, weight: .medium), modeStyle = TextStyle(size: 12 * s)
+        let numberStyle = TextStyle(size: 13 * s, weight: .semibold), modeStyle = TextStyle(size: 11 * s)
         let modeName = mode.rawValue.prefix(1).uppercased() + mode.rawValue.dropFirst()
         let numberText = number.map(String.init) ?? ""
         let gap = numberText.isEmpty ? 0 : 6 * s
