@@ -150,7 +150,7 @@ extension Controller {
         overlays[state.activeScreen.id]?.show(key: true)
         updateMouse()
         // If macOS refuses to activate us, the tap types for the overview instead.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.activationGrace) { [weak self] in
             MainActor.assumeIsolated {
                 guard let self, self.state.isOverview, !NSApp.isActive else { return }
                 self.keyCaptureFallback = true

@@ -6,6 +6,8 @@ import Foundation
 /// come for changes that leave the files as they were; compare before acting.
 /// Unchecked: everything it keeps is read and written on `queue` only.
 public final class FileWatcher: @unchecked Sendable {
+    /// Seconds of quiet that end a burst of writes.
+    private static let burst = 0.1
     private let files: [URL]
     private let queue: DispatchQueue
     private let onChange: @Sendable () -> Void
@@ -64,6 +66,6 @@ public final class FileWatcher: @unchecked Sendable {
             self.onChange()
         }
         pending = work
-        queue.asyncAfter(deadline: .now() + 0.1, execute: work)
+        queue.asyncAfter(deadline: .now() + Self.burst, execute: work)
     }
 }

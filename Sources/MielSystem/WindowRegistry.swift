@@ -12,6 +12,8 @@ import MielCore
 /// thread; none of them waits on an app except `performAndWait`.
 @MainActor
 public final class WindowRegistry {
+    /// Seconds after an app starts or quits, or the Space changes, before the screens are read again.
+    private static let screenSettle = 1.5
     /// Only this pid's windows (`--manage-only`, tests), whatever its
     /// activation policy. nil tracks every regular app except our own.
     public let pidFilter: Int32?
@@ -94,7 +96,7 @@ public final class WindowRegistry {
         screenCheck?.cancel()
         let work = DispatchWorkItem { [weak self] in self?.checkScreens() }
         screenCheck = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: work)
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.screenSettle, execute: work)
     }
 
     public func stop() {

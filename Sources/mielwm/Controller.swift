@@ -16,6 +16,9 @@ final class Controller {
     static let purgeDelay = 30.0 // seconds after the overlay hides until its GPU memory goes
     static let shrinkDelay = 300.0 // seconds after the overlay hides until parked windows' stills shrink
     static let maxStreams = 12 // windows on screen past this get stills
+    static let stillBudget = 0.4 // seconds a window waits for its still before it parks anyway
+    static let saveDelay = 0.3 // seconds of quiet before layout.json is written
+    static let activationGrace = 0.3 // seconds macOS gets to activate mielwm for the overview's keys
 
     let mode: Mode
     let paths: ConfigPaths
@@ -286,7 +289,7 @@ final class Controller {
             self.registry.perform(later.filter { self.commandSerial[$0.0] == $0.2 }.map(\.1))
         }
         capture.captureStills(later.map(\.0), scale: stillScale) { MainActor.assumeIsolated { finish() } }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { MainActor.assumeIsolated { finish() } }
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.stillBudget) { MainActor.assumeIsolated { finish() } }
     }
 
     /// MIELWM_TIMINGS: an action starts the clock; the moves it causes, now or when its flight lands, count.

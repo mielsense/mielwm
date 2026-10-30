@@ -82,6 +82,7 @@ final class AppTracker: @unchecked Sendable {
     }
 
     private static let attempts = 20
+    private static let retryDelay = 0.25 // seconds between attempts while an app is still launching
 
     private func setUp(attempt: Int) {
         guard !stopped, observer == nil else { return }
@@ -95,7 +96,7 @@ final class AppTracker: @unchecked Sendable {
             // Apps that are still launching refuse for a while; apps without
             // AX support or a missing permission never stop refusing.
             if attempt < Self.attempts, result != .apiDisabled, result != .notImplemented {
-                queue.asyncAfter(deadline: .now() + 0.25) { self.setUp(attempt: attempt + 1) }
+                queue.asyncAfter(deadline: .now() + Self.retryDelay) { self.setUp(attempt: attempt + 1) }
             }
             return
         }
