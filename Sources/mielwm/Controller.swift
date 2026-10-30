@@ -65,6 +65,10 @@ final class Controller {
     var tickTimer: Timer?
     var keyCaptureFallback = false
 
+    /// MIELWM_TIMINGS: logs how long each action's moves take, from the action to the last move confirmed.
+    static let logsTimings = ProcessInfo.processInfo.environment["MIELWM_TIMINGS"] != nil
+    var timing: (start: Double, firstMove: Double?, lastPark: Double?, moves: Int, ax: Int)?
+
     // Pointer gestures.
     var panLast: CGPoint?
     var panSamples: [(time: Double, delta: CGVector)] = []
@@ -211,13 +215,14 @@ final class Controller {
     private func step(_ input: CoreInput) {
         let before = state
         let commands = state.send(input)
+        if Self.logsTimings { noteTiming(input, commands) }
         perform(commands, before: before)
         let focusSent = commands.contains { if case .focus = $0 { true } else { false } }
         update(from: before, focusSent: focusSent)
     }
 
     private func perform(_ commands: [WindowCommand], before: CanvasState) {
-        var now: [WindowCommand] = [], later: [(WindowID, WindowCommand, Int)] = []
+        var now: [WindowCommand] = [], later: [(WindowID, WindowCommand, Int)] = [], parksNow = false
         for c in commands {
             switch c {
             case .focus:
@@ -225,25 +230,39 @@ final class Controller {
                 now.append(c)
             case let .setFrame(id, _):
                 commandSerial[id, default: 0] += 1
+                let parking = state.window(id)?.parked == true && before.window(id)?.parked == false
                 // Going to a park slot with no live stream: take a still first, so the overview has a picture.
-                if renderer != nil, !streamsLive, state.window(id)?.parked == true, before.window(id)?.parked == false {
+                if renderer != nil, !streamsLive, parking {
                     later.append((id, c, commandSerial[id]!))
                 } else {
+                    parksNow = parksNow || parking
                     now.append(c)
                 }
             }
         }
         if !now.isEmpty { registry.perform(now) }
+        if parksNow { timing?.lastPark = CACurrentMediaTime() }
         guard !later.isEmpty else { return }
         var done = false
         let finish = { [weak self] in
             guard let self, !done else { return }
             done = true
+            self.timing?.lastPark = CACurrentMediaTime()
             // A newer command for the same window wins.
             self.registry.perform(later.filter { self.commandSerial[$0.0] == $0.2 }.map(\.1))
         }
         capture.captureStills(later.map(\.0), scale: stillScale) { MainActor.assumeIsolated { finish() } }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { MainActor.assumeIsolated { finish() } }
+    }
+
+    /// MIELWM_TIMINGS: an action starts the clock; the moves it causes, now or when its flight lands, count.
+    private func noteTiming(_ input: CoreInput, _ commands: [WindowCommand]) {
+        let now = CACurrentMediaTime()
+        if case .action = input, timing?.firstMove == nil { timing = (now, nil, nil, 0, axCalls.withLock { $0 }) }
+        let moves = commands.filter { if case .setFrame = $0 { true } else { false } }.count
+        guard moves > 0, timing != nil else { return }
+        timing!.moves += moves
+        if timing!.firstMove == nil { timing!.firstMove = now }
     }
 
     /// What follows every input: overlays, keyboard, tap, files, ticking.
@@ -262,6 +281,12 @@ final class Controller {
             } else if overlayShown, restingSince == nil, fadeStart == nil {
                 restingSince = state.now
             }
+        }
+        if let t = timing, let first = t.firstMove, !state.movesInFlight, state.animator.isSettled {
+            timing = nil
+            let ms = { (end: Double) in String(format: "%.0f ms", (end - t.start) * 1000) }
+            log("timing: \(t.moves) moves, first after \(ms(first)), last park after \(t.lastPark.map(ms) ?? "none"), "
+                + "all confirmed after \(ms(CACurrentMediaTime())), \(axCalls.withLock { $0 } - t.ax) AX calls")
         }
         updateTap()
         if state.layoutRevision != savedLayoutRevision { scheduleSave() }
