@@ -63,6 +63,8 @@ final class Controller {
     var restingSince: Double?
     var fadeStart: Double?
     var tickTimer: Timer?
+    var wakeTimer: Timer? // one tick at `wakeAt`
+    var wakeAt: Double?
     var keyCaptureFallback = false
 
     // Pointer gestures.
@@ -149,6 +151,8 @@ final class Controller {
         configWatcher?.stop()
         tickTimer?.invalidate()
         tickTimer = nil
+        wakeTimer?.invalidate()
+        wakeTimer = nil
         gate?.timeout.cancel()
         gate = nil
         hideOverlays()

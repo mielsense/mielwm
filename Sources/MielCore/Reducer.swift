@@ -83,6 +83,9 @@ public extension CanvasState {
         isOverview || isPanning || !animator.isSettled || overview.switcherRevealed(now: now)
     }
 
+    /// When a tick is next due while `needsTicks` is false: a window waits to go back where it belongs.
+    var nextWake: Double? { windows.compactMap(\.retryAt).min() }
+
     /// Some setFrame we sent is not confirmed yet (the landing fade waits for it).
     var movesInFlight: Bool { windows.contains { $0.expected != nil } }
 }
@@ -99,11 +102,20 @@ extension CanvasState {
             if let report = windows[i].pending {
                 windows[i].pending = nil
                 judge(i, report, answering: true)
+            } else if !e.resent, !windows[i].real.isClose(to: e.frame, tolerance: Self.frameTolerance) {
+                setFrame(i, e.frame) // no report at all: the app may have dropped it, so once more
+                windows[i].expected?.resent = true
             }
+        }
+        for i in windows.indices {
+            guard let t = windows[i].retryAt, now >= t else { continue }
+            windows[i].retryAt = nil
+            windows[i].reparkedAt = now // the app's answer to this try counts on from it
+            sync([windows[i].id], force: true)
         }
         if let g = graceUntil, now >= g { // (h) the screens settled: put everything where it belongs
             graceUntil = nil
-            for i in windows.indices { windows[i].expected = nil; windows[i].pending = nil }
+            for i in windows.indices { windows[i].expected = nil; windows[i].pending = nil; windows[i].sent = [] }
             sync(force: true)
         }
         if toast != nil, now >= toastUntil { toast = nil }
@@ -113,7 +125,9 @@ extension CanvasState {
     // MARK: System events
 
     mutating func handle(_ event: SystemEvent) {
-        defer { // the search list follows windows coming, going and being renamed
+        defer {
+            refocusIfLost() // the focused window may have closed, minimized or hidden
+            // The search list follows windows coming, going and being renamed.
             switch event {
             case .windowFrameChanged, .windowFocused, .screensChanged: break
             default:
@@ -126,7 +140,7 @@ extension CanvasState {
         switch event {
         case let .windowAppeared(snapshot): appeared(snapshot)
         case let .windowClosed(id): remove { $0.id == id }
-        case let .windowFrameChanged(id, frame): frameChanged(id, frame)
+        case let .windowFrameChanged(id, frame, dragging): frameChanged(id, frame, dragging: dragging)
         case let .windowTitleChanged(id, title):
             guard let i = index(id) else { return }
             windows[i].title = title
@@ -162,12 +176,25 @@ extension CanvasState {
             mru.remove(id)
             fills[id] = nil
             fullscreens[id] = nil
-            if focused == id { focused = nil }
             if selection == id { selection = nil }
             if dragging == id { dragging = nil; dropIndicator = nil }
             leave(id) // the rest of its workspace tiles again
         }
         layoutRevision += 1
+    }
+
+    /// The focused window closed, minimized or hid. macOS focuses a window of
+    /// its choosing, often one parked on another workspace, so the most
+    /// recent window on screen takes focus instead. With none, nothing does
+    /// and macOS's pick is ignored for a moment: the camera stays.
+    mutating func refocusIfLost() {
+        guard let f = focused, !(window(f)?.isShown ?? false) else { return }
+        focused = nil
+        if let next = mru.sorted(windows.filter { $0.isShown && isFullyVisible($0) }.map(\.id)).first {
+            focusWindow(next)
+        } else {
+            expectedFocus = (f, now + Self.focusLifetime) // a focus nobody gets, to hold off the others
+        }
     }
 
     /// (f) A new window: a saved spot (and workspace) wins; one found in a
@@ -190,7 +217,7 @@ extension CanvasState {
                               isMinimized: s.isMinimized, isFullScreen: s.isFullScreen, isResizable: s.isResizable, real: s.frame)
         let ordinal = windows.filter { $0.bundleID == s.bundleID && $0.displayTitle == w.displayTitle }.count
         var restored: SavedWindow?
-        if now < restoreUntil, let saved, let k = saved.match(bundleID: s.bundleID, title: w.displayTitle, ordinal: ordinal, excluding: claimed) {
+        if now < restoreUntil, let saved, let k = saved.match(id: s.id, bundleID: s.bundleID, title: w.displayTitle, ordinal: ordinal, excluding: claimed) {
             claimed.insert(k)
             w.frame = saved.windows[k].frame
             if saved.version >= 2 { restored = saved.windows[k] } // older layouts knew no workspaces
@@ -220,28 +247,35 @@ extension CanvasState {
     /// (a) Our own moves come back as reports: one that matches what we asked
     /// for is ignored, never adopted. While an expectation lives (size, then
     /// position, then size again gives three reports) only the newest report
-    /// is kept, and judged if the expectation lapses without a match.
-    mutating func frameChanged(_ id: WindowID, _ frame: CGRect) {
+    /// is kept, and judged if the expectation lapses without a match. A late
+    /// report of an earlier move of ours (a busy app, many windows moving at
+    /// once) is ignored too, unless the user is dragging or the window is parked.
+    mutating func frameChanged(_ id: WindowID, _ frame: CGRect, dragging: Bool) {
         guard let i = index(id) else { return }
         windows[i].real = frame
         if windows[i].isFullScreen { return } // the screen-sized frame is not a resize to adopt
         if graceUntil != nil { return } // (h) macOS shuffles windows while screens change
-        if let e = windows[i].expected, now <= e.deadline {
-            if frame.isClose(to: e.frame, tolerance: Self.frameTolerance) {
-                windows[i].expected = nil
-                windows[i].pending = nil
-            } else {
-                windows[i].pending = frame
-            }
+        let live = windows[i].expected.flatMap { now <= $0.deadline ? $0 : nil }
+        if let live, frame.isClose(to: live.frame, tolerance: Self.frameTolerance) {
+            windows[i].expected = nil
+            windows[i].pending = nil
+            return
+        }
+        // Not for a parked window: an app pulling it back to a frame we set before is the fight `judge` handles.
+        if !dragging, !windows[i].parked, windows[i].sent.contains(where: { now <= $0.deadline && frame.isClose(to: $0.frame, tolerance: Self.frameTolerance) }) {
+            return
+        }
+        if live != nil {
+            windows[i].pending = frame
             return
         }
         windows[i].expected = nil
-        judge(i, frame, answering: false)
+        judge(i, frame, answering: false, dragging: dragging)
     }
 
     /// A report that did not match: the newest one left when a move we
-    /// asked for lapsed (`answering`), or one nobody asked for.
-    mutating func judge(_ i: Int, _ frame: CGRect, answering: Bool) {
+    /// asked for lapsed (`answering`), or one nobody asked for, `dragging` when the mouse button was down.
+    mutating func judge(_ i: Int, _ frame: CGRect, answering: Bool, dragging: Bool = false) {
         let id = windows[i].id
         if windows[i].pinned != nil { // moved while pinned: it stays pinned there
             windows[i].pinned = frame
@@ -252,16 +286,15 @@ extension CanvasState {
             // Another report of its own slot (repeats, stray moves) confirms the park.
             if frame.isClose(to: desiredFrame(windows[i]).frame, tolerance: Self.frameTolerance) { return }
             // (c) An app pulled a parked window back, or resized it: keep the
-            // new size and park it again; after two tries, let it be.
+            // new size and park it again. After two tries in a row, wait 1, 2,
+            // 4, 8 and 16 seconds before the next, then leave it until the
+            // camera moves again: it still belongs off screen.
             if !sameSize { windows[i].frame.size = frame.size }
-            if windows[i].reparks < Self.maxReparks {
-                windows[i].reparks += 1
+            let n = countRepark(i)
+            if n <= Self.maxReparks {
                 sync([id], force: true)
-            } else {
-                windows[i].frame = deskCamera.toCanvas(frame, deskCenter: deskCenter)
-                windows[i].parked = false
-                windows[i].reparks = 0
-                layoutRevision += 1
+            } else if windows[i].retryAt == nil, n <= Self.maxReparks + Self.maxRetries {
+                windows[i].retryAt = now + pow(2, Double(n - Self.maxReparks - 1))
             }
             return
         }
@@ -276,8 +309,14 @@ extension CanvasState {
             return
         }
         // (b) The user dragged it, or the app moved or resized itself: adopt.
-        // A tiled window keeps its tile, or moves the edge it shares with a neighbour.
-        if windows[i].workspace != nil { return userChangedTile(i, to: deskCamera.toCanvas(frame, deskCenter: deskCenter)) }
+        // A tiled window keeps its tile, or the user drags the edge it shares with a neighbour.
+        if windows[i].workspace != nil {
+            if dragging, sameSize { // by its title bar: back once the reports stop, without counting as a try
+                windows[i].retryAt = now + dragGrace
+                return
+            }
+            return userChangedTile(i, to: deskCamera.toCanvas(frame, deskCenter: deskCenter), resizing: dragging)
+        }
         windows[i].frame = deskCamera.toCanvas(frame, deskCenter: deskCenter)
         if fills[id].map({ !frame.size.isClose(to: $0.filled.size) }) ?? false { fills[id] = nil }
         layoutRevision += 1
@@ -308,17 +347,13 @@ extension CanvasState {
         let old = deskCenter
         screens = new
         let shift = CGVector(dx: deskCenter.x - old.x, dy: deskCenter.y - old.y)
-        func moved(_ c: Camera) -> Camera { Camera(center: CGPoint(x: c.center.x + shift.dx, y: c.center.y + shift.dy), zoom: c.zoom) }
-        deskCamera = moved(deskCamera)
-        returnCamera = returnCamera.map(moved)
-        let target = moved(animator.target)
-        animator.warp(to: moved(animator.camera), now: now)
-        animator.fly(to: target, now: now)
+        moveCameras { Camera(center: CGPoint(x: $0.center.x + shift.dx, y: $0.center.y + shift.dy), zoom: $0.zoom) }
         if let id = activeScreenID, !new.contains(where: { $0.id == id }) { activeScreenID = nil }
         for k in workspaces.indices where !new.contains(where: { $0.id == workspaces[k].screenID }) {
             workspaces[k].screenID = nil // its screen left: it lays out for the primary one
             retile(workspaces[k].slot)
         }
+        widenSlots()
         graceUntil = now + Self.screenGracePeriod
         sync()
     }
@@ -335,6 +370,15 @@ extension CanvasState {
     }
 
     // MARK: Camera moves
+
+    /// Every camera, at rest or flying, through `moved`.
+    mutating func moveCameras(_ moved: (Camera) -> Camera) {
+        deskCamera = moved(deskCamera)
+        returnCamera = returnCamera.map(moved)
+        let target = moved(animator.target)
+        animator.warp(to: moved(animator.camera), now: now)
+        animator.fly(to: target, now: now)
+    }
 
     mutating func fly(to camera: Camera, transition: Double? = nil, velocity: CGVector? = nil) {
         animator.fly(to: camera, transition: transition, now: now, velocity: velocity)
@@ -423,7 +467,7 @@ extension CanvasState {
             if let ws = workspace(of: id), let tile = tiles(ws).first(where: { $0.id == id })?.frame {
                 dragging = nil
                 dropIndicator = nil
-                if !windows[i].frame.size.isClose(to: tile.size) { return userChangedTile(i, to: windows[i].frame) } // resized
+                if !windows[i].frame.size.isClose(to: tile.size) { return userChangedTile(i, to: windows[i].frame, resizing: true) } // resized
                 // Dropped on a workspace: it moves there (or within it); on open canvas it floats there.
                 if let spot = dropSpot(i) { return join(id, spot.slot, at: spot.position) }
                 leave(id)

@@ -28,16 +28,31 @@ public struct SlotGrid: Hashable, Codable, Sendable {
         self.step = step
     }
 
-    /// Slot 1 where the primary screen is, the rest to the right. The step is the whole desk plus a gap,
-    /// so whichever screen a workspace is shown on, its neighbours stay off every screen.
+    /// Slot 1 where the primary screen is, the rest to the right.
     init(screens: [ScreenInfo], camera: Camera) {
         let primary = primaryScreen(screens)?.frame ?? .zero
         let p = camera.toCanvas(primary.origin, deskCenter: deskCenter(screens))
         origin = CGPoint(x: p.x.rounded(), y: p.y.rounded())
-        step = (deskRect(screens).isNull ? primary.width : deskRect(screens).width).rounded() + 240
+        step = Self.step(for: screens)
+    }
+
+    /// Far enough apart that whichever screen a workspace is shown on, its
+    /// neighbours stay off every screen, plus a gap: the one before, shown on
+    /// the rightmost screen and as wide as the widest, clears the desk's left
+    /// end. That is at least the desk's width, so the next one clears it too.
+    static func step(for screens: [ScreenInfo]) -> CGFloat {
+        let desk = deskRect(screens)
+        guard !desk.isNull else { return 240 }
+        let reach = screens.map { $0.frame.minX - desk.minX }.max()! + screens.map(\.frame.width).max()!
+        return reach.rounded() + 240
     }
 
     func origin(_ slot: Int) -> CGPoint { CGPoint(x: origin.x + CGFloat(slot - 1) * step, y: origin.y) }
+
+    /// How far canvas `x` moves to keep its place in its slot when the slots are `step` apart.
+    func shift(_ x: CGFloat, toStep step: CGFloat) -> CGFloat {
+        max(0, ((x - origin.x) / self.step).rounded(.down)) * (step - self.step)
+    }
 }
 
 /// The screen with the menu bar (global origin 0,0), else the first.
@@ -251,7 +266,6 @@ extension CanvasState {
             }
             guard windows[i].frame != f else { continue }
             windows[i].frame = f
-            windows[i].reparks = 0 // a new tile gets new tries
             moved.insert(id)
         }
         guard !moved.isEmpty else { return }
@@ -261,6 +275,37 @@ extension CanvasState {
 
     mutating func retileAll() {
         for ws in workspaces { retile(ws.slot) }
+    }
+
+    /// Screens wider than the slots were spaced for (a display came, or the
+    /// layout was saved with other ones): the slots move apart. Windows, the
+    /// cameras and every frame kept to go back to (undo, fill, fullscreen,
+    /// the saved layout) keep their place in their slot.
+    mutating func widenSlots() {
+        let step = SlotGrid.step(for: screens), old = slots
+        guard step > old.step else { return }
+        let before = self // where each camera rests is read off the old grid
+        moveCameras { c in
+            let x = before.restingSlot(c).map { old.origin($0.slot).x } ?? c.center.x
+            return Camera(center: CGPoint(x: c.center.x + old.shift(x, toStep: step), y: c.center.y), zoom: c.zoom)
+        }
+        func moved(_ r: CGRect) -> CGRect { r.offsetBy(dx: old.shift(r.midX, toStep: step), dy: 0) }
+        for i in windows.indices {
+            windows[i].frame = moved(windows[i].frame)
+            windows[i].floatingFrame = windows[i].floatingFrame.map(moved)
+        }
+        fills = fills.mapValues { RestoreEntry(before: moved($0.before), filled: moved($0.filled)) }
+        fullscreens = fullscreens.mapValues { FullscreenEntry(before: moved($0.before), suspended: $0.suspended) }
+        func moved(_ e: UndoEntry) -> UndoEntry { UndoEntry(frames: e.frames.mapValues(moved), workspaces: e.workspaces) }
+        undoStack = undoStack.map(moved)
+        redoStack = redoStack.map(moved)
+        if var s = saved {
+            for k in s.windows.indices { s.windows[k].frame = moved(s.windows[k].frame) }
+            saved = s
+        }
+        slots.step = step
+        layoutRevision += 1
+        retileAll()
     }
 
     // MARK: Cameras
@@ -315,14 +360,14 @@ extension CanvasState {
 
     // MARK: The user moved or resized a tiled window
 
-    /// A resize along the split axis moves the edge it shares with the
-    /// neighbour that way; anything else snaps back to the tile. An app that
-    /// keeps refusing gets its way after a couple of tries.
-    mutating func userChangedTile(_ i: Int, to frame: CGRect) {
+    /// A resize along the split axis by the user (`resizing`) moves the edge
+    /// it shares with the neighbour that way; anything else snaps back to the
+    /// tile. An app that keeps refusing gets its way after a couple of tries.
+    mutating func userChangedTile(_ i: Int, to frame: CGRect, resizing: Bool) {
         let id = windows[i].id
         guard let ws = workspace(of: id) else { return }
         let t = tiles(ws)
-        if ws.mode == .tiles, fills[id] == nil, fullscreens[id] == nil, let p = t.firstIndex(where: { $0.id == id }) {
+        if resizing, ws.mode == .tiles, fills[id] == nil, fullscreens[id] == nil, let p = t.firstIndex(where: { $0.id == id }) {
             let h = isHorizontal(ws), tile = t[p].frame
             let length = h ? frame.width : frame.height, old = h ? tile.width : tile.height
             if abs(length - old) > Self.frameTolerance {
@@ -339,15 +384,14 @@ extension CanvasState {
                 }
             }
         }
-        retile(ws.slot) // a gesture may have moved the canvas frame
-        guard let j = index(id) else { return }
-        if windows[j].reparks < Self.maxReparks {
-            windows[j].reparks += 1
-            sync([id], force: true)
-        } else {
-            windows[j].frame.size = frame.size
+        // Given in: the tile keeps the size the app insists on. Retiling first would undo that and fight again.
+        guard countRepark(i) <= Self.maxReparks else {
+            windows[i].frame.size = frame.size
             layoutRevision += 1
+            return
         }
+        retile(ws.slot) // a gesture may have moved the canvas frame
+        sync([id], force: true)
     }
 
     /// Weights become tile lengths with `id` at `length`; `neighbour` (else
