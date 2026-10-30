@@ -10,6 +10,7 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 - Windows that open while an app is busy no longer get lost. mielwm reads every app's window list again every 5 seconds and when you switch to an app.
 - A window an app closed without telling mielwm no longer leaves an empty tile behind.
 - Apps that take a long time to start, or that turn into regular apps after they start, get their windows managed.
+- Windows that open as a dialog and then become normal windows get tiled.
 - `mielwm refresh` also reads every app's window list again.
 
 ## 0.1.0

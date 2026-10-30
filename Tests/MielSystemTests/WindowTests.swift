@@ -279,6 +279,17 @@ struct WindowTests {
         #expect(s.steps.map(\.event) == ["closed"])
     }
 
+    @Test func aWindowThatBecomesStandardIsAnnouncedAgain() async throws {
+        let s = try Session([CGRect(x: 260, y: 220, width: 400, height: 280)], options: ["--untitled", "--still"])
+        defer { s.end() }
+        let id = try #require(try await s.start(count: 1).first).id
+        #expect(s.registry.windows[id]?.isStandard == false)
+        kill(s.pid, SIGUSR2) // gives it a title bar
+        try await Task.sleep(for: .milliseconds(300))
+        s.registry.refresh()
+        #expect(await s.until { s.registry.windows[id]?.isStandard == true })
+    }
+
     /// A close whose notification never arrives (the observer thread is blocked) is caught by a rescan.
     @Test func rescanClosesAWindowWhoseNotificationWasMissed() async throws {
         let s = try Session([CGRect(x: 280, y: 240, width: 400, height: 280), CGRect(x: 720, y: 240, width: 400, height: 280)],

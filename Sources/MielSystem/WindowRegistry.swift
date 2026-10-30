@@ -236,6 +236,9 @@ final class AppTracker {
     private var elements: [WindowID: AXUIElement] = [:]
     private var ids: [AXUIElement: WindowID] = [:]
     private var fullScreen: Set<WindowID> = []
+    /// Not standard or not movable when last read, so Core skips them. Rescans
+    /// read them again: some apps report AXUnknown or AXDialog at first.
+    private var ignored: Set<WindowID> = []
 
     init(pid: pid_t, bundleID: String?, appName: String, observerThread: RunLoopThread,
          post: @escaping (SystemEvent) -> Void) {
@@ -339,18 +342,26 @@ final class AppTracker {
         queue.async { self.observer == nil ? self.setUp(attempt: Self.attempts) : self.scan() } // a last attempt, no retries
     }
 
-    /// Re-reads the window list: announces new windows, closes destroyed ones.
-    /// A window missing from the list but still alive (on another Space, say) stays.
+    /// Re-reads the window list: announces new windows and ignored ones that
+    /// became standard, closes destroyed ones. A window missing from the list
+    /// but still alive (on another Space, say) stays.
     func scan() {
         guard observer != nil, let current = app.value(kAXWindowsAttribute) as? [AXUIElement] else { return }
         let live = Set(current.compactMap(adopt))
         for (id, element) in elements where !live.contains(id) && element.isGone { forget(id, element) }
+        for id in ignored.intersection(live) {
+            guard let element = elements[id], let snapshot = snapshot(element, id), !isIgnored(snapshot) else { continue }
+            ignored.remove(id)
+            if snapshot.isFullScreen { fullScreen.insert(id) }
+            post(.windowAppeared(snapshot))
+        }
     }
 
     private func forget(_ id: WindowID, _ element: AXUIElement) {
         elements[id] = nil
         ids[element] = nil
         fullScreen.remove(id)
+        ignored.remove(id)
         post(.windowClosed(id))
     }
 
@@ -415,6 +426,7 @@ final class AppTracker {
         elements[id] = element
         ids[element] = id
         if snapshot.isFullScreen { fullScreen.insert(id) }
+        if isIgnored(snapshot) { ignored.insert(id) }
         if let observer, let refcon {
             for name in windowNotifications {
                 AXObserverAddNotification(observer, element, name as CFString, refcon.toOpaque())
@@ -424,8 +436,8 @@ final class AppTracker {
         return id
     }
 
-    /// shortcut: role and subrole are read once, when the window appears. If
-    /// an app turns out to report AXUnknown first, re-read them on a later event.
+    private func isIgnored(_ s: WindowSnapshot) -> Bool { !s.isStandard || !s.isMovable }
+
     private func snapshot(_ element: AXUIElement, _ id: WindowID) -> WindowSnapshot? {
         let v = element.values([kAXRoleAttribute, kAXSubroleAttribute, kAXTitleAttribute,
                                 kAXPositionAttribute, kAXSizeAttribute, kAXMinimizedAttribute, kAXFullScreen])
