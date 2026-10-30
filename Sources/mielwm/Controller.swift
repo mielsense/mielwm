@@ -64,6 +64,7 @@ final class Controller {
     var fadeStart: Double?
     var tickTimer: Timer?
     var rescanTimer: Timer?
+    var rescanPauses: Set<String> = [] // "displays" asleep, "session" inactive
     var keyCaptureFallback = false
 
     // Pointer gestures.
