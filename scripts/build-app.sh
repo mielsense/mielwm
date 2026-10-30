@@ -50,6 +50,8 @@ echo "== swift build -c release"
 SDK_VERSION=$(xcrun --sdk macosx --show-sdk-version)
 # The oldest macOS, from Package.swift's .macOS(.vNN).
 MIN_MACOS=$(sed -n 's/.*\.macOS(\.v\([0-9]*\)).*/\1/p' Package.swift).0
+# A miss would link minos 0.0 and ship an app that claims to run on any macOS.
+[[ $MIN_MACOS =~ ^[0-9]+\.0$ ]] || { echo "can't read the macOS version from Package.swift" >&2; exit 1; }
 STAMP=(-Xlinker -platform_version -Xlinker macos -Xlinker "$MIN_MACOS" -Xlinker "$SDK_VERSION")
 # Short output, but a failed build stops here: never sign and ship the last good binary.
 for product in mielwm mielwm-aerospace; do
