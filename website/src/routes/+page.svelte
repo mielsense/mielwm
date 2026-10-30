@@ -221,7 +221,7 @@ scripts/build-app.sh --install`;
 			</div>
 			<div class="grain flex flex-1 items-center justify-center rounded-[16px] px-6 py-10" style:background={mesh.coral}>
 				<div class="w-full max-w-[18rem] overflow-hidden rounded-[10px] shadow-[0_0_0_1px_rgb(0_0_0/0.12),0_18px_40px_-12px_rgb(0_0_0/0.45)]">
-					<Shot name="import" widths={[520]} width={520} height={640} sizes="18rem" alt="The Import from AeroSpace sheet, listing the gaps, layout and rules it found." />
+					<Shot name="import" widths={[520]} width={520} height={736} sizes="18rem" alt="The Import from AeroSpace sheet, listing the gaps, layout and rules it found." />
 				</div>
 			</div>
 		</section>
