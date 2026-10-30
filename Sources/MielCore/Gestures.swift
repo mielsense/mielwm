@@ -33,8 +33,8 @@ extension CanvasState {
                 dragging = id
             }
             let z = isOverview ? animator.camera.zoom : 1
-            if windows[i].pinned != nil {
-                windows[i].pinned = windows[i].pinned!.offsetBy(delta)
+            if let pin = windows[i].pinned {
+                windows[i].pinned = pin.offsetBy(delta)
             } else {
                 windows[i].frame = windows[i].frame.offsetBy(dx: delta.dx / z, dy: delta.dy / z)
             }
