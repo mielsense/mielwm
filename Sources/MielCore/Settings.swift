@@ -44,6 +44,8 @@ public struct Settings: Hashable, Codable, Sendable {
     public var floatingApps = "com.apple.systempreferences,com.apple.ActivityMonitor,com.apple.calculator,com.apple.archiveutility"
     /// "bundle.id=N" pairs, comma separated: windows of that app open on workspace N.
     public var workspaceRules = ""
+    /// layout:stack_peek: points each window behind a stack's front one shows of its edge (AeroSpace's accordion padding).
+    public var stackPeek = 0.0
     /// `rules:<name>:<field>` entries: windows matched by app name or title (WindowRules.swift).
     public var windowRules: [String: WindowRule] = [:]
     /// Going to the workspace you are on goes back to the one before (AeroSpace's --auto-back-and-forth).
@@ -62,6 +64,9 @@ public struct Settings: Hashable, Codable, Sendable {
 
     /// menubar:style. The old menubar:workspaces = false still means the icon.
     public var menuBarStyle = MenuBarStyle.all
+
+    /// notices:workspace: switching workspaces shows their numbers at the bottom of the display for a moment.
+    public var workspaceNotice = true
 
     /// integrations:barik: Barik's menu bar shows mielwm's workspaces (docs/aerospace.md).
     public var barik = false

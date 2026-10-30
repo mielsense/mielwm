@@ -97,6 +97,20 @@ func settingsPreview(_ args: [String]) -> Never {
                 pump(0.4)
                 savePNG(settings.window, to: out.appendingPathComponent(file + "-end.png"))
             }
+            // The glass style picker sits where the first view ends: a view of it on its own, taken from the screen.
+            if pane == .appearance, let scroll = detailScrollView(in: settings.window.contentView), let doc = scroll.documentView {
+                let y = 420.0
+                doc.scroll(NSPoint(x: 0, y: doc.isFlipped ? y : doc.frame.height - y - scroll.contentView.bounds.height))
+                pump(0.4)
+                // From the screen: Liquid glass renders only there, not in an offscreen copy of the view.
+                settings.window.orderFrontRegardless()
+                pump(0.4)
+                let shot = Process()
+                shot.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+                shot.arguments = ["-x", "-o", "-l", String(settings.window.windowNumber), out.appendingPathComponent(file + "-glass.png").path]
+                try? shot.run()
+                shot.waitUntilExit()
+            }
         }
         // The AeroSpace import, as the AeroSpace & Barik pane asks about it.
         if let toml = AeroSpaceImport.standardURL().flatMap({ try? String(contentsOf: $0, encoding: .utf8) }) {
@@ -208,11 +222,7 @@ private func saveMenuPreview(to url: URL) {
     let rect = "\(Int(at.x) - 12),\(Int(screen.frame.maxY - at.y) - 12),\(Int(menu.size.width) + 24),\(Int(menu.size.height) + 24)"
     nonisolated(unsafe) let open = menu // the timer fires on the main thread, inside the menu's tracking loop
     let timer = Timer(timeInterval: 0.6, repeats: false) { _ in
-        let shot = Process()
-        shot.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-        shot.arguments = ["-x", "-R", rect, url.path]
-        try? shot.run()
-        shot.waitUntilExit()
+        screencapture(rect, to: url)
         open.cancelTracking()
     }
     RunLoop.main.add(timer, forMode: .common)
@@ -259,6 +269,15 @@ private func saveMenuBarPreview(dark: Bool, to url: URL) {
     }
     NSGraphicsContext.restoreGraphicsState()
     try? canvas.representation(using: .png, properties: [:])?.write(to: url)
+}
+
+/// The screen region "x,y,width,height" (points from the primary display's top-left) as a PNG.
+func screencapture(_ region: String, to url: URL) {
+    let shot = Process()
+    shot.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+    shot.arguments = ["-x", "-R", region, url.path]
+    try? shot.run()
+    shot.waitUntilExit()
 }
 
 /// Runs AppKit's event loop for `seconds`, as NSApp.run would: windows

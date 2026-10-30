@@ -17,6 +17,7 @@ final class Overlay {
     let screenID: UInt32
     let window: OverlayWindow
     let view: OverlayView
+    let chrome = OverlayChrome() // the HUD as native views above the canvas
 
     init(screenID: UInt32, controller: Controller, device: MTLDevice) {
         self.screenID = screenID
@@ -31,7 +32,13 @@ final class Overlay {
         window.isReleasedWhenClosed = false
         window.acceptsMouseMovedEvents = true
         window.animationBehavior = .none
-        window.contentView = view
+        let container = NSView()
+        container.wantsLayer = true
+        for v in [view, chrome] as [NSView] {
+            v.autoresizingMask = [.width, .height]
+            container.addSubview(v)
+        }
+        window.contentView = container
     }
 
     func place(on screen: ScreenInfo) {
@@ -61,8 +68,8 @@ final class Overlay {
     }
 
     func hide() {
+        chrome.clear()
         view.link?.isPaused = true
-        view.showCaret(nil)
         window.orderOut(nil)
     }
 
@@ -84,14 +91,12 @@ final class Overlay {
         idleFrames = 0
         guard let drawable = view.metal.nextDrawable() else { return }
         renderer.draw(scene, frames: frames, into: drawable)
-        view.showCaret(renderer.caret(screenID: screenID))
     }
 }
 
 final class OverlayView: NSView, NSTextInputClient {
     let screenID: UInt32
     private(set) var metal = CAMetalLayer()
-    private let caret = CALayer()
     var link: CADisplayLink?
     private weak var controller: Controller?
     private var marked = ""
@@ -114,39 +119,9 @@ final class OverlayView: NSView, NSTextInputClient {
         metal.maximumDrawableCount = 3
         metal.contentsScale = scale
         metal.frame = bounds
-        metal.addSublayer(caret)
         layer = metal // layer-hosting: we size and scale it ourselves
         resize()
     }
-
-    /// The search field's caret, blinked by Core Animation like the system's, so an
-    /// idle field costs no frames; it restarts on (solid while typing) when it moves.
-    func showCaret(_ c: (rect: CGRect, alpha: Double, color: SIMD4<Float>)?) {
-        CATransaction.begin()
-        CATransaction.setDisableActions(true)
-        defer { CATransaction.commit() }
-        caret.isHidden = c == nil
-        guard let c else { return }
-        let s = metal.contentsScale
-        let frame = CGRect(x: c.rect.minX / s, y: c.rect.minY / s, width: c.rect.width / s, height: c.rect.height / s) // the flipped view flips its layer too
-        let space = window?.screen?.colorSpace?.cgColorSpace ?? CGColorSpace(name: CGColorSpace.sRGB)! // the frames are not color matched
-        caret.backgroundColor = CGColor(colorSpace: space, components: [CGFloat(c.color.x), CGFloat(c.color.y), CGFloat(c.color.z), CGFloat(c.alpha)])
-        guard caret.frame != frame || caret.animation(forKey: "blink") == nil else { return }
-        caret.frame = frame
-        caret.add(Self.blink, forKey: "blink")
-    }
-
-    /// On, a quick fade out, off, a fade back in: the caret the renderer draws in snapshots.
-    private static let blink: CAKeyframeAnimation = {
-        let a = CAKeyframeAnimation(keyPath: "opacity")
-        a.values = [1, 1, 0, 0, 1]
-        a.keyTimes = [0, 0.42, 0.5, 0.92, 1]
-        let linear = CAMediaTimingFunction(name: .linear), ease = CAMediaTimingFunction(name: .easeInEaseOut)
-        a.timingFunctions = [linear, ease, linear, ease]
-        a.duration = 1.06
-        a.repeatCount = .infinity
-        return a
-    }()
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError() }
@@ -218,8 +193,8 @@ final class OverlayView: NSView, NSTextInputClient {
 
     /// Where input method windows appear: the search field near the top.
     func firstRect(forCharacterRange range: NSRange, actualRange: NSRangePointer?) -> NSRect {
-        guard let window, let look = controller?.state.look else { return .zero }
-        let field = NSRect(x: bounds.midX - 200, y: bounds.height * look.paletteTop, width: 400, height: look.searchHeight * look.hudScale)
+        guard let window, let controller, let screen = controller.screen(id: screenID) else { return .zero }
+        let field = PaletteMetrics.fieldFrame(controller.state.look, screenSize: bounds.size, topInset: screen.topInset)
         return window.convertToScreen(convert(field, to: nil))
     }
 

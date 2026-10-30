@@ -14,6 +14,12 @@ struct MenuBarPane: View {
             } footer: {
                 Text("While the config file has errors, a warning sign shows instead. The menu lists your workspaces either way.").settingsFooter()
             }
+            Section("On screen") {
+                Toggle(isOn: model.flag("notices:workspace")) {
+                    Text("Show workspace on switch")
+                    Text("The same numbers appear at the bottom of the display for a moment when you switch.")
+                }
+            }
         }
     }
 

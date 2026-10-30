@@ -59,9 +59,9 @@ struct AdvancedPane: View {
 
     private var cliNote: String {
         switch model.cliStatus {
-        case let .installed(at): "Installed as \(at). Try “\(CLITool.name) overview”."
+        case let .installed(at): "Installed as \(at). Try \"\(CLITool.name) overview\"."
         case let .taken(at): "\(at) is another file. Install replaces it."
-        case .missing: "Links “\(CLITool.name)” into ~/.local/bin, to drive mielwm from Terminal."
+        case .missing: "Links \"\(CLITool.name)\" into ~/.local/bin, to drive mielwm from Terminal."
         }
     }
 

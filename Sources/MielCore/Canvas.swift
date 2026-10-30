@@ -72,6 +72,8 @@ public struct CanvasState: Sendable {
     public var systemDark = true { didSet { resolveLook() } }
     /// Reduce Motion, Reduce Transparency, Increase Contrast; the app sets them.
     public var accessibility = AccessibilityOptions() { didSet { resolveLook() } }
+    /// macOS 26 and later draw Liquid glass; the app sets it, so Core stays the same on every Mac.
+    public var liquidGlassAvailable = false { didSet { resolveLook() } }
     /// `settings.look` with the accent resolved, kept current so frames and hit tests don't re-resolve it.
     public private(set) var look: Look
     /// The screen the user acts on (pointer or keyboard). The HUD shows there
@@ -93,7 +95,9 @@ public struct CanvasState: Sendable {
     public internal(set) var mru = MRU()
     public internal(set) var overview = OverviewMachine()
     public internal(set) var dropIndicator: CGRect?
-    public internal(set) var toast: String?
+    /// The toast, the workspace pill and the stack strip.
+    public internal(set) var notices = Notices()
+    public var toast: String? { notices.toast?.content }
     /// Bumps when ⌘, (or the tune action) asks for the Settings window's Appearance pane.
     public internal(set) var appearanceRequests = 0
     /// Bumps when frames or the camera settle somewhere new; save the layout then.
@@ -106,7 +110,6 @@ public struct CanvasState: Sendable {
     public internal(set) var previousWorkspace: Int?
     public internal(set) var slots: SlotGrid
 
-    var toastUntil = 0.0
     var returnCamera: Camera?
     var openedCamera: Camera? // where this overview session opened, to tell whether the camera moved since
     var fills: [WindowID: RestoreEntry] = [:]
@@ -158,6 +161,7 @@ public struct CanvasState: Sendable {
         look.reduceMotion = accessibility.reduceMotion
         look.reduceTransparency = accessibility.reduceTransparency
         look.increaseContrast = accessibility.increaseContrast
+        look.liquidGlassAvailable = liquidGlassAvailable
         animator.enabled = settings.animationEnabled && !accessibility.reduceMotion
     }
 
@@ -248,11 +252,9 @@ public struct CanvasState: Sendable {
         var top = m, bottom = size.height - m
         if hudShown, screen.id == activeScreen.id {
             let l = look
-            let topInset = max(screen.safeAreaTop, screen.visibleFrame.minY - screen.frame.minY)
-            let bottomInset = max(0, screen.frame.maxY - screen.visibleFrame.maxY)
-            top = PaletteMetrics.top(l, screenHeight: size.height, topInset: topInset)
+            top = PaletteMetrics.top(l, screenHeight: size.height, topInset: screen.topInset)
                 + PaletteMetrics.height(l, rows: paletteRowsShown, footer: paletteFooterShown) * l.hudScale + m
-            bottom = size.height - PaletteMetrics.hintsMargin(l, bottomInset: bottomInset) - PaletteMetrics.hintsHeight(l) - m
+            bottom = size.height - PaletteMetrics.hintsMargin(l, bottomInset: screen.bottomInset) - PaletteMetrics.hintsHeight(l) - m
         }
         return CGRect(x: m, y: top, width: max(1, size.width - m * 2), height: max(1, bottom - top))
     }
@@ -393,11 +395,13 @@ public struct CanvasState: Sendable {
 
     mutating func raise(_ i: Int) {
         windows.append(windows.remove(at: i))
+        // With peek edges a stack's frames follow its front window.
+        if settings.stackPeek > 0, let ws = workspace(of: windows[windows.count - 1].id), ws.mode == .stack { retile(ws.slot) }
     }
 
     mutating func showToast(_ text: String) {
-        toast = text
-        toastUntil = now + Self.toastDuration
+        notices.toast = Notice(content: text, screenID: activeScreen.id, until: now + Self.toastDuration)
+        notices.toastInOverview = isOverview
     }
 }
 

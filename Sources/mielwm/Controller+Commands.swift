@@ -15,8 +15,7 @@ extension Controller {
 
     var workspaceStatus: WorkspaceStatus {
         let current = state.currentWorkspace.flatMap { $0 <= 9 ? $0 : nil }
-        let numbers = Set(state.workspaces.filter { !$0.members.isEmpty }.compactMap(\.number) + (current.map { [$0] } ?? []))
-        return WorkspaceStatus(numbers: numbers.sorted(), current: current, mode: state.workspaces.first { $0.slot == current }?.mode)
+        return WorkspaceStatus(numbers: state.workspaceNumbers(current: current), current: current, mode: state.workspaces.first { $0.slot == current }?.mode)
     }
 
     func reportWorkspaces() {

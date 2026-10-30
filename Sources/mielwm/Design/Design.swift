@@ -1,4 +1,5 @@
 import AppKit
+import MielCore
 import SwiftUI
 
 /// mielwm's design language for its native windows: Settings, onboarding,
@@ -9,9 +10,11 @@ enum Design {
     /// The pane's name in its header card.
     static let headerTitle = Font.system(size: 22, weight: .semibold)
     /// A row's title, and body text.
-    static let row = Font.system(size: 13)
+    static let row = Font.system(size: rowSize)
     /// Text under a row or a group, the header card's line, labels under thumbnails.
-    static let secondary = Font.system(size: 11)
+    static let secondary = Font.system(size: secondarySize)
+    /// Their sizes, for what AppKit draws and what scales (the overview's chrome, the notices).
+    static let rowSize: CGFloat = 13, secondarySize: CGFloat = 11
 
     // MARK: Spacing, on a 4 pt grid.
 
@@ -80,6 +83,13 @@ enum Design {
         static let padding = EdgeInsets(top: 3, leading: 8, bottom: 3, trailing: 8)
         static let minHeight: CGFloat = 22
         static let rest = 0.05, hover = 0.09
+        /// On glass the backdrop shows through, so 5% vanishes: the cap needs more to keep its shape.
+        static let onGlass = 0.12
+    }
+
+    /// A floating pill with one line in it: a toast in the overview or over the desktop.
+    enum Pill {
+        static let height: CGFloat = 36
     }
 
     // MARK: Motion
@@ -92,15 +102,12 @@ enum Design {
     // MARK: Materials
 
     /// What floats over content: Liquid Glass on macOS 26, frosted material before.
-    /// The overview's "Glass style" setting (`appearance:glass`) will choose between them once it exists.
-    enum Glass: String {
-        case liquid, frosted
+    /// The overview's "Glass style" setting (`appearance:glass`) chooses between them.
+    typealias Glass = GlassStyle
+}
 
-        static var systemDefault: Glass {
-            if #available(macOS 26, *) { return .liquid }
-            return .frosted
-        }
-    }
+extension GlassStyle {
+    static var systemDefault: GlassStyle { Controller.liquidGlassAvailable ? .liquid : .frosted }
 }
 
 extension View {

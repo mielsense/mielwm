@@ -9,14 +9,29 @@ import Foundation
 /// The search palette's layout in points (times look.hudScale). Render draws
 /// with these and the camera aims below them, so the two agree.
 public enum PaletteMetrics {
-    public static let listInset = 6.0 // above and below the rows, and beside them
-    public static let footerHeight = 30.0
-    public static let panelExtraRadius = 6.0 // the panel's corners are rounder than its rows'
+    public static let listInset = 8.0 // above and below the rows, and beside them
+    public static let footerHeight = 28.0
+    public static let cardGap = 8.0 // between the field and the card of results below it
+    public static let helpWidth = 1040.0 // the shortcuts sheet is wider than the field, for three columns
+    public static let cardRadius = 20.0 // the card's corners; its rows' are this minus listInset, so they share a centre
 
-    /// Height of the search panel with `rows` result rows (0: the field alone).
+    /// Height of the field (a capsule) and, with `rows` result rows, the card below it.
+    /// The camera keeps the canvas clear of this, so both renderers size the card with `cardHeight`.
     public static func height(_ look: Look, rows: Int, footer: Bool) -> Double {
         guard rows > 0 else { return look.searchHeight }
-        return look.searchHeight + listInset * 2 + Double(rows) * look.rowHeight + (footer ? footerHeight : 0)
+        return look.searchHeight + cardGap + cardHeight(look, rows: rows, footer: footer)
+    }
+
+    /// The card of results below the field: its inset, `rows` rows and the "more results" footer.
+    public static func cardHeight(_ look: Look, rows: Int, footer: Bool) -> Double {
+        listInset * 2 + Double(rows) * look.rowHeight + (footer ? footerHeight : 0)
+    }
+
+    /// The ⌥Tab switcher's icons that fit `maxTiles` across: the selected one
+    /// (clamped), and the first shown, keeping the selection near the middle.
+    public static func switcherWindow(count: Int, selected: Int?, maxTiles: Int) -> (first: Int, shown: Int, selected: Int) {
+        let shown = min(count, max(1, maxTiles)), selected = min(max(selected ?? 0, 0), count - 1)
+        return (max(0, min(selected - shown / 2, count - shown)), shown, selected)
     }
 
     /// The palette's top edge, in points from the screen's top; `topInset` is the notch or menu bar.
@@ -24,11 +39,66 @@ public enum PaletteMetrics {
         max(screenHeight * look.paletteTop, topInset + 12 * look.hudScale)
     }
 
+    /// The search field, the capsule at the top, in points from the screen's top-left.
+    public static func fieldFrame(_ look: Look, screenSize: CGSize, topInset: Double) -> CGRect {
+        let width = min(look.paletteWidth * look.hudScale, screenSize.width * 0.94)
+        return CGRect(x: (screenSize.width - width) / 2, y: top(look, screenHeight: screenSize.height, topInset: topInset),
+                      width: width, height: look.searchHeight * look.hudScale)
+    }
+
     /// The bottom key-hint pill: its height, and its distance from the screen's bottom (`bottomInset`: the Dock).
     public static func hintsHeight(_ look: Look) -> Double { (look.cornerSize * 2.5 * look.hudScale).rounded() }
 
     public static func hintsMargin(_ look: Look, bottomInset: Double) -> Double {
         max(20 * look.hudScale, bottomInset + 14 * look.hudScale)
+    }
+}
+
+/// "{⌃0} Fit all" as [(key ⌃0), (text Fit all)]: the `{...}` spans are keys.
+public func hintSegments(_ text: String) -> [(text: String, isKey: Bool)] {
+    var out: [(text: String, isKey: Bool)] = []
+    var current = "", inKey = false
+    for ch in text {
+        if ch == "{" || ch == "}" {
+            if !current.isEmpty { out.append((current, inKey)) }
+            current = ""
+            inKey = ch == "{"
+        } else {
+            current.append(ch)
+        }
+    }
+    if !current.isEmpty { out.append((current, inKey)) }
+    return out
+}
+
+public extension HelpSection {
+    // The shortcuts sheet in points: the title band, a section header, a row, the gap after a section.
+    static let titleBand = 52.0, headerHeight = 28.0, lineHeight = 24.0, gap = 14.0
+
+    var height: Double { Self.headerHeight + Double(entries.count) * Self.lineHeight + Self.gap }
+
+    /// Sections split into `count` columns of about equal height, in order.
+    static func columns(_ sections: [HelpSection], count: Int) -> [[HelpSection]] {
+        let heights = sections.map(\.height)
+        let target = heights.reduce(0, +) / Double(max(count, 1))
+        var columns: [[HelpSection]] = [[]]
+        var acc = 0.0
+        for (section, h) in zip(sections, heights) {
+            if !columns[columns.count - 1].isEmpty, columns.count < count, acc + h / 2 > target * Double(columns.count) { columns.append([]) }
+            columns[columns.count - 1].append(section)
+            acc += h
+        }
+        return columns
+    }
+
+    /// A help entry's keys: space-separated keycaps; plain words (Click, drag) as text.
+    static func keyTokens(_ keys: String) -> [(text: String, isKey: Bool)] {
+        var out: [(text: String, isKey: Bool)] = []
+        for token in keys.split(separator: " ").map(String.init) {
+            let isKey = token.count == 1 || ["Space", "esc"].contains(token) || token.contains { !$0.isLetter }
+            if !isKey, let last = out.last, !last.isKey { out[out.count - 1].text += " " + token } else { out.append((token, isKey)) }
+        }
+        return out
     }
 }
 
@@ -65,7 +135,7 @@ public extension CanvasState {
                 let hint = directionHint(for: w.frame, viewCenter: view, viewSize: activeScreen.frame.size)
                 let row = n - overview.listOffset
                 return HUDRow(title: w.displayTitle, detail: hint.isEmpty ? w.appName : w.appName + " · " + hint,
-                              bundleID: w.bundleID, trailing: n == overview.selected ? "↩" : row < 9 ? "⌃\(row + 1)" : "",
+                              bundleID: w.bundleID, trailing: n == overview.selected ? "↩" : row < 9 ? "⌘\(row + 1)" : "",
                               highlights: r.titleRanges)
             }
             h.selectedRow = h.rows.isEmpty ? nil : overview.selected - overview.listOffset

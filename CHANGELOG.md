@@ -4,6 +4,18 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 
 ## Unreleased
 
+### On screen
+
+- Switching workspaces shows the workspace numbers at the bottom of the display for a moment, with the current one filled. Turn it off in Settings > Menu bar.
+- Going to a stack, or bringing another of its windows to the front, shows a strip at the top with each window's icon and title and where you are, like "2 of 4".
+- Stacks can show the edges of the windows behind the front one. Set Peek edges in Settings > Layout.
+- A glass style in Appearance settings. Liquid glass, the default on macOS 26, is clear and bends the edges of what is behind every panel, from the search panel to the notices. Frosted keeps the blur of earlier versions.
+- VoiceOver says the workspace you switch to, the app selected in the `⌥Tab` switcher, messages like "Tidied 4 windows", and in the overview the selected window, its app and its place among the search results.
+- The overview's search field, results, shortcuts sheet, key hints, toasts and the `⌥Tab` switcher are drawn by macOS itself, so Liquid glass is Apple's own and bends the canvas behind it.
+- The overview's search field is a capsule, like Spotlight, with the results in their own card just below it.
+- The overview's panels have the continuous corners of macOS, keys show as light capsules, and the shortcuts sheet has semibold headings.
+- The `⌥Tab` switcher's highlight follows the panel's rounded corners, and its arrows to more windows are drawn chevrons.
+
 ### Workspaces and layouts
 
 - `⌥` arrows and `⌥⇧` arrows stop at the edge of the workspace, as in AeroSpace. Turn on Settings > Layout > Focus and move past the edge to keep going into the next one.
@@ -33,6 +45,9 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 ### Fixes
 
 - After you click the desktop, a dialog or an app mielwm leaves alone, window keys like `⌥T` no longer act on the last window you used.
+- Tidy windows from the menu bar, and other actions outside the overview, now show their message on screen. Before, it only showed in the overview.
+- Messages say "1 window", not "1 windows".
+- Messages and search results show the keys that work there: `⌘1` to `⌘9` for search results and `⌘⇧Z` to redo in the overview.
 - Leaving macOS full screen, like a full screen video, no longer flashes two desktops side by side. mielwm leaves a full screen window alone and keeps its tile for when it comes back.
 - Closing, minimizing or hiding the focused window keeps you on the same workspace. The most recent window on screen takes focus.
 - An app that resizes its own window, like an Electron app restoring its size, no longer shifts the split between tiles. Only dragging an edge does.

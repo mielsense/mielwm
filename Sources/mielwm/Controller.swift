@@ -55,6 +55,7 @@ final class Controller {
     private var ipc: IPCServer?
     private(set) var renderer: Renderer?
     var overlays: [UInt32: Overlay] = [:]
+    let notices = NoticeBoard() // toasts, the workspace pill and the stack strip over the desktop
 
     // Opening: inputs wait here until captures are fresh (see `input`).
     var gate: (queue: [CoreInput], waitFor: WindowID?, opensOverview: Bool, timeout: DispatchWorkItem)?
@@ -110,6 +111,7 @@ final class Controller {
         state.systemAccent = Self.systemAccent()
         state.systemDark = Self.systemDark()
         state.accessibility = Self.accessibility()
+        state.liquidGlassAvailable = Self.liquidGlassAvailable
         state.stopwords = Self.stopwords()
         savedLayoutRevision = state.layoutRevision
         configStamp = paths.configModified
@@ -123,7 +125,6 @@ final class Controller {
         // MIELWM_TEST_OVERLAY: manage-only draws the overlay too (it still never takes focus).
         if mode == .normal || ProcessInfo.processInfo.environment["MIELWM_TEST_OVERLAY"] != nil {
             do { renderer = try Renderer() } catch { log("no Metal renderer: \(error)") }
-            renderer?.drawsCaret = false // the overlays blink it in a layer
             rebuildOverlays()
             capture.onFirstFrame = { [weak self] id in MainActor.assumeIsolated { self?.firstFrame(id) } }
         }
@@ -173,6 +174,7 @@ final class Controller {
         gate?.timeout.cancel()
         gate = nil
         hideOverlays()
+        notices.hideAll()
         for o in overlays.values { o.close() }
         overlays = [:]
         tokens.forEach(NotificationCenter.default.removeObserver)
@@ -313,6 +315,7 @@ final class Controller {
                 restingSince = state.now
             }
         }
+        if renderer != nil { notices.update(state) } // ticks too: a notice fades a little every tick
         if let t = timing, let first = t.firstMove, !state.movesInFlight, state.animator.isSettled {
             timing = nil
             let ms = { (end: Double) in String(format: "%.0f ms", (end - t.start) * 1000) }

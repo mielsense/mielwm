@@ -79,8 +79,10 @@ enum Fixture {
             windows[i].isFocused = windows[i].id == WindowID(pid: 102, number: 2)
         }
         let focused = windows.firstIndex { $0.isSelected }
-        return Scene(screen: screen, desk: desk, camera: overviewCamera, transition: 1, windows: windows, look: look,
-                     minimap: minimap(windows, camera: overviewCamera, focused: focused), hud: hud, time: 0.2)
+        var scene = Scene(screen: screen, desk: desk, camera: overviewCamera, transition: 1, windows: windows, look: look,
+                          minimap: minimap(windows, camera: overviewCamera, focused: focused), hud: hud, time: 0.2)
+        scene.searching = hud.mode == .search && !hud.query.isEmpty // as Core's scene(for:) sets it
+        return scene
     }
 
     static func searchHUD() -> (HUDModel, [SceneWindow]) {

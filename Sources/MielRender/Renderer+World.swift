@@ -79,7 +79,7 @@ extension Renderer {
             quad(enc, r, worldSize)
         }
 
-        let searching = scene.hud.mode == .search && !scene.hud.query.isEmpty
+        let searching = scene.searching
         let accent = theme.accentRGBA
         let fade = labelFades(scene, s)
         for pass in 0..<2 { // pinned windows last, on top

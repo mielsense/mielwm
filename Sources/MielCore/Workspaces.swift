@@ -94,6 +94,19 @@ func tileFrames(in area: CGRect, weights: [Double], horizontal: Bool, gap: Doubl
     return out
 }
 
+/// A stack's frames: all one size, the front window in the middle of `area`
+/// and the others `peek` points before or after it along the stack, so the
+/// edges of its neighbours show. No peek: every window fills the area.
+func stackFrames(in area: CGRect, count: Int, front: Int, horizontal: Bool, peek: Double) -> [CGRect] {
+    let a = area.roundedFrame, p = count > 1 ? peek.rounded() : 0
+    guard p > 0 else { return Array(repeating: a, count: count) }
+    let base = horizontal ? a.insetBy(dx: p, dy: 0) : a.insetBy(dx: 0, dy: p)
+    return (0 ..< count).map { i in
+        let shift = i < front ? -p : i > front ? p : 0
+        return horizontal ? base.offsetBy(dx: shift, dy: 0) : base.offsetBy(dx: 0, dy: shift)
+    }
+}
+
 extension Settings {
     /// What a workspace's tiles fill on `screen`: its visible frame inside the outer gaps.
     func tileArea(on screen: ScreenInfo) -> CGRect {
@@ -164,7 +177,8 @@ extension CanvasState {
     func tiles(_ ws: Workspace) -> [(id: WindowID, frame: CGRect)] {
         let area = settings.tileArea(on: layoutScreen(ws)), horizontal = isHorizontal(ws)
         let shown = ws.members.filter { window($0)?.isShown ?? false }
-        let rects = ws.mode == .stack ? Array(repeating: area, count: shown.count)
+        let front = ws.mode == .stack && settings.stackPeek > 0 ? frontMember(shown).flatMap(shown.firstIndex) ?? 0 : 0
+        let rects = ws.mode == .stack ? stackFrames(in: area, count: shown.count, front: front, horizontal: horizontal, peek: settings.stackPeek)
             : tileFrames(in: area, weights: shown.map { ws.weights[$0] ?? 1 }, horizontal: horizontal,
                          gap: horizontal ? settings.gapInnerHorizontal : settings.gapInnerVertical)
         return zip(shown, rects).map { ($0, canvasRect($1, in: ws)) }

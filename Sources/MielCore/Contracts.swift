@@ -45,6 +45,10 @@ public struct ScreenInfo: Hashable, Codable, Sendable {
         self.isBuiltIn = isBuiltIn
         self.topBar = topBar
     }
+
+    /// Room the notch or the menu bar takes at the top, and the Dock at the bottom, in points.
+    public var topInset: CGFloat { max(safeAreaTop, visibleFrame.minY - frame.minY) }
+    public var bottomInset: CGFloat { max(0, frame.maxY - visibleFrame.maxY) }
 }
 
 public struct WindowSnapshot: Hashable, Codable, Sendable {
@@ -274,6 +278,19 @@ public struct RGB: Hashable, Codable, Sendable {
     }
 
     static let mielOrange = RGB(1.0, 0x6B / 255.0, 0x1A / 255.0) // #ff6b1a
+
+    /// Text on this color reads better dark than white: white wins unless the color is very light (WCAG).
+    public var wantsDarkText: Bool {
+        func linear(_ c: Double) -> Double { c <= 0.04045 ? c / 12.92 : pow((c + 0.055) / 1.055, 2.4) }
+        let luminance = 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b)
+        return (luminance + 0.05) / 0.05 >= 1.05 / (luminance + 0.05) * 1.6
+    }
+}
+
+/// What floating panels are made of: Liquid Glass, which bends the edges of
+/// what is behind it, or the frosted blur of earlier macOS versions.
+public enum GlassStyle: String, Hashable, Codable, Sendable, CaseIterable {
+    case liquid, frosted
 }
 
 public struct Look: Hashable, Codable, Sendable {
@@ -326,6 +343,8 @@ public struct Look: Hashable, Codable, Sendable {
     public var rowHeight = 44.0
     public var rounding = 8.0 // rows and pills; panels add 6
     public var panelOpacity = 0.8
+    /// appearance:glass: every panel the overview and the notices draw.
+    public var glass = GlassStyle.liquid
     var uppercase = false // no longer drawn; kept so old configs load
     var letterSpacing = 0.0 // no longer drawn; kept so old configs load
     public var querySize = 24.0
@@ -346,8 +365,14 @@ public struct Look: Hashable, Codable, Sendable {
     public var reduceMotion = false
     public var reduceTransparency = false
     public var increaseContrast = false
+    /// Whether this Mac has Liquid glass (macOS 26 and later); the app sets it.
+    public var liquidGlassAvailable = false
 
     public init() {}
+
+    /// Liquid glass: chosen, available on this Mac, and not turned solid by Reduce Transparency.
+    /// Elsewhere a stored "liquid" (a config synced from another Mac) shows as frosted.
+    public var liquid: Bool { glass == .liquid && liquidGlassAvailable && !reduceTransparency }
 }
 
 /// macOS's accessibility display options that change how the overview looks and moves.
@@ -416,7 +441,7 @@ public struct HUDRow: Hashable, Sendable {
     public var title: String
     public var detail: String
     public var bundleID: String? // app icon
-    public var trailing: String // shortcut hint ("⌃1")
+    public var trailing: String // shortcut hint ("⌘1")
     public var highlights: [Range<Int>] // matched character offsets in `title`
 
     public init(title: String, detail: String = "", bundleID: String? = nil,
@@ -439,8 +464,7 @@ public struct HelpSection: Hashable, Sendable {
     }
 
     public static func == (a: HelpSection, b: HelpSection) -> Bool {
-        a.title == b.title && a.entries.map(\.keys) == b.entries.map(\.keys)
-            && a.entries.map(\.action) == b.entries.map(\.action)
+        a.title == b.title && a.entries.elementsEqual(b.entries) { $0.keys == $1.keys && $0.action == $1.action }
     }
 
     public func hash(into h: inout Hasher) {
@@ -507,6 +531,9 @@ public struct Scene: Equatable, Sendable {
     public var dropIndicator: CGRect? // canvas rect where a dragged window will land
     public var time: Double // seconds, for the caret blink and small animations
     public var workspaces: [SceneWorkspace] = [] // drawn behind the windows, with the transition
+    /// A search is on: windows that match get an outline. Its own field, so a
+    /// HUD drawn elsewhere (the overlay's native views) leaves it in place.
+    public var searching = false
 
     public init(screen: ScreenInfo, desk: CGRect, camera: Camera, transition: Double,
                 opacity: Double = 1, windows: [SceneWindow], look: Look,

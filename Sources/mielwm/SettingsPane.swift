@@ -49,6 +49,7 @@ enum SettingsPane: String, CaseIterable {
         case .layout: ["New windows", "Layout", "Tiles", "Stack", "Floating", "Orientation", "Automatic", "Side by side", "Above each other",
                        "Gaps", "Between windows, side by side", "Between windows, above each other", "Left edge", "Right edge", "Bottom edge",
                        "Top edge", "Same as other edges", "Custom", "Top gap", "Top gap, built-in display", "Top gap, other displays", "Status bar",
+                       "Stacks", "Peek edges",
                        "Workspaces", "Workspace key goes back", "Back and forth", "Focus and move past the edge"]
         case .windows: ["Floating apps", "Workspace rules", "Add app", "Open apps", "Choose an app…", "Apps"]
         case .overview: ["Zoomed-out level", "Show window names", "Show the minimap", "Lens", "Bend the edges", "Strength", "Magnification", "Zoom"]
@@ -57,8 +58,10 @@ enum SettingsPane: String, CaseIterable {
         case .trackpad: ["Trackpad", "Swipe between workspaces", "Three fingers", "Windows", "Move and resize windows", "Pointer and scrolling",
                          "Use the pointer in the overview", "Panning speed", "Zoom speed", "Mouse", "Drag", "Modifier", "Scroll wheel", "Middle button"]
         case .appearance: ["Accent color", "Automatic", "Custom", "Background", "Show the desktop picture", "Wallpaper", "Dim", "Blur", "Blur amount",
-                           "Grid", "Show the grid", "Style", "Grid style", "Dots", "Lines", "Opacity", "Windows", "Corner rounding", "Shadows", "Preview"]
-        case .menubar: ["Menu bar item", "All workspaces", "Current only", "Icon", "Workspace numbers"]
+                           "Grid", "Show the grid", "Style", "Grid style", "Dots", "Lines", "Opacity", "Windows", "Corner rounding", "Shadows", "Preview",
+                           "Glass style", "Liquid glass", "Frosted", "Glass", "Transparency"]
+        case .menubar: ["Menu bar item", "All workspaces", "Current only", "Icon", "Workspace numbers", "On screen", "Show workspace on switch",
+                        "Workspace indicator"]
         case .integrations: ["Barik", "Work with Barik", "AeroSpace", "Import from AeroSpace"]
         case .advanced: ["Config file", "config.json", "Command-line tool", "Terminal", "Reset all settings", "Some settings could not be read"]
         case .about: ["Version", "Website", "Documentation", "Changelog", "Source code", "GitHub", "License"]

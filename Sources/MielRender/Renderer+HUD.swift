@@ -6,8 +6,7 @@ extension Renderer {
         let model = scene.hud
         let screen = scene.screen
         let view = HUDView(size: pxSize, scale: scale,
-                           topInset: max(screen.safeAreaTop, screen.visibleFrame.minY - screen.frame.minY) * scale,
-                           bottomInset: max(0, screen.frame.maxY - screen.visibleFrame.maxY) * scale,
+                           topInset: screen.topInset * scale, bottomInset: screen.bottomInset * scale,
                            minimapTop: minimapTop)
         var base = Hasher()
         base.combine(lookRevision)
@@ -70,16 +69,18 @@ extension Renderer {
         let ease = smoothstep(0, 1, t)
         func draw(_ layer: HUDLayer?, alpha: Double, dy: CGFloat = 0) {
             guard let layer, alpha > 0.001 else { return }
-            if let (world, lens, map) = behind, let panel = layer.panel, t > 0.001, !scene.look.reduceTransparency {
-                // The material: what is behind the panel, blurred, under its translucent tint.
-                let r = panel.offsetBy(dx: layer.rect.minX, dy: layer.rect.minY + dy)
-                var m = MaterialUniforms(rect: SIMD4(r), map: map, size: SIMD2(Float(pxSize.width), Float(pxSize.height)),
-                                         radius: Float(layer.radius), distort: Float(lens.distort), contrast: Float(lens.contrast),
-                                         alpha: Float(alpha * opacity * ease), blur: Float(24 * scale))
-                enc.setRenderPipelineState(pipelines.material)
-                enc.setFragmentBytes(&m, length: MemoryLayout<MaterialUniforms>.stride, index: 0)
-                enc.setFragmentTexture(world, index: 0)
-                quad(enc, r, pxSize)
+            if let (world, lens, map) = behind, t > 0.001, !scene.look.reduceTransparency {
+                // The material: what is behind each panel, blurred, under its translucent tint.
+                for panel in layer.panels {
+                    let r = panel.rect.offsetBy(dx: layer.rect.minX, dy: layer.rect.minY + dy)
+                    var m = MaterialUniforms(rect: SIMD4(r), map: map, size: SIMD2(Float(pxSize.width), Float(pxSize.height)),
+                                             radius: Float(panel.radius), distort: Float(lens.distort), contrast: Float(lens.contrast),
+                                             alpha: Float(alpha * opacity * ease), blur: Float(24 * scale))
+                    enc.setRenderPipelineState(pipelines.material)
+                    enc.setFragmentBytes(&m, length: MemoryLayout<MaterialUniforms>.stride, index: 0)
+                    enc.setFragmentTexture(world, index: 0)
+                    quad(enc, r, pxSize)
+                }
             }
             var u = TexturedUniforms(alpha: Float(alpha * opacity))
             enc.setRenderPipelineState(pipelines.texture)
@@ -105,7 +106,7 @@ extension Renderer {
             let r = caret.offsetBy(dx: palette.rect.minX, dy: palette.rect.minY + slide)
             s.caret = (r, ease * opacity)
         }
-        if drawsCaret, let (r, alpha) = s.caret {
+        if let (r, alpha) = s.caret {
             let blink = caretBlink(scene.time)
             var u = SolidUniforms()
             u.rect = SIMD4(r)

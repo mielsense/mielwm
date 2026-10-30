@@ -72,6 +72,7 @@ func settingsSelfTest(_ model: SettingsModel, _ window: SettingsWindow, _ paths:
         ("gaps:inner_horizontal", .number(20)), ("gaps:inner_vertical", .number(22)), ("gaps:outer_left", .number(4)),
         ("gaps:outer_right", .number(6)), ("gaps:outer_bottom", .number(30)), ("gaps:outer_top", .number(2)),
         ("gaps:outer_top_external", .number(40)), ("menubar:style", .text("current")),
+        ("appearance:glass", .text("frosted")), ("notices:workspace", .flag(false)), ("layout:stack_peek", .number(8)),
         ("input:move_modifier", .text("ctrl+cmd")), ("input:pan_sensitivity", .number(2)), ("input:scroll_factor", .number(0.5)),
         ("layout:auto_back_and_forth", .flag(true)), ("layout:cross_workspaces", .flag(true)),
     ]

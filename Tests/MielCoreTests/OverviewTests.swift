@@ -291,3 +291,34 @@ func threeWindows() -> CanvasState {
     _ = s.send(.text("zzz"))
     #expect(!s.scene(for: builtIn).windows.contains { $0.isSelected })
 }
+
+@Test func aSearchStaysInTheSceneWhenItsHUDIsTaken() {
+    var s = makeState([snapshot(1, onBuiltIn, title: "mielwm — GitHub"), snapshot(2, onBuiltIn.offsetBy(dx: 900, dy: 0), title: "Notes")])
+    _ = s.send(.action(.search("mielwm")))
+    var scene = s.scene(for: builtIn)
+    #expect(scene.searching)
+    scene.hud = HUDModel() // the overlay draws the HUD natively
+    #expect(scene.searching)
+    _ = s.send(.action(.search("")))
+    #expect(!s.scene(for: builtIn).searching)
+}
+
+@Test func theSearchFieldsFrameIsTheCapsuleBelowTheNotch() {
+    var look = Look()
+    look.hudScale = 1
+    let f = PaletteMetrics.fieldFrame(look, screenSize: CGSize(width: 1512, height: 982), topInset: 38)
+    #expect(f.height == look.searchHeight && f.width == look.paletteWidth && f.midX == 756)
+    #expect(abs(f.minY - PaletteMetrics.top(look, screenHeight: 982, topInset: 38)) < 1e-9)
+    let tall = PaletteMetrics.fieldFrame(look, screenSize: CGSize(width: 600, height: 400), topInset: 120) // a narrow display, a deep notch
+    #expect(abs(tall.width - 600 * 0.94) < 1e-9 && abs(tall.minY - (120 + 12)) < 1e-9)
+}
+
+@Test func thePalettesHeightIsTheFieldTheGapAndTheCard() {
+    let look = Look()
+    #expect(PaletteMetrics.height(look, rows: 0, footer: false) == look.searchHeight)
+    for (rows, footer) in [(1, false), (6, true)] {
+        #expect(PaletteMetrics.height(look, rows: rows, footer: footer)
+            == look.searchHeight + PaletteMetrics.cardGap + PaletteMetrics.cardHeight(look, rows: rows, footer: footer))
+    }
+    #expect(PaletteMetrics.cardHeight(look, rows: 6, footer: true) == 8 * 2 + 6 * look.rowHeight + 28)
+}

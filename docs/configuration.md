@@ -27,6 +27,7 @@ If the file isn't valid JSON, mielwm keeps its defaults and shows the error in t
 | `layout:default` | `"tiles"` | The layout new windows join: `tiles`, `stack` or `floating`. |
 | `layout:orientation` | `"auto"` | Tiles side by side (`horizontal`), above each other (`vertical`), or by the display's shape (`auto`). |
 | `layout:workspace_rules` | `""` | `bundle.id=N` pairs, comma separated: that app's windows open on workspace N. |
+| `layout:stack_peek` | `0` | Points the windows behind a stack's front one move aside, 0 to 16, so their edges show. |
 | `layout:floating_apps` | System Settings, Activity Monitor, Calculator, Archive Utility | Bundle ids, comma separated, whose windows always float. |
 | `layout:cross_workspaces` | `false` | Focus and move keys go on into the next workspace at the edge, instead of stopping. |
 | `layout:auto_back_and_forth` | `false` | The key of the workspace you're on takes you to the one before. `mielwm workspace N` and Barik stay put. |
@@ -93,6 +94,7 @@ Flat keys work too: `"rules:firefox-pip:title": "Picture-in-Picture"`. Settings 
 | `navigator:row_height` | `44` | Height of a result row. |
 | `navigator:rounding` | `8` | Corner radius of rows and pills. |
 | `navigator:panel_opacity` | `0.8` | Opacity of the search panel. |
+| `appearance:glass` | `"liquid"` | What panels are made of: `liquid` or `frosted`. Before macOS 26 they are always frosted. |
 | `navigator:corner_labels` | `false` | A small readout of zoom, window count and display. |
 | `canvas:minimap_enabled` | `true` | The minimap. |
 | `canvas:minimap_width`, `canvas:minimap_height` | `240`, `150` | Its size. |
@@ -136,6 +138,7 @@ Flat keys work too: `"rules:firefox-pip:title": "Picture-in-Picture"`. Settings 
 | `animation:speed` | `1` | 1 flies in 0.8 seconds, 2 in 0.4. |
 | `animation:curve` | `"spring"` | `spring` or `bezier`. |
 | `menubar:style` | `"all"` | What the menu bar item shows: `all` workspaces with windows, the `current` one only, or the `icon`. The older `menubar:workspaces: false` still means `icon`. |
+| `notices:workspace` | `true` | The workspace numbers show at the bottom of the display for a moment after you switch. |
 | `integrations:barik` | `false` | [Barik](aerospace.md#barik) shows mielwm's workspaces. Turn it on in Settings, which also edits Barik's config. |
 
 ## Shortcuts

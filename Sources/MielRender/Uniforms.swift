@@ -88,6 +88,10 @@ struct LensUniforms {
     var focused: Int32 = -1
     var opacity: Float = 1
     var workspaceCount: Int32 = 0 // outlines in the marker array after the windows
+    var liquid: Float = 0 // 1: Liquid glass
+    var pad0: Float = 0
+    var pad1: Float = 0
+    var pad2: Float = 0
 }
 
 struct MaterialUniforms {

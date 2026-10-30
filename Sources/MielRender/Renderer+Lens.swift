@@ -34,6 +34,7 @@ extension Renderer {
             u.minimapTransition = Float(t)
             u.count = Int32(minimap.count)
             u.workspaceCount = Int32(minimap.workspaceCount)
+            u.liquid = scene.look.liquid ? 1 : 0
             let focused = scene.minimap?.focusedIndex ?? -1
             u.focused = Int32(focused < minimap.count ? focused : -1)
         }

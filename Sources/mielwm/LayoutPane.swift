@@ -21,6 +21,13 @@ struct LayoutPane: View {
             } footer: {
                 Text("Automatic puts tiles side by side on a wide display and above each other on a tall one.").settingsFooter()
             }
+            Section {
+                LabeledSlider("Peek edges", value: model.number("layout:stack_peek"), in: 0 ... 16) { $0 < 0.5 ? "Off" : "\(Int($0.rounded())) pt" }
+            } header: {
+                Text("Stacks")
+            } footer: {
+                Text("The windows behind the front one move aside by this much, so their edges show.").settingsFooter()
+            }
             Section("Gaps") {
                 GapDiagram(settings: s, screen: model.screen, focus: gapFocus)
                     .frame(maxWidth: .infinity)

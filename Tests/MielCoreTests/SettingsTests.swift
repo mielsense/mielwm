@@ -308,6 +308,22 @@ func tempDir() throws -> URL {
     #expect(settings.warmModifiers == [[.command, .shift]])
 }
 
+@Test func glassStyleIsLiquidOrFrostedAndReduceTransparencyWins() {
+    var s = Settings()
+    #expect(s.set(.text("Frosted"), forKey: "appearance:glass") == nil)
+    #expect(s.look.glass == .frosted && s.value(forKey: "appearance:glass") == .text("frosted"))
+    #expect(s.set(.text("shiny"), forKey: "appearance:glass") != nil)
+    #expect(s.look.glass == .frosted) // a bad value changes nothing
+    s.set(.text("liquid"), forKey: "appearance:glass")
+    #expect(!s.look.liquid) // stored, but this Mac has no Liquid glass: frosted
+    s.look.liquidGlassAvailable = true
+    #expect(s.look.liquid)
+    s.look.reduceTransparency = true
+    #expect(!s.look.liquid)
+    #expect(Settings().look.glass == .liquid) // the same default on every Mac
+    #expect(Settings.keys.contains("appearance:glass"))
+}
+
 @Test func theMoveModifiersNeverWarmTheCaptures() {
     var settings = Settings()
     #expect(settings.warmModifiers.isEmpty) // ⌃⌥G, but ⌃⌥ is held for every modifier drag

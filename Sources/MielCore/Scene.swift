@@ -15,6 +15,7 @@ public extension CanvasState {
         var scene = Scene(screen: screen, desk: deskRect(screens), camera: camera, transition: animator.transition,
                           windows: sceneWindows, look: look, minimap: minimap, hud: hud(for: screen),
                           dropIndicator: dropIndicator, time: time ?? now)
+        scene.searching = scene.hud.mode == .search && !scene.hud.query.isEmpty
         scene.workspaces = workspaces.map {
             var ws = SceneWorkspace(number: $0.number, canvasFrame: workspaceFrame($0.slot), mode: $0.mode,
                                     isCurrent: $0.slot == currentWorkspace, windowCount: $0.members.count)

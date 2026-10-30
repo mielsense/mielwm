@@ -65,6 +65,7 @@ func snapshot(_ args: [String]) {
     if args.contains("--reduce-transparency") { access.reduceTransparency = true }
     if args.contains("--increase-contrast") { access.increaseContrast = true }
     state.accessibility = access
+    state.liquidGlassAvailable = Controller.liquidGlassAvailable
     state.activeScreenID = screen.id
     if let action { _ = state.send(.action(action)) }
     if let then { _ = state.send(.action(then)) }

@@ -14,7 +14,12 @@ struct AppearancePane: View {
             Section {
                 AppearancePreviewView(settings: model.settings, dark: colorScheme == .dark, preview: model.preview)
                 AccentPicker()
-                // The overview's glass style (appearance:glass), once it exists, goes here as a VisualPicker over Design.Glass.
+                // Without Liquid glass every panel is frosted, whatever the stored value (a config synced from a newer Mac).
+                VisualPicker(title: "Glass style", subtitle: Controller.liquidGlassAvailable ? nil : "Liquid glass needs macOS 26.",
+                             selection: Binding(get: { Controller.liquidGlassAvailable ? look.glass : .frosted }, set: { model.set("appearance:glass", .text($0.rawValue)) }),
+                             options: [GlassStyle.liquid, .frosted], name: { $0 == .liquid ? "Liquid glass" : "Frosted" }) { GlassThumbnail(style: $0) }
+                    .disabled(!Controller.liquidGlassAvailable)
+                    .opacity(Controller.liquidGlassAvailable ? 1 : 0.5)
             } footer: {
                 Text("The canvas as you set it. The overview shows each change right away.").settingsFooter()
             }
@@ -40,6 +45,21 @@ struct AppearancePane: View {
                 LabeledSlider("Corner rounding", value: model.number("window:rounding"), in: 0 ... 40) { "\(Int($0.rounded())) pt" }
                 Toggle("Shadows", isOn: model.flag("window:shadow"))
             }
+        }
+    }
+}
+
+/// A pill in `style` over a bright, busy backdrop, so the glass shows what it does to what is behind it.
+struct GlassThumbnail: View {
+    let style: GlassStyle
+
+    var body: some View {
+        ZStack {
+            LinearGradient(colors: [Design.Tint.orange, Design.Tint.red, Design.Tint.indigo, Design.Tint.cyan], startPoint: .topLeading, endPoint: .bottomTrailing)
+            HStack(spacing: Design.Space.xs) {
+                ForEach(0 ..< 6, id: \.self) { _ in Rectangle().fill(.white.opacity(0.85)).frame(width: 2) }
+            }
+            Capsule().fill(.clear).frame(width: 44, height: 18).glassSurface(style, in: Capsule())
         }
     }
 }

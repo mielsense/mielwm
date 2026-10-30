@@ -19,6 +19,7 @@ The sidebar lists the panes in groups. The search field at its top finds a pane 
 - The layout new windows get, tiles, stack or floating, and which way tiles split. Each choice is a small picture you click.
 - The gaps between windows and around the screen edge, with a small desktop that redraws as you type. Point at a gap's field and its gap lights up, with its size. It shows the top gap on the display the Settings window is on.
 - The top edge: Automatic, Same as other edges, or Custom. [Workspaces and layouts](workspaces.md#a-status-bar-at-the-top) explains each.
+- Peek edges for stacks, so the windows behind the front one show their edges.
 - Workspace key goes back: the key of the workspace you're on takes you to the one before.
 - Focus and move past the edge: `⌥` arrows and `⌥⇧` arrows go on into the next workspace instead of stopping at the edge.
 
@@ -50,6 +51,7 @@ Every shortcut, grouped by what it does. Click a shortcut, then type the new key
 Appearance starts with a live preview of the overview, drawn by the same renderer, so every change shows as you make it.
 
 - The accent color. Automatic follows System Settings, or pick a preset or any color.
+- The glass style of every panel mielwm draws: the search field and its results, the pills and tags, the shortcuts sheet, the minimap, the `⌥Tab` switcher and the notices over the desktop. Liquid glass is clear and bends the edges of what is behind it, like macOS 26. Frosted blurs it, like earlier macOS versions. Liquid glass needs macOS 26 and is the default there. With Reduce Transparency on, every panel is solid.
 - The background: your desktop picture, how much it dims, and blur.
 - The grid on the canvas, dots or lines, and how strong it is.
 - How windows look in the overview: corner rounding and shadows.
@@ -59,6 +61,8 @@ Appearance starts with a live preview of the overview, drawn by the same rendere
 ## Menu bar
 
 What the mielwm item in the menu bar shows: all workspaces, the current one only, or the icon. [The menu bar](#the-menu-bar) below explains each.
+
+Show workspace on switch puts the same numbers at the bottom of the display for a moment each time you switch, which helps when the menu bar is on another display.
 
 ## AeroSpace & Barik
 

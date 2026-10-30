@@ -41,6 +41,7 @@ public extension CanvasState {
     /// Applies one input and returns the window commands it causes.
     mutating func send(_ input: CoreInput) -> [WindowCommand] {
         outbox = []
+        let watch: NoticeWatch? = if case .tick = input { nil } else { noticeWatch }
         switch input {
         case let .system(event): handle(event)
         case let .action(action): perform(action)
@@ -60,6 +61,7 @@ public extension CanvasState {
         case .unparkAll: unparkAll()
         case let .setSettings(s): settings = s
         }
+        if let watch { updateNotices(from: watch) }
         // One batch moves each window once: its last setFrame wins.
         var seen = Set<WindowID>()
         let out = outbox.reversed().filter { command in
@@ -71,15 +73,16 @@ public extension CanvasState {
     }
 
     /// Ticks are needed while this is true: animations, moves awaiting
-    /// confirmation, the screen grace period, toasts, the switcher's delay.
-    var needsTicks: Bool { !animator.isSettled || tickDeadline != nil }
+    /// confirmation, the screen grace period, notices and toasts, the switcher's delay.
+    var needsTicks: Bool { !animator.isSettled || notices.fading(at: now) || tickDeadline != nil }
 
     /// While nothing animates, ticks only wait for this: the earliest time a tick
-    /// changes something (nil: never). nil too while something animates.
+    /// changes something (nil: never). nil too while something animates or a
+    /// notice fades out, when every tick changes something.
     var tickDeadline: Double? {
-        guard animator.isSettled else { return nil }
-        let times = windows.compactMap(\.expected?.deadline) + [graceUntil, toast.map { _ in toastUntil }, expectedFocus?.until,
-                                                               overview.switcherRevealAt.flatMap { $0 > now ? $0 : nil }].compactMap { $0 }
+        guard animator.isSettled, !notices.fading(at: now) else { return nil }
+        let times = windows.compactMap(\.expected?.deadline) + notices.holds + [graceUntil, expectedFocus?.until,
+                                                                                 overview.switcherRevealAt.flatMap { $0 > now ? $0 : nil }].compactMap { $0 }
         return times.min()
     }
 
@@ -124,7 +127,7 @@ extension CanvasState {
             for i in windows.indices { windows[i].expected = nil; windows[i].pending = nil; windows[i].sent = [] }
             sync(force: true)
         }
-        if toast != nil, now >= toastUntil { toast = nil }
+        notices.expire(now)
         if let f = expectedFocus, now >= f.until {
             expectedFocus = nil
             if let report = heldFocus { // focus changed again while ours landed: that is where it is now

@@ -121,6 +121,10 @@ extension Controller {
             scene.dropIndicator = nil
         }
         scene.opacity = opacity
+        // The HUD shows in native views over the canvas; Metal draws the canvas, the tags and the minimap.
+        // A HUD change is an input, and every input wakes paused frames (Controller.state), so this runs for each.
+        overlay.chrome.show(ChromeContent(taking: &scene, worldShown: worldShown, toastOpacity: state.notices.toast?.opacity(at: now) ?? 1),
+                            transition: scene.transition, opacity: opacity)
         pictureChecks[screenID] = capture.picturesStored // before the look, so a picture landing during it counts as new
         overlay.draw(scene, renderer: renderer, frames: capture)
         // Settled with nothing new to draw on any display: no frames (nor ticks, which would

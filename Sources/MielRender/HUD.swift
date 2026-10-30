@@ -1,5 +1,7 @@
 // The HUD, rasterized with Core Text into textures that are composited after
-// the lens, so text is never bent. It looks like macOS's own overlays
+// the lens, so text is never bent. The live overview draws its HUD natively
+// (Sources/mielwm/ChromeViews.swift); this copy draws `mielwm snapshot` and
+// the render tests, frosted, so a change to one belongs in the other. It looks like macOS's own overlays
 // (Spotlight, the app switcher, the volume HUD): SF Pro at 12-24 pt, panels
 // over a blur, keycaps for keys. Every length is in device pixels (`s` =
 // backing scale × hud scale); the palette's metrics are Core's PaletteMetrics.
@@ -15,8 +17,7 @@ struct HUDLayer {
     var texture: MTLTexture
     var rect: CGRect
     var caret: CGRect? // layer-local; blinked by the shader
-    var panel: CGRect? // layer-local; the renderer blurs what is behind it
-    var radius: CGFloat = 0
+    var panels: [(rect: CGRect, radius: CGFloat)] = [] // layer-local; the renderer blurs what is behind them
 }
 
 /// What the painter needs to know about the screen, all in px.
@@ -38,11 +39,11 @@ final class HUDPainter {
     }
 
     private func layer(_ bitmap: Bitmap?, key: Int, at origin: CGPoint, caret: CGRect? = nil,
-                       panel: CGRect? = nil, radius: CGFloat = 0) -> HUDLayer? {
+                       panels: [(rect: CGRect, radius: CGFloat)] = []) -> HUDLayer? {
         guard let bitmap, let texture = bitmap.texture(device: device) else { return nil }
         return HUDLayer(key: key, texture: texture,
                         rect: CGRect(x: origin.x, y: origin.y, width: CGFloat(bitmap.width), height: CGFloat(bitmap.height)),
-                        caret: caret, panel: panel, radius: radius)
+                        caret: caret, panels: panels)
     }
 
     // MARK: - Shared pieces
@@ -87,15 +88,16 @@ final class HUDPainter {
     private func keycapStyle(_ size: CGFloat) -> TextStyle { TextStyle(size: size, weight: .medium) }
 
     private func keycapWidth(_ key: String, _ style: TextStyle) -> CGFloat {
-        max(measure(key, style) + style.size * 0.84, style.size * 1.6)
+        max(measure(key, style) + style.size * 0.84, (style.size * 1.6).rounded())
     }
 
-    /// One key in a small rounded box. Returns its width.
+    /// One key, taking the radius (6, continuous) and fill from the app's `Design.KeyCap` recipe,
+    /// scaled to `style` (this module can't import it). Its size is this module's own. Returns its width.
     @discardableResult
     private func keycap(_ b: Bitmap, _ key: String, _ style: TextStyle, x: CGFloat, cy: CGFloat, onAccent: Bool, _ theme: Theme) -> CGFloat {
         let w = keycapWidth(key, style), h = (style.size * 1.6).rounded()
         let box = CGRect(x: x, y: (cy - h / 2).rounded(), width: w, height: h)
-        b.fill(b.roundedPath(box, style.size * 0.36), onAccent ? rgba(1, 1, 1, 0.22) : theme.fill)
+        b.fill(b.roundedPath(box, 6 * style.size / 13), onAccent ? rgba(1, 1, 1, 0.22) : theme.look.dark ? rgba(1, 1, 1, 0.05) : rgba(0, 0, 0, 0.05))
         let color = onAccent ? theme.onAccent : theme.textDim
         let tw = measure(key, style)
         text(b, key, style, color, x: box.midX - tw / 2, cy: cy)
@@ -124,20 +126,10 @@ final class HUDPainter {
         return cx - x
     }
 
-    /// Help sheet keys: space-separated keycaps; plain words (Click, drag) as text.
-    private func keyTokens(_ keys: String) -> [(text: String, isKey: Bool)] {
-        var out: [(text: String, isKey: Bool)] = []
-        for token in keys.split(separator: " ").map(String.init) {
-            let isKey = token.count == 1 || ["Space", "esc"].contains(token) || token.contains { !$0.isLetter }
-            if !isKey, let last = out.last, !last.isKey { out[out.count - 1].text += " " + token } else { out.append((token, isKey)) }
-        }
-        return out
-    }
-
     @discardableResult
     private func keys(_ b: Bitmap?, _ keys: String, _ style: TextStyle, right: CGFloat, cy: CGFloat, s: CGFloat, _ theme: Theme) -> CGFloat {
         let caps = keycapStyle(style.size)
-        let tokens = keyTokens(keys)
+        let tokens = HelpSection.keyTokens(keys)
         let widths = tokens.map { $0.isKey ? keycapWidth($0.text, caps) : measure($0.text, style) }
         let total = widths.reduce(0, +) + CGFloat(max(tokens.count - 1, 0)) * 4 * s
         guard let b else { return total }
@@ -171,59 +163,54 @@ final class HUDPainter {
         let help = hud.mode == .help
         let list = hud.mode == .search && (!hud.rows.isEmpty || !hud.query.isEmpty)
         let columns = help ? 3 : 1
-        let width = min((help ? max(look.paletteWidth, 960) : look.paletteWidth) * s, view.size.width * 0.94)
+        let width = min((help ? max(look.paletteWidth, PaletteMetrics.helpWidth) : look.paletteWidth) * s, view.size.width * 0.94)
         let inset = PaletteMetrics.listInset * s
-        let radius = (look.rounding + PaletteMetrics.panelExtraRadius) * s
         let count = min(hud.rows.count, max(1, look.paletteRows))
         let rowHeight = look.rowHeight * s
         let selected = hud.selectedRow ?? -1
         let rows = list ? max(1, count) : 0 // Core already sends only the visible rows
         let showFooter = list && !hud.footer.isEmpty
         let footHeight = PaletteMetrics.footerHeight * s
-        let sections = help ? helpColumns(hud.help, count: columns) : []
-        let helpHeight = help ? self.helpHeight(sections, s: s) : 0
+        let sections = help ? HelpSection.columns(hud.help, count: columns) : []
         let fieldHeight = look.searchHeight * s
+        // The field is a capsule; results and the shortcuts sheet sit in a card of their own just below it.
+        var cardHeight: CGFloat = 0
+        if rows > 0 { cardHeight = PaletteMetrics.cardHeight(look, rows: rows, footer: showFooter) * s }
+        if help { cardHeight = helpHeight(sections, s: s) }
+        let gap = cardHeight > 0 ? PaletteMetrics.cardGap * s : 0
+        let cardRadius = PaletteMetrics.cardRadius * s
 
-        var height = fieldHeight
-        if rows > 0 { height += inset * 2 + CGFloat(rows) * rowHeight + (showFooter ? footHeight : 0) }
-        if help { height += helpHeight }
-
-        guard let b = Bitmap(width: Int(ceil(width + m * 2)), height: Int(ceil(height + m * 2))) else { return nil }
-        let box = CGRect(x: m, y: m, width: width, height: height)
-        panel(b, box, radius, s, theme)
-        let caret = searchField(b, CGRect(x: m, y: m, width: width, height: fieldHeight), s: s, hud: hud, theme)
-        var y = m + fieldHeight
-        if rows > 0 || help { hairline(b, x: m, y: y, width: width, theme) }
+        guard let b = Bitmap(width: Int(ceil(width + m * 2)), height: Int(ceil(fieldHeight + gap + cardHeight + m * 2))) else { return nil }
+        let field = CGRect(x: m, y: m, width: width, height: fieldHeight)
+        let card = CGRect(x: m, y: field.maxY + gap, width: width, height: cardHeight)
+        panel(b, field, fieldHeight / 2, s, theme)
+        if cardHeight > 0 { panel(b, card, cardRadius, s, theme) }
+        let caret = searchField(b, field, s: s, hud: hud, theme)
 
         if rows > 0 {
-            y += inset
-            let x = m + inset, rowWidth = width - inset * 2
+            let x = card.minX + inset, y = card.minY + inset, rowWidth = width - inset * 2
             if hud.rows.isEmpty {
                 let r = CGRect(x: x, y: y, width: rowWidth, height: rowHeight)
                 let title = TextStyle(size: look.titleSize * s)
-                let message = "No windows match “\(hud.query)”"
+                let message = "No windows match \"\(hud.query)\""
                 text(b, message, title, theme.textDim, x: r.minX + 12 * s, cy: r.midY, maxWidth: rowWidth - 24 * s)
             }
             for row in 0..<count {
                 let r = CGRect(x: x, y: y + CGFloat(row) * rowHeight, width: rowWidth, height: rowHeight)
-                searchRow(b, hud.rows[row], r, s: s, selected: row == selected, theme)
+                searchRow(b, hud.rows[row], r, s: s, selected: row == selected, radius: cardRadius - inset, theme)
             }
-            y += CGFloat(rows) * rowHeight + inset
             if showFooter {
-                hairline(b, x: m, y: y, width: width, theme)
                 let style = TextStyle(size: look.detailSize * s)
-                text(b, hud.footer, style, theme.textFaint, x: m + 16 * s, cy: y + footHeight / 2,
-                     maxWidth: width - 32 * s)
+                text(b, hud.footer, style, theme.textFaint, x: x + 12 * s, cy: card.maxY - inset - footHeight / 2,
+                     maxWidth: rowWidth - 24 * s)
             }
         }
 
-        if help {
-            drawHelp(b, sections, CGRect(x: m, y: y, width: width, height: helpHeight), s: s, theme)
-        }
+        if help { drawHelp(b, sections, card, s: s, theme) }
 
         let top = PaletteMetrics.top(look, screenHeight: view.size.height / view.scale, topInset: view.topInset / view.scale) * view.scale
         return layer(b, key: key, at: CGPoint(x: ((view.size.width - CGFloat(b.width)) / 2).rounded(), y: (top - m).rounded()),
-                     caret: caret, panel: box, radius: radius)
+                     caret: caret, panels: [(field, fieldHeight / 2)] + (cardHeight > 0 ? [(card, cardRadius)] : []))
     }
 
     /// Spotlight's field: a magnifying glass and the query in the biggest
@@ -233,7 +220,7 @@ final class HUDPainter {
         let size = look.querySize * s
         let style = TextStyle(size: size)
         let glyph = (size * 0.8).rounded()
-        let gx = r.minX + 18 * s
+        let gx = r.minX + 20 * s // the capsule's round end needs a little more room than a corner
         if let image = icons.symbol("magnifyingglass", pointSize: glyph, color: theme.textDim) {
             let fit = min(glyph * 1.3 / max(image.size.width, 1), glyph * 1.3 / max(image.size.height, 1), 1)
             let w = image.size.width * fit, h = image.size.height * fit
@@ -253,9 +240,9 @@ final class HUDPainter {
         return CGRect(x: caretX.rounded(), y: (r.midY - caretHeight / 2).rounded(), width: max(2, (1.5 * s).rounded()), height: caretHeight)
     }
 
-    private func searchRow(_ b: Bitmap, _ row: HUDRow, _ r: CGRect, s: CGFloat, selected: Bool, _ theme: Theme) {
+    private func searchRow(_ b: Bitmap, _ row: HUDRow, _ r: CGRect, s: CGFloat, selected: Bool, radius: CGFloat, _ theme: Theme) {
         let look = theme.look
-        if selected { b.fill(b.roundedPath(r, look.rounding * s), theme.accent) }
+        if selected { b.fill(b.roundedPath(r, radius), theme.accent) }
         let icon = (min(r.height * 0.66, 48 * s)).rounded()
         appIcon(b, CGRect(x: r.minX + 8 * s, y: (r.midY - icon / 2).rounded(), width: icon, height: icon), bundleID: row.bundleID,
                 fallback: row.detail.isEmpty ? row.title : row.detail, theme)
@@ -284,56 +271,35 @@ final class HUDPainter {
 
     // MARK: help
 
-    // Help sheet spacing in points: the title band, a section header, a row, the gap between sections.
-    private static let helpTitle = 52.0, helpHeader = 28.0, helpLine = 24.0, helpSectionGap = 14.0
-
-    private func sectionHeight(_ section: HelpSection) -> Double {
-        Self.helpHeader + Double(section.entries.count) * Self.helpLine + Self.helpSectionGap
-    }
-
-    /// Sections split into `count` columns of about equal height, in order.
-    private func helpColumns(_ sections: [HelpSection], count: Int) -> [[HelpSection]] {
-        let heights = sections.map(sectionHeight)
-        let target = heights.reduce(0, +) / Double(max(count, 1))
-        var columns: [[HelpSection]] = [[]]
-        var acc = 0.0
-        for (section, h) in zip(sections, heights) {
-            if !columns[columns.count - 1].isEmpty, columns.count < count, acc + h / 2 > target * Double(columns.count) { columns.append([]) }
-            columns[columns.count - 1].append(section)
-            acc += h
-        }
-        return columns
-    }
-
     private func helpHeight(_ columns: [[HelpSection]], s: CGFloat) -> CGFloat {
-        let tallest = columns.map { $0.map(sectionHeight).reduce(0, +) }.max() ?? 0
-        return (Self.helpTitle + tallest + 6) * s
+        let tallest = columns.map { $0.map(\.height).reduce(0, +) }.max() ?? 0
+        return (HelpSection.titleBand + tallest + 6) * s
     }
 
     /// A macOS keyboard-shortcuts sheet: a title, then columns of sections,
     /// each row "Action … keycaps".
     private func drawHelp(_ b: Bitmap, _ columns: [[HelpSection]], _ r: CGRect, s: CGFloat, _ theme: Theme) {
-        let title = TextStyle(size: 18 * s, weight: .medium)
-        let header = TextStyle(size: 13 * s, weight: .medium)
+        let title = TextStyle(size: 18 * s, weight: .semibold)
+        let header = TextStyle(size: 13 * s, weight: .semibold)
         let row = TextStyle(size: 13 * s)
-        let keyStyle = TextStyle(size: 12 * s)
+        let keyStyle = TextStyle(size: 11 * s)
         let pad = 24 * s, columnGap = 28 * s
-        text(b, "Shortcuts", title, theme.text, x: r.minX + pad, cy: r.minY + Self.helpTitle / 2 * s + 2 * s)
+        text(b, "Shortcuts", title, theme.text, x: r.minX + pad, cy: r.minY + HelpSection.titleBand / 2 * s + 2 * s)
         let n = CGFloat(max(columns.count, 1))
         let columnWidth = (r.width - pad * 2 - columnGap * (n - 1)) / n
         for (i, sections) in columns.enumerated() {
             let x = r.minX + pad + CGFloat(i) * (columnWidth + columnGap)
-            var y = r.minY + Self.helpTitle * s
+            var y = r.minY + HelpSection.titleBand * s
             for section in sections {
-                text(b, section.title, header, theme.textDim, x: x, cy: y + Self.helpHeader / 2 * s, maxWidth: columnWidth)
-                y += Self.helpHeader * s
+                text(b, section.title, header, theme.textDim, x: x, cy: y + HelpSection.headerHeight / 2 * s, maxWidth: columnWidth)
+                y += HelpSection.headerHeight * s
                 for entry in section.entries {
-                    let cy = y + Self.helpLine / 2 * s
+                    let cy = y + HelpSection.lineHeight / 2 * s
                     let keysWidth = keys(b, entry.keys, keyStyle, right: x + columnWidth, cy: cy, s: s, theme)
                     text(b, entry.action, row, theme.text, x: x, cy: cy, maxWidth: columnWidth - keysWidth - 10 * s)
-                    y += Self.helpLine * s
+                    y += HelpSection.lineHeight * s
                 }
-                y += Self.helpSectionGap * s
+                y += HelpSection.gap * s
             }
         }
     }
@@ -346,18 +312,16 @@ final class HUDPainter {
         guard !hud.rows.isEmpty else { return nil }
         let look = theme.look
         let s = view.scale * look.hudScale
-        let pad = 16 * s, tileGap = 4 * s, tile = 104 * s, icon = 80 * s
+        let pad = 12 * s, tileGap = 4 * s, tile = 104 * s, icon = 80 * s
         let m = theme.shadowMargin(s)
-        let maxTiles = max(1, Int((view.size.width * 0.9 - pad * 2 + tileGap) / (tile + tileGap)))
         let count = hud.rows.count
-        let shown = min(count, maxTiles)
-        let selected = min(max(hud.selectedRow ?? 0, 0), count - 1)
-        let first = max(0, min(selected - shown / 2, count - shown))
+        let (first, shown, selected) = PaletteMetrics.switcherWindow(count: count, selected: hud.selectedRow,
+                                                                     maxTiles: Int((view.size.width * 0.9 - pad * 2 + tileGap) / (tile + tileGap)))
         let titleStyle = TextStyle(size: look.titleSize * s)
         let titleBand = 44 * s // the title, then as much room below it as above the icons
         let width = CGFloat(shown) * tile + CGFloat(shown - 1) * tileGap + pad * 2
         let height = pad + tile + titleBand
-        let radius = 22 * s
+        let radius = 22 * s, highlightRadius = radius - pad // concentric with the panel's corners
 
         guard let b = Bitmap(width: Int(ceil(width + m * 2)), height: Int(ceil(height + m * 2))) else { return nil }
         let box = CGRect(x: m, y: m, width: width, height: height)
@@ -367,13 +331,13 @@ final class HUDPainter {
             let index = first + i
             let row = hud.rows[index]
             let r = CGRect(x: m + pad + CGFloat(i) * (tile + tileGap), y: m + pad, width: tile, height: tile)
-            if index == selected { b.fill(b.roundedPath(r, 14 * s), theme.highlight) }
+            if index == selected { b.fill(b.roundedPath(r, highlightRadius), theme.highlight) }
             appIcon(b, CGRect(x: r.midX - icon / 2, y: r.midY - icon / 2, width: icon, height: icon), bundleID: row.bundleID,
                     fallback: row.detail.isEmpty ? row.title : row.detail, theme)
         }
-        let more = TextStyle(size: 16 * s)
-        if first > 0 { text(b, "‹", more, theme.textFaint, x: m + 4 * s, cy: m + pad + tile / 2) }
-        if first + shown < count { text(b, "›", more, theme.textFaint, x: m + width - 12 * s, cy: m + pad + tile / 2) }
+        // More icons that way: a chevron centred in the side padding.
+        if first > 0 { chevron(b, x: m + pad / 2, cy: m + pad + tile / 2, pointsLeft: true, s: s, theme.textFaint) }
+        if first + shown < count { chevron(b, x: m + width - pad / 2, cy: m + pad + tile / 2, pointsLeft: false, s: s, theme.textFaint) }
 
         let row = hud.rows[selected]
         let line = type.fit(type.line(row.title.isEmpty ? row.detail : row.title, titleStyle, theme.text), width - 40 * s, titleStyle, theme.text)
@@ -381,7 +345,21 @@ final class HUDPainter {
                capHeight: type.capHeight(titleStyle))
         let origin = CGPoint(x: ((view.size.width - CGFloat(b.width)) / 2).rounded(),
                              y: ((view.size.height - CGFloat(b.height)) / 2).rounded())
-        return layer(b, key: key, at: origin, panel: box, radius: radius)
+        return layer(b, key: key, at: origin, panels: [(box, radius)])
+    }
+
+    /// A small chevron, 4 by 8 points with round ends, centred on `x`.
+    private func chevron(_ b: Bitmap, x: CGFloat, cy: CGFloat, pointsLeft: Bool, s: CGFloat, _ color: CGColor) {
+        let w = 4 * s * (pointsLeft ? -1 : 1), h = 4 * s
+        let path = CGMutablePath()
+        path.move(to: CGPoint(x: x - w / 2, y: cy - h))
+        path.addLine(to: CGPoint(x: x + w / 2, y: cy))
+        path.addLine(to: CGPoint(x: x - w / 2, y: cy + h))
+        b.ctx.saveGState()
+        b.ctx.setLineCap(.round)
+        b.ctx.setLineJoin(.round)
+        b.stroke(path, color, width: 1.5 * s)
+        b.ctx.restoreGState()
     }
 
     // MARK: - Pills: the status readout and the key hints
@@ -411,7 +389,7 @@ final class HUDPainter {
         default: view.size.width - margin - width
         }
         let origin = CGPoint(x: (x - m).rounded(), y: ((index < 2 ? top : bottom) - m).rounded())
-        return layer(b, key: key, at: origin, panel: box, radius: height / 2)
+        return layer(b, key: key, at: origin, panels: [(box, height / 2)])
     }
 
     // MARK: - Toast
@@ -429,7 +407,7 @@ final class HUDPainter {
         hints(b, message, style, x: m + padX, cy: box.midY, s: s, theme, color: theme.text)
         let y = view.size.height * 0.78 - height / 2 - m
         return layer(b, key: key, at: CGPoint(x: ((view.size.width - CGFloat(b.width)) / 2).rounded(), y: y.rounded()),
-                     panel: box, radius: height / 2)
+                     panels: [(box, height / 2)])
     }
 
     // MARK: - Labels drawn in the world, under the lens
@@ -452,10 +430,10 @@ final class HUDPainter {
         return b.texture(device: device)
     }
 
-    /// A workspace's tag: its number in medium 14 and its mode in 12, in a
+    /// A workspace's tag: its number in semibold 13 and its mode in 11, in a
     /// pill; the current workspace's pill in the accent color.
     func workspaceLabel(number: Int?, mode: LayoutMode, current: Bool, scale s: CGFloat, _ theme: Theme) -> MTLTexture? {
-        let numberStyle = TextStyle(size: 14 * s, weight: .medium), modeStyle = TextStyle(size: 12 * s)
+        let numberStyle = TextStyle(size: 13 * s, weight: .semibold), modeStyle = TextStyle(size: 11 * s)
         let modeName = mode.rawValue.prefix(1).uppercased() + mode.rawValue.dropFirst()
         let numberText = number.map(String.init) ?? ""
         let gap = numberText.isEmpty ? 0 : 6 * s
