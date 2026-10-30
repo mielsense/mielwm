@@ -44,6 +44,7 @@ let package = Package(
         .testTarget(name: "MielRenderTests", dependencies: ["MielRender", "MielCore"], swiftSettings: testing),
         // The app's own logic, from the executable module; nothing here opens windows.
         .testTarget(name: "mielwmTests", dependencies: ["mielwm", "MielCore", "MielSystem"], swiftSettings: testing),
-        .testTarget(name: "MielSystemTests", dependencies: ["MielSystem", "MielIPC", "MielCore"], swiftSettings: testing),
+        .testTarget(name: "MielIPCTests", dependencies: ["MielIPC"], swiftSettings: testing),
+        .testTarget(name: "MielSystemTests", dependencies: ["MielSystem", "MielCore"], swiftSettings: testing),
     ]
 )
