@@ -14,7 +14,7 @@ Each workspace lays its windows out one way, and you can change it any time.
 
 A new workspace starts with the layout from Settings > Layout > New windows. Click Tiles, Stack or Floating there.
 
-![The Layout pane, with the gaps diagram](images/settings-layout-dark.png)
+![The Layout pane, with the choices for new windows and stacks](images/settings-layout-dark.png)
 
 ## Tiles
 

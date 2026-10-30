@@ -89,7 +89,7 @@ mielwm.app also holds a small `aerospace` command, at `/Applications/mielwm.app/
 | `aerospace workspace-back-and-forth`, `close`, `macos-native-minimize` | The same as mielwm's actions. |
 | `aerospace resize smart\|width\|height +N\|-N` | The same as `mielwm resize`. |
 
-It answers within 0.3 seconds. When mielwm isn't running, or the command is one it doesn't know, it prints what an AeroSpace with no windows would: `[]` for a list, nothing for an action. [AeroSpace-compatible apps](compatible-apps.md) explains how to point an app at it.
+It waits at most 0.3 seconds for mielwm. When mielwm isn't running, or the command is one it doesn't know, it prints what an AeroSpace with no windows would: `[]` for a list, nothing for an action. [AeroSpace-compatible apps](compatible-apps.md) explains how to point an app at it.
 
 ## From other tools
 

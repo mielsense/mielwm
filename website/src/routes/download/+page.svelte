@@ -11,7 +11,7 @@
 	const latest = $derived(data.latest);
 	// the exact file when the release list loaded, the stable latest link when it didn't
 	const dmg = $derived(latest?.dmg?.url ?? site.download);
-	const file = $derived(latest ? `mielwm-${latest.version}.dmg` : 'mielwm.dmg');
+	const file = $derived(latest?.dmg?.name ?? 'mielwm.dmg');
 	const day = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 	const megabytes = (bytes: number) => `${(bytes / 1e6).toFixed(1)} MB`;
 </script>

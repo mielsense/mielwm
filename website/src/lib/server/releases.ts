@@ -2,7 +2,7 @@
 // rate limit, an odd reply) gives an empty list, and the page falls back to the stable latest link.
 import { site } from '@/site';
 
-export type Dmg = { url: string; size: number };
+export type Dmg = { name: string; url: string; size: number };
 export type Release = { version: string; date: string; prerelease: boolean; page: string; dmg?: Dmg; sha256?: string };
 
 type Asset = { name: string; size: number; browser_download_url: string };
@@ -43,7 +43,7 @@ export function releases(): Promise<Release[]> {
 					date: r.published_at!,
 					prerelease: r.prerelease,
 					page: r.html_url,
-					dmg: asset && { url: asset.browser_download_url, size: asset.size }
+					dmg: asset && { name: asset.name, url: asset.browser_download_url, size: asset.size }
 				};
 			});
 		const latest = found.find((r) => !r.prerelease);
@@ -51,7 +51,7 @@ export function releases(): Promise<Release[]> {
 		const sums = raw?.assets.find((a) => a.name === 'SHA256SUMS');
 		if (latest && sums) {
 			const text = await (await get(sums.browser_download_url))?.text().catch(() => undefined);
-			latest.sha256 = text ? sha256For(text, `mielwm-${latest.version}.dmg`) : undefined;
+			latest.sha256 = text && latest.dmg ? sha256For(text, latest.dmg.name) : undefined;
 		}
 		return found;
 	})());
