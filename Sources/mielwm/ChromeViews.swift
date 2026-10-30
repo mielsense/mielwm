@@ -49,6 +49,7 @@ struct SteadyChrome: View {
             }
             if let toast = c.hud.toast, !toast.isEmpty {
                 Pill(text: toast, look: c.look, worldShown: c.worldShown, toast: true)
+                    .opacity(c.toastOpacity)
                     .position(x: c.size.width / 2, y: c.size.height * 0.78) // where the notices put theirs
             }
         }

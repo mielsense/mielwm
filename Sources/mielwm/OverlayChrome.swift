@@ -11,13 +11,15 @@ struct ChromeContent: Equatable {
     var topInset: CGFloat = 0 // notch or menu bar
     var bottomInset: CGFloat = 0 // Dock
     var worldShown = true // the canvas is drawn behind; false: the live desktop (⌥Tab on its own)
+    var toastOpacity = 1.0 // the toast fades out as its notice does
 }
 
 extension ChromeContent {
     /// The chrome for `scene`'s display, taking its HUD: Metal then draws the canvas without it.
-    init(taking scene: inout MielCore.Scene, worldShown: Bool = true) {
+    init(taking scene: inout MielCore.Scene, worldShown: Bool = true, toastOpacity: Double = 1) {
         let s = scene.screen
-        self.init(hud: scene.hud, look: scene.look, size: s.frame.size, topInset: s.topInset, bottomInset: s.bottomInset, worldShown: worldShown)
+        self.init(hud: scene.hud, look: scene.look, size: s.frame.size, topInset: s.topInset, bottomInset: s.bottomInset,
+                  worldShown: worldShown, toastOpacity: toastOpacity)
         scene.hud = HUDModel()
     }
 }
@@ -59,6 +61,7 @@ final class OverlayChrome: NSView {
     func show(_ content: ChromeContent, transition: Double, opacity: Double) {
         var palette = content, rest = content
         palette.hud.toast = nil
+        palette.toastOpacity = 1
         if content.hud.mode == .switcher { palette.hud.rows = [] }
         rest.hud = HUDModel()
         rest.hud.toast = content.hud.toast
