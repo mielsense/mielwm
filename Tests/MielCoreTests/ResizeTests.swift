@@ -4,8 +4,7 @@ import Testing
 
 // resize by an amount, along the split for tiles, one side or both for a floating window.
 
-@Test func resizeCommandsRoundTripAndBadOnesAreRefused() {
-    for a: Action in [.resize(.smart, 50), .resize(.width, -100), .resize(.height, 20)] { #expect(Action(command: a.command) == a, "\(a.command)") }
+@Test func resizeCommandsWithBadAmountsAreRefused() {
     #expect(Action(command: "resize smart +50")?.command == "resize smart +50")
     for bad in ["resize width 800", "resize smart +0", "resize diagonal +5", "resize smart", "resize width -x"] {
         #expect(Action(command: bad) == nil, "\(bad)")

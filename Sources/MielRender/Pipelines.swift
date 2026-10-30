@@ -7,7 +7,6 @@ final class Pipelines {
     let solid: MTLRenderPipelineState
     let texture: MTLRenderPipelineState
     let lens: MTLRenderPipelineState
-    let material: MTLRenderPipelineState
 
     private static let lock = NSLock()
     private static var shared: [UInt64: Pipelines] = [:]
@@ -43,6 +42,5 @@ final class Pipelines {
         solid = try make("solid_fragment", blend: true)
         texture = try make("texture_fragment", blend: true)
         lens = try make("lens_fragment", blend: false)
-        material = try make("material_fragment", blend: true)
     }
 }

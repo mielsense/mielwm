@@ -37,8 +37,7 @@ public final class BarikLink {
         (self.home, self.shim, self.helper, self.apps, self.defaults) = (home, shim, helper, apps, defaults)
     }
 
-    /// Translocated by macOS (run from Downloads) or on a mounted disk image.
-    /// Translocated, or on a read-only disk like the DMG. An Applications
+    /// Translocated by macOS (run from Downloads), or on a read-only disk like the DMG. An Applications
     /// folder on a writable external drive is fine.
     public var temporaryLocation: Bool {
         if shim.contains("/AppTranslocation/") { return true }

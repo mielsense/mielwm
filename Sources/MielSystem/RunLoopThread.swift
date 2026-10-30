@@ -33,7 +33,9 @@ final class RunLoopThread: Thread {
         CFRunLoopWakeUp(runLoop)
     }
 
+    /// A thread that never started has nothing to stop.
     func stop() {
+        guard runLoop != nil else { return }
         perform { CFRunLoopStop(CFRunLoopGetCurrent()) }
     }
 }

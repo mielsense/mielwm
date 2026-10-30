@@ -61,3 +61,19 @@ private func keywords() throws -> [String: [String]] {
         #expect(missing.isEmpty, "\(pane) keywords miss \(missing.sorted())")
     }
 }
+
+/// mielwm works with any app built for AeroSpace: its text names Barik only as an example
+/// ("like Barik"), and search still takes "Barik" to the AeroSpace pane.
+@Test func barikIsOnlyAnExample() throws {
+    // Multi-line strings whole, then one-line ones with their escapes.
+    let literal = try NSRegularExpression(pattern: #"(?s)"""(.*?)"""|"((?:[^"\\\n]|\\.)*)""#)
+    for file in ["IntegrationsPane", "MenuBarPane", "AppDelegate+Barik", "SettingsPane", "AppDelegate+Menu", "Onboarding"] {
+        let source = try read(file)
+        let strings = literal.matches(in: source, range: NSRange(source.startIndex..., in: source)).compactMap { m in
+            (Range(m.range(at: 1), in: source) ?? Range(m.range(at: 2), in: source)).map { String(source[$0]) }
+        }
+        let named = strings.filter { $0.contains("Barik") && !$0.contains("like Barik") && $0 != "Barik" }
+        #expect(named.isEmpty, "\(file): \(named)")
+    }
+    #expect(try keywords()["integrations"]?.contains("Barik") == true)
+}

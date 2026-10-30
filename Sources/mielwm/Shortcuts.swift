@@ -68,7 +68,7 @@ let shortcutGroups: [(title: String, items: [ShortcutItem])] = [
 
 /// Keys of the zoomed-out canvas: not shortcuts, listed so they are known.
 let overviewKeys: [(keys: String, name: String)] = [
-    ("↩", "Go to the selected window"), ("⇧↩", "Bring it here"), ("⌘1–9", "Go to that search result"),
+    ("↩", "Go to the selected window"), ("⇧↩", "Bring it here"), ("⌘1-9", "Go to that search result"),
     ("⌘0", "Fit every window"), ("⌘F", "Frame the selected window"), ("⌘A", "Tidy windows"),
     ("⌘Z  ⌘⇧Z", "Undo, redo"), ("⌘,", "Appearance settings"), ("⎋", "Clear the search, then go back"),
 ]

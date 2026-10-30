@@ -1,17 +1,32 @@
 import AppKit
+import Carbon.HIToolbox
 import MielCore
 import MielRender
 import MielSystem
 import QuartzCore
 
 extension Controller {
-    func system(_ event: SystemEvent) {
-        if case let .windowClosed(id) = event { capture.stop([id], dropFrames: true) }
-        input(.system(event))
-        if case .screensChanged = event {
-            rebuildOverlays()
-            onScreens?()
+    /// Keys the overview and switcher understand; nil for typed text.
+    static func namedKey(keyCode: UInt16, characters: String, modifiers: Modifiers) -> NamedKey? {
+        switch Int(keyCode) {
+        case kVK_LeftArrow: return .arrow(.left)
+        case kVK_RightArrow: return .arrow(.right)
+        case kVK_DownArrow: return .arrow(.down)
+        case kVK_UpArrow: return .arrow(.up)
+        case kVK_Tab: return .tab
+        case kVK_Return, kVK_ANSI_KeypadEnter: return .enter
+        case kVK_Escape: return .escape
+        case kVK_F1: return .f1
+        case kVK_Delete: return .backspace
+        case kVK_ForwardDelete: return .forwardDelete
+        default: break
         }
+        guard modifiers.contains(.control) || modifiers.contains(.command) else { return nil }
+        let digits = [kVK_ANSI_0, kVK_ANSI_1, kVK_ANSI_2, kVK_ANSI_3, kVK_ANSI_4, kVK_ANSI_5, kVK_ANSI_6, kVK_ANSI_7, kVK_ANSI_8, kVK_ANSI_9]
+        if let n = digits.firstIndex(of: Int(keyCode)) { return .digit(n) }
+        if Int(keyCode) == kVK_ANSI_Equal { return .equals }
+        if Int(keyCode) == kVK_ANSI_Minus { return .minus }
+        return characters.isEmpty ? nil : .character(characters.lowercased())
     }
 
     func updateTap() {
@@ -24,7 +39,7 @@ extension Controller {
             tapSettings = s
             var bindings: [Chord: Action] = [:], swallow: Set<Chord> = [] // only the config's no-ops: a key the user unbinds types again
             for (chord, action) in s.chords {
-                guard let c = Chord(chord.description) else { continue }
+                guard let c = Chord(chord) else { continue }
                 if action == .noop { swallow.insert(c) } else { bindings[c] = action }
             }
             bindingTable = BindingTable(bindings: bindings, swallow: swallow)

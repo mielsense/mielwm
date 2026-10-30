@@ -48,7 +48,7 @@ cd website && pnpm check && pnpm build     # what CI runs on the website
 A window manager under test moves windows, so the tools stay away from yours. Never run a development build in normal mode while your own mielwm runs. Two copies fight over every window.
 
 - `swift test` runs the pure logic, the renderer and the system layer. It moves nothing.
-- `mielwm snapshot --state overview|search:<text>|help|switcher|desktop [--light|--dark] --out x.png` draws any state of the overview to a PNG from made-up windows. `--real` uses your windows' pictures but still moves nothing.
+- `mielwm snapshot --state overview|search:<text>|help|switcher|desktop [--light|--dark] --out x.png` draws any state of the overview to a PNG from made-up windows, with the chrome in its solid Reduce Transparency material, since Liquid glass only draws on screen. `--real` uses your windows' pictures but still moves nothing.
 - `mielwm --settings-preview --out <dir>` saves every Settings pane, the onboarding and the menu as PNGs in light and dark, on a copy of your config. `--selftest` drives the Settings window through its controls instead.
 - `mielwm --manage-only <pid>` manages one app's windows only, with no shortcuts and no focus changes. Point it at `mielwm-testwindows` to try something live.
 - `scripts/system-test.sh`, `scripts/barik-test.sh` and `scripts/benchmark.sh` do exactly that for you, each with its own socket and settings, and clean up after themselves.

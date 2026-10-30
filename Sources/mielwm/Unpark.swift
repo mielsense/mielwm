@@ -17,7 +17,7 @@ func unparkFromLayout() -> Bool {
     let registry = WindowRegistry { _ in }
     registry.start()
     let ok = registry.performAndWait(commands, timeout: 3)
-    print("mielwm: unparked \(commands.count) windows\(ok ? "" : " (some apps did not answer)")")
+    print("mielwm: unparked \(counted(commands.count, "window"))\(ok ? "" : " (some apps did not answer)")")
     return ok
 }
 

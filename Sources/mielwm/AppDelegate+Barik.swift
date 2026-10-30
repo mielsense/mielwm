@@ -32,29 +32,29 @@ extension AppDelegate {
             }
             model.apply(changes)
         } catch {
-            model.problem = "Barik: \(Self.describe(error))"
+            model.problem = "Work with AeroSpace-compatible apps: \(Self.describe(error))"
         }
     }
 
     /// `icon`: turning on also sets mielwm's menu bar item to its icon.
     static func barikAlert(on: Bool, config: URL?, icon: Bool = false) -> NSAlert {
         let alert = NSAlert.mielwm()
-        let file = config.map { ($0.path as NSString).abbreviatingWithTildeInPath } ?? "Barik's config"
+        let file = config.map { ($0.path as NSString).abbreviatingWithTildeInPath } ?? "the menu bar's config"
         if on {
-            alert.messageText = "Work with Barik?"
+            alert.messageText = "Work with AeroSpace-compatible apps?"
             alert.informativeText = """
-                mielwm will set aerospace.path in \(file) to its own aerospace command, after saving a copy \
-                next to it. Then it starts a hidden helper called AeroSpace and relaunches Barik, so Barik \
-                shows mielwm's workspaces.
+                mielwm will start a hidden helper called AeroSpace, so menu bars and tools made for AeroSpace \
+                show mielwm's workspaces. It sets aerospace.path in \(file) to its own aerospace command, after \
+                saving a copy next to it, and relaunches the app that reads it.
                 """ + (icon ? " mielwm's own menu bar item changes to its icon, so the workspaces don't show twice." : "")
-            alert.addButton(withTitle: "Turn On")
+            alert.addButton(withTitle: "Turn on")
         } else {
-            alert.messageText = "Stop working with Barik?"
+            alert.messageText = "Stop working with AeroSpace-compatible apps?"
             alert.informativeText = """
-                mielwm will put Barik's old aerospace.path back in \(file), quit its AeroSpace helper and \
-                relaunch Barik.
+                mielwm will put the old aerospace.path back in \(file), quit its AeroSpace helper and \
+                relaunch the app that reads it.
                 """
-            alert.addButton(withTitle: "Turn Off")
+            alert.addButton(withTitle: "Turn off")
         }
         alert.addButton(withTitle: "Cancel")
         return alert
@@ -62,8 +62,8 @@ extension AppDelegate {
 
     static func barikNoConfigAlert() -> NSAlert {
         let alert = NSAlert.mielwm()
-        alert.messageText = "Open Barik once first"
-        alert.informativeText = "Barik makes its config the first time it runs, and mielwm needs it. Open Barik, then turn this on again."
+        alert.messageText = "Open your menu bar app once first"
+        alert.informativeText = "mielwm points the app's config at its aerospace command, and an app like Barik makes its config the first time it runs. Open it, then turn this on again."
         alert.addButton(withTitle: "OK")
         return alert
     }
@@ -73,7 +73,7 @@ extension AppDelegate {
         alert.messageText = "Move mielwm to Applications first"
         alert.informativeText = """
             mielwm is running from a disk image or a temporary folder macOS made for it, which goes away when \
-            it quits, and Barik would lose it. Move mielwm to Applications, open it from there, then turn this on.
+            it quits, and apps using its aerospace command would lose it. Move mielwm to Applications, open it from there, then turn this on.
             """
         alert.addButton(withTitle: "OK")
         return alert

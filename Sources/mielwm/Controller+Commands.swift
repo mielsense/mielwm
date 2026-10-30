@@ -19,11 +19,10 @@ extension Controller {
     }
 
     func reportWorkspaces() {
-        guard let onWorkspaces else { return }
         let status = workspaceStatus
-        guard status != reportedWorkspaces else { return }
+        guard let onWorkspaces, status != reportedWorkspaces else { return }
         reportedWorkspaces = status
-        onWorkspaces(status)
+        onWorkspaces()
     }
 
     /// The Settings window's values while they change (a slider moving), before config.json has them.

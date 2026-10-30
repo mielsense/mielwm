@@ -41,7 +41,7 @@ func listWindows(json: Bool, fps: Bool, pid: Int32?) {
         let rows = windows.map { w in
             Row(id: w.id.description, pid: w.id.pid, app: w.appName, title: w.title,
                 frame: [w.frame.minX, w.frame.minY, w.frame.width, w.frame.height],
-                visible: !isHiddenFrame(w.frame, screens: screens), managed: w.isStandard && w.isMovable, minimized: w.isMinimized,
+                visible: !isHiddenFrame(w.frame, screens: screens), managed: w.isManageable, minimized: w.isMinimized,
                 sckOnScreen: onScreen[w.id.number], fps: rates[w.id])
         }
         let encoder = JSONEncoder()
@@ -59,7 +59,7 @@ func listWindows(json: Bool, fps: Bool, pid: Int32?) {
         if w.isMinimized { flags.append("minimized") }
         if onScreen[w.id.number] == false { flags.append("sck-offscreen") }
         if let r = rates[w.id] { flags.append(String(format: "%.0ffps", r)) }
-        let title = w.title.isEmpty ? "" : " “\(w.title)”"
+        let title = w.title.isEmpty ? "" : " \"\(w.title)\""
         print("\(w.id)\t\(w.appName)\(title)\t\(fmt(w.frame))\t\(flags.joined(separator: " "))")
     }
 }

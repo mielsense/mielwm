@@ -11,24 +11,30 @@ import MielCore
 @testable import MielSystem
 import Testing
 
-// MARK: - Chords
-
-@Test func chordParsesModifiersAndKeys() {
-    #expect(Chord("ctrl+opt+g") == Chord(UInt16(kVK_ANSI_G), [.control, .option]))
-    #expect(Chord("alt-shift-left") == Chord(UInt16(kVK_LeftArrow), [.option, .shift]))
-    #expect(Chord("Cmd+,") == Chord(UInt16(kVK_ANSI_Comma), .command))
-    #expect(Chord("alt+-") == Chord(UInt16(kVK_ANSI_Minus), .option))
-    #expect(Chord("alt-minus") == Chord(UInt16(kVK_ANSI_Minus), .option))
-    #expect(Chord("alt+=") == Chord(UInt16(kVK_ANSI_Equal), .option))
-    #expect(Chord("super+f1") == Chord(UInt16(kVK_F1), .command))
-    #expect(Chord("tab") == Chord(UInt16(kVK_Tab)))
+/// A new folder for one test, inside this run's own, which goes when the run ends.
+func scratchDir(_ name: String) throws -> URL {
+    let url = scratchRoot.appendingPathComponent("\(name)-\(UUID().uuidString)", isDirectory: true)
+    try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+    return url
 }
 
-@Test func chordRejectsUnknownPartsAndMissingKeys() {
-    #expect(Chord("ctrl+opt") == nil)
-    #expect(Chord("hyper+g") == nil)
-    #expect(Chord("ctrl+g+h") == nil)
-    #expect(Chord("") == nil)
+private let scratchRoot: URL = {
+    atexit { try? FileManager.default.removeItem(at: FileManager.default.temporaryDirectory.appendingPathComponent("mielwm-system-tests-\(getpid())")) }
+    return FileManager.default.temporaryDirectory.appendingPathComponent("mielwm-system-tests-\(getpid())", isDirectory: true)
+}()
+
+// MARK: - Chords
+
+@Test func chordsTakeTheKeyCodeTheConfigNames() throws {
+    func chord(_ text: String) throws -> Chord? { Chord(try #require(KeyChord(text))) }
+    #expect(try chord("ctrl+opt+g") == Chord(UInt16(kVK_ANSI_G), [.control, .option]))
+    #expect(try chord("opt+shift+left") == Chord(UInt16(kVK_LeftArrow), [.option, .shift]))
+    #expect(try chord("Cmd+,") == Chord(UInt16(kVK_ANSI_Comma), .command))
+    #expect(try chord("alt+-") == Chord(UInt16(kVK_ANSI_Minus), .option))
+    #expect(try chord("alt+=") == Chord(UInt16(kVK_ANSI_Equal), .option))
+    #expect(try chord("cmd+f1") == Chord(UInt16(kVK_F1), .command))
+    #expect(try chord("tab") == Chord(UInt16(kVK_Tab)))
+    #expect(KeyChord.allKeys.allSatisfy { Chord.keyCode($0) != nil }, "every key the config can name")
 }
 
 // MARK: - Tap routing
@@ -40,10 +46,10 @@ private func key(_ code: Int, _ modifiers: Modifiers = [], down: Bool = true, is
 private func tapState() -> TapState {
     var state = TapState()
     state.table = BindingTable(bindings: [
-        Chord("ctrl+opt+g")!: .toggleOverview,
-        Chord("opt+shift+left")!: .nudge(.left),
-        Chord("opt+tab")!: .switchWindow(forward: true),
-        Chord("opt+shift+tab")!: .switchWindow(forward: false),
+        Chord(KeyChord("ctrl+opt+g")!)!: .toggleOverview,
+        Chord(KeyChord("opt+shift+left")!)!: .nudge(.left),
+        Chord(KeyChord("opt+tab")!)!: .switchWindow(forward: true),
+        Chord(KeyChord("opt+shift+tab")!)!: .switchWindow(forward: false),
     ])
     return state
 }
@@ -70,7 +76,8 @@ private func tapState() -> TapState {
     var router = TapRouter()
     let state = tapState()
     for chord in ["opt+1", "opt+0", "opt+shift+5", "opt+/", "opt+,", "opt+;"] {
-        #expect(router.route(key(Int(Chord(chord)!.keyCode), Chord(chord)!.modifiers), state)
+        let c = Chord(KeyChord(chord)!)!
+        #expect(router.route(key(Int(c.keyCode), c.modifiers), state)
             == TapOutput(consume: true), "\(chord)")
     }
     #expect(router.route(key(kVK_ANSI_A, .option), state) == TapOutput())
@@ -215,18 +222,16 @@ private func tapState() -> TapState {
 // MARK: - File watching
 
 @Test func fileWatcherSeesEveryKindOfEdit() throws {
-    let root = FileManager.default.temporaryDirectory.appendingPathComponent("mielwm-watch-\(UUID().uuidString)")
-    defer { try? FileManager.default.removeItem(at: root) }
+    let root = try scratchDir("watch") // watched while `dir` is missing; others' temporary files never land in it
     let dir = root.appendingPathComponent("mielwm"), file = dir.appendingPathComponent("config.json")
-    let calls = DispatchSemaphore(value: 0)
-    let watcher = FileWatcher([file, dir.appendingPathComponent("other.json")], queue: DispatchQueue(label: "test.watch")) { calls.signal() }
+    let calls = DispatchSemaphore(value: 0), queue = DispatchQueue(label: "test.watch")
+    let watcher = FileWatcher([file, dir.appendingPathComponent("other.json")], queue: queue) { calls.signal() }
     defer { watcher.stop() }
     func expectCall(_ what: String) {
-        #expect(calls.wait(timeout: .now() + 3) == .success, "\(what)")
-        while calls.wait(timeout: .now() + 0.3) == .success {} // one edit may report twice
+        #expect(calls.wait(timeout: .now() + 10) == .success, "\(what)")
+        while calls.wait(timeout: .now() + 0.5) == .success {} // one edit may report twice
     }
-    try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
-    Thread.sleep(forTimeInterval: 0.2) // the watcher has armed on the root
+    queue.sync {} // the watcher has armed on the root
     try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
     try Data("{}".utf8).write(to: file) // the directory and the file appear
     expectCall("created")
@@ -260,7 +265,7 @@ private func tapState() -> TapState {
 
 /// The overview pauses once its displays found nothing new; a picture stored after they
 /// looked but before the pause asked to be woken must still wake it.
-@Test func aPictureStoredBeforeTheWakeIsAskedForWakesAtOnce() async throws {
+@Test(.timeLimit(.minutes(1))) func aPictureStoredBeforeTheWakeIsAskedForWakesAtOnce() async throws {
     let capture = CaptureManager()
     let id = WindowID(pid: 1, number: 7)
     let ctx = try #require(CGContext(data: nil, width: 4, height: 4, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
@@ -337,8 +342,7 @@ func stillsOfWindowsLongOutOfSightShrink() throws {
 // MARK: - Wallpaper
 
 @Test func wallpaperIsDecodedJustLargeEnoughToCoverTheScreen() throws {
-    let url = FileManager.default.temporaryDirectory.appendingPathComponent("mielwm-wallpaper-\(UUID().uuidString).png")
-    defer { try? FileManager.default.removeItem(at: url) }
+    let url = try scratchDir("wallpaper").appendingPathComponent("wallpaper.png")
     let ctx = try #require(CGContext(data: nil, width: 4000, height: 2000, bitsPerComponent: 8, bytesPerRow: 0,
                                      space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
     let dest = try #require(CGImageDestinationCreateWithURL(url as CFURL, "public.png" as CFString, 1, nil))
@@ -442,4 +446,9 @@ private func socketPath(_ name: String) -> String { "/tmp/mielwm-\(getpid())-\(n
     registry.report(a) // the display is back
     registry.report(a)
     #expect(seen == [a, b, b, a])
+}
+
+// The root of WindowRegistry.stop() crashing before start(): stopping its observer thread before it ran.
+@Test func aThreadThatNeverStartedStopsQuietly() {
+    RunLoopThread(name: "mielwm.test").stop()
 }

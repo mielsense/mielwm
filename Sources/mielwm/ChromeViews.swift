@@ -19,13 +19,13 @@ struct EasedChrome: View {
                 Palette(content: c)
                     .padding(.top, PaletteMetrics.top(c.look, screenHeight: c.size.height, topInset: c.topInset))
             }
-            if let hints = c.hud.corners[safe: 2], !hints.isEmpty {
-                Pill(text: hints, look: c.look, worldShown: c.worldShown)
+            if !c.hud.hints.isEmpty {
+                Pill(text: c.hud.hints, look: c.look, worldShown: c.worldShown)
                     .frame(maxHeight: .infinity, alignment: .bottom)
                     .padding(.bottom, PaletteMetrics.hintsMargin(c.look, bottomInset: c.bottomInset))
             }
-            if let readout = c.hud.corners[safe: 1], !readout.isEmpty {
-                Pill(text: readout, look: c.look, worldShown: c.worldShown)
+            if !c.hud.readout.isEmpty {
+                Pill(text: c.hud.readout, look: c.look, worldShown: c.worldShown)
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .padding(.top, max(Design.Space.xl * s, c.topInset + (Design.Space.s + 2) * s))
                     .padding(.trailing, Design.Space.xl * s)
@@ -51,7 +51,7 @@ struct SteadyChrome: View {
             if let toast = c.hud.toast, !toast.isEmpty {
                 Pill(text: toast, look: c.look, worldShown: c.worldShown, toast: true)
                     .opacity(c.toastOpacity)
-                    .position(x: c.size.width / 2, y: c.size.height * 0.78) // where the notices put theirs
+                    .position(x: c.size.width / 2, y: c.size.height * Notices.toastCenter)
             }
         }
         .frame(width: c.size.width, height: c.size.height)
@@ -69,7 +69,7 @@ private struct Palette: View {
         let hud = content.hud, look = content.look, s = look.hudScale
         let help = hud.mode == .help
         let list = hud.mode == .search && (!hud.rows.isEmpty || !hud.query.isEmpty)
-        let width = min((help ? max(look.paletteWidth, PaletteMetrics.helpWidth) : look.paletteWidth) * s, content.size.width * 0.94)
+        let width = PaletteMetrics.width(look, help: help, screenWidth: content.size.width)
         VStack(spacing: PaletteMetrics.cardGap * s) {
             QueryField(hud: hud, look: look)
                 .frame(width: width, height: look.searchHeight * s)
@@ -180,7 +180,7 @@ private struct ResultRow: View {
         .frame(maxHeight: .infinity)
         .background {
             if selected {
-                RoundedRectangle(cornerRadius: (PaletteMetrics.cardRadius - PaletteMetrics.listInset) * s, style: .continuous)
+                RoundedRectangle(cornerRadius: PaletteMetrics.rowRadius * s, style: .continuous)
                     .fill(Color(look.accent))
             }
         }
@@ -383,9 +383,36 @@ private struct AppIcon: View {
     }
 }
 
-/// The search field's caret, blinked by Core Animation like the system's, so an
-/// idle field costs no frames; it starts again, solid, whenever the text changes.
-private struct Caret: NSViewRepresentable {
+private struct ChromeStillKey: EnvironmentKey { static let defaultValue = false }
+
+extension EnvironmentValues {
+    /// The chrome is drawn once into an image (`mielwm snapshot`), where AppKit views and
+    /// materials don't draw: solid surfaces, a steady caret.
+    var chromeStill: Bool {
+        get { self[ChromeStillKey.self] }
+        set { self[ChromeStillKey.self] = newValue }
+    }
+}
+
+/// The search field's caret: blinking on screen, a steady bar in an image.
+private struct Caret: View {
+    let height: CGFloat
+    let color: RGB
+    let moves: String
+    @Environment(\.chromeStill) private var still
+
+    var body: some View {
+        if still {
+            Rectangle().fill(Color(color)).frame(width: 2, height: height)
+        } else {
+            BlinkingCaret(height: height, color: color, moves: moves)
+        }
+    }
+}
+
+/// Blinked by Core Animation like the system's caret, so an idle field costs
+/// no frames; it starts again, solid, whenever the text changes.
+private struct BlinkingCaret: NSViewRepresentable {
     let height: CGFloat
     let color: RGB
     let moves: String
@@ -411,7 +438,7 @@ private struct Caret: NSViewRepresentable {
 
     final class Coordinator { var moves = "" }
 
-    /// On, a quick fade out, off, a fade back in, as the overlay's caret did.
+    /// On, a quick fade out, off, a fade back in.
     private static let blink: CAKeyframeAnimation = {
         let a = CAKeyframeAnimation(keyPath: "opacity")
         a.values = [1, 1, 0, 0, 1]
@@ -430,18 +457,19 @@ extension View {
     /// Liquid glass, frosted, or solid with Reduce Transparency; outlined with Increase Contrast.
     /// `behindWindow`: what to blur is the desktop behind the overlay, not the canvas inside it (frosted only).
     func chromeMaterial<S: InsettableShape>(_ shape: S, look: Look, behindWindow: Bool = false) -> some View {
-        modifier(ChromeMaterial(shape: shape, look: look, behindWindow: behindWindow))
+        modifier(ChromeSurface(shape: shape, look: look, behindWindow: behindWindow))
     }
 }
 
-private struct ChromeMaterial<S: InsettableShape>: ViewModifier {
+private struct ChromeSurface<S: InsettableShape>: ViewModifier {
     let shape: S
     let look: Look
     let behindWindow: Bool
+    @Environment(\.chromeStill) private var still
 
     func body(content: Content) -> some View {
         Group {
-            switch NoticeMaterial.current(look) {
+            switch still ? .solid : Design.ChromeMaterial.current(look) { // glass and frosted draw only on screen
             case .solid:
                 content.background(shape.fill(Color(nsColor: .windowBackgroundColor)))
                     .shadow(color: .black.opacity(look.dark ? 0.4 : 0.2), radius: 14, y: 4)
@@ -490,8 +518,4 @@ extension AppInfo {
     @MainActor static func icon(for bundleID: String?) -> NSImage {
         bundleID.map { AppInfo(bundleID: $0).icon } ?? NSWorkspace.shared.icon(for: .applicationBundle)
     }
-}
-
-extension Array {
-    subscript(safe i: Int) -> Element? { indices.contains(i) ? self[i] : nil }
 }

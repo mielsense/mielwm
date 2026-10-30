@@ -8,9 +8,9 @@ extension AppDelegate {
     /// else the icon; a warning sign while the config has problems.
     func refreshIcon() {
         guard let button = statusItem?.button else { return }
-        let settings = currentSettings
+        let (settings, errors) = config
         let status = controller?.workspaceStatus
-        if !configErrors.isEmpty {
+        if !errors.isEmpty {
             button.image = NSImage(systemSymbolName: "exclamationmark.triangle", accessibilityDescription: "mielwm: the config has problems")
         } else if let status, let numbers = Self.shownNumbers(settings.menuBarStyle, status), !numbers.isEmpty {
             button.image = workspaceIndicator(numbers, current: status.current)
@@ -35,7 +35,7 @@ extension AppDelegate {
             menu.addItem(item)
             return item
         }
-        let on = controller != nil
+        let on = controller != nil, config = config
         add(statusLine.title, statusLine.symbol, nil, enabled: false)
         // Keys reach the shortcuts through an event tap, and secure input hides them from it.
         if on, IsSecureEventInputEnabled() {
@@ -59,7 +59,7 @@ extension AppDelegate {
             add(swipeAeroSpace() == nil ? "Quit AeroSpace" : "Quit AeroSpace and SwipeAeroSpace", "xmark.circle", #selector(quitAeroSpace))
         }
         let overview = add("Overview", "square.grid.2x2", #selector(overview), enabled: on)
-        if let chord = currentSettings.chords(for: .toggleOverview).first, let key = menuKey(chord) {
+        if let chord = config.settings.chords(for: .toggleOverview).first, let key = menuKey(chord) {
             overview.keyEquivalent = key.0
             overview.keyEquivalentModifierMask = key.1
         }
@@ -69,7 +69,7 @@ extension AppDelegate {
         add(paused ? "Resume mielwm" : "Pause mielwm", paused ? "play.circle" : "pause.circle", #selector(toggleCanvas),
             enabled: !waitingForAeroSpace && onboarding == nil && !stopping)
         menu.addItem(.separator())
-        if !configErrors.isEmpty { add("Config has problems…", "exclamationmark.triangle", #selector(showConfigProblems)) }
+        if !config.errors.isEmpty { add("Config has problems…", "exclamationmark.triangle", #selector(showConfigProblems)) }
         add("Settings…", "gearshape", #selector(openSettings), key: ",")
         add("About mielwm", "info.circle", #selector(about))
         menu.addItem(.separator())
@@ -119,8 +119,12 @@ extension AppDelegate {
         return ("Workspace \(n)" + (status.mode.map { $0 == .stack ? " · Stack" : " · Tiles" } ?? ""), "\(n).square")
     }
 
-    private var currentSettings: MielCore.Settings { controller?.state.settings ?? loadSettings(.standard()).settings }
-    private var configErrors: [String] { controller?.configErrors ?? loadSettings(.standard()).errors }
+    /// The running settings, or the config file's while paused (read once per call).
+    private var config: (settings: MielCore.Settings, errors: [String]) {
+        if let controller { return (controller.state.settings, controller.configErrors) }
+        let loaded = loadSettings(.standard())
+        return (loaded.settings, loaded.errors)
+    }
 
     @objc private func toggleCanvas() { controller == nil ? begin() : stopCanvas() }
     @objc private func overview() { controller?.input(.action(.toggleOverview)) }
@@ -150,7 +154,7 @@ extension AppDelegate {
     }
 
     @objc private func showConfigProblems() {
-        let alert = Self.configProblemsAlert(configErrors)
+        let alert = Self.configProblemsAlert(config.errors)
         NSApp.activate(ignoringOtherApps: true)
         if alert.runModal() == .alertFirstButtonReturn { openConfigFile(ConfigPaths.standard().config) }
     }

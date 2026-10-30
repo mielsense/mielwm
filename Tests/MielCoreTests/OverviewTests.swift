@@ -176,12 +176,12 @@ func threeWindows() -> CanvasState {
     #expect(row.detail.hasPrefix("Ghostty · "))
     #expect(hud.selectedRow == 0)
     // No status pill by default; the key hints always show, as keycaps.
-    #expect(hud.corners[0].isEmpty && hud.corners[1].isEmpty && hud.corners[3].isEmpty)
-    #expect(hud.corners[2].hasPrefix("{↩} Go  {⇥} Next"))
+    #expect(hud.readout.isEmpty)
+    #expect(hud.hints.hasPrefix("{↩} Go  {⇥} Next"))
     var settings = s.settings
     settings.look.cornerLabels = true
     _ = s.send(.setSettings(settings))
-    #expect(s.hud(for: builtIn).corners[1].hasSuffix("%  ·  3 windows  ·  \(builtIn.name)"))
+    #expect(s.hud(for: builtIn).readout.hasSuffix("%  ·  3 windows  ·  \(builtIn.name)"))
 }
 
 @Test func hudTextIsSentenceCase() {
@@ -189,10 +189,12 @@ func threeWindows() -> CanvasState {
     _ = s.send(.action(.toggleOverview))
     _ = s.send(.action(.help))
     let hud = s.hud(for: builtIn)
-    let words = ([hud.placeholder, hud.footer] + hud.corners + hud.help.flatMap { [$0.title] + $0.entries.map(\.action) })
+    let words = ([hud.placeholder, hud.footer, hud.readout, hud.hints] + hud.help.flatMap { [$0.title] + $0.entries.map(\.action) })
         .flatMap { $0.split { !$0.isLetter } }.filter { $0.count > 1 }
     #expect(!words.isEmpty)
     #expect(words.allSatisfy { $0 != $0.uppercased() }, "no word in all caps")
+    let keys = hud.help.flatMap { $0.entries.map(\.keys) }
+    #expect(!keys.joined().contains { "“”‘’–—".contains($0) }, "straight quotes and hyphens only")
 }
 
 @Test func helpListsEveryKeyIncludingRemaps() {
@@ -204,9 +206,9 @@ func threeWindows() -> CanvasState {
     let help = s.helpSections
     #expect(help.map(\.title) == ["Search", "Mouse and trackpad", "Canvas", "Anywhere", "Workspaces"])
     let keys = Set(help.flatMap { $0.entries.map(\.keys) })
-    for key in ["⌘1–9", "⇧↩", "esc", "↑ ↓ ⇥ ⇧⇥", "⌘0", "⌘F", "⌘A", "⌘Z ⌘⇧Z", "⌘,", "⌃⌥ drag", "⇧⌘Space", "⌥←→↑↓",
+    for key in ["⌘1-9", "⇧↩", "esc", "↑ ↓ ⇥ ⇧⇥", "⌘0", "⌘F", "⌘A", "⌘Z ⌘⇧Z", "⌘,", "⌃⌥ drag", "⇧⌘Space", "⌥←→↑↓",
                 "⌥⇧←→↑↓", "⌥⇥ ⌥⇧⇥", "⌥T", "⌥F", "⌥O", "⌥= ⌥-",
-                "⌥/", "⌥,", "⌥.", "⌥1–9", "⌥⇧1–9", "⌃← ⌃→", "Menu bar"] {
+                "⌥/", "⌥,", "⌥.", "⌥1-9", "⌥⇧1-9", "⌃← ⌃→", "Menu bar"] {
         #expect(keys.contains(key), "missing \(key)")
     }
     #expect(!keys.contains("⌃⌥G"))
@@ -292,13 +294,10 @@ func threeWindows() -> CanvasState {
     #expect(!s.scene(for: builtIn).windows.contains { $0.isSelected })
 }
 
-@Test func aSearchStaysInTheSceneWhenItsHUDIsTaken() {
+@Test func theSceneSaysWhenASearchIsOn() {
     var s = makeState([snapshot(1, onBuiltIn, title: "mielwm — GitHub"), snapshot(2, onBuiltIn.offsetBy(dx: 900, dy: 0), title: "Notes")])
     _ = s.send(.action(.search("mielwm")))
-    var scene = s.scene(for: builtIn)
-    #expect(scene.searching)
-    scene.hud = HUDModel() // the overlay draws the HUD natively
-    #expect(scene.searching)
+    #expect(s.scene(for: builtIn).searching)
     _ = s.send(.action(.search("")))
     #expect(!s.scene(for: builtIn).searching)
 }
@@ -321,4 +320,10 @@ func threeWindows() -> CanvasState {
             == look.searchHeight + PaletteMetrics.cardGap + PaletteMetrics.cardHeight(look, rows: rows, footer: footer))
     }
     #expect(PaletteMetrics.cardHeight(look, rows: 6, footer: true) == 8 * 2 + 6 * look.rowHeight + 28)
+}
+
+@Test func hintsSplitIntoKeysAndLabels() {
+    let segments = hintSegments("{⌃0} Fit all  {⎋} Back")
+    #expect(segments.map(\.text) == ["⌃0", " Fit all  ", "⎋", " Back"])
+    #expect(segments.map(\.isKey) == [true, false, true, false])
 }

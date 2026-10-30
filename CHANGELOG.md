@@ -29,12 +29,13 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 
 ### Settings and the menu bar
 
-- The menu bar item can show all workspaces, the current one only, or the icon. Turning on Work with Barik switches All workspaces to the icon.
+- The pane for AeroSpace is called AeroSpace, and its switch is Work with AeroSpace-compatible apps. Status bars built for AeroSpace, like Barik, show mielwm's workspaces when it's on.
+- The menu bar item can show all workspaces, the current one only, or the icon. Turning on Work with AeroSpace-compatible apps switches All workspaces to the icon.
 - The menu lists each workspace with windows, with its apps' icons and a check on the current one. Click one to go there.
 - The menu warns when secure input is on, since mielwm's shortcuts don't work while it is.
 - Settings > Advanced links to the Configuration file page for the settings that exist only in the file.
 - The Settings window looks and reads like System Settings: a search field in the sidebar that finds panes and settings, panes in groups, a header on each pane, and pictures to click for the layout, the orientation, the grid style and the menu bar item.
-- Settings has new panes, so each setting is where you'd look for it: Windows, Overview, Trackpad & mouse, Menu bar, AeroSpace & Barik and About. Every setting keeps its name in the config file.
+- Settings has new panes, so each setting is where you'd look for it: Windows, Overview, Trackpad & mouse, Menu bar, AeroSpace and About. Every setting keeps its name in the config file.
 - The gaps diagram is a small desktop that redraws as you type. Pointing at a gap's field lights up that gap with its size.
 - Shortcuts show as light key caps instead of boxes, and a search field in Settings > Keyboard finds one by name.
 - Settings > Trackpad & mouse sets the keys you hold to move and resize windows, and how fast the overview pans and zooms. These were in the config file only.
@@ -44,6 +45,9 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 
 ### Fixes
 
+- A window that its app keeps pulling back is parked again on time, even while a message or a display change is still settling.
+- One of something is counted in the singular, like "1 floating app" in the import note.
+- Text in the app uses straight quotes and plain hyphens, like `⌘1-9`.
 - After you click the desktop, a dialog or an app mielwm leaves alone, window keys like `⌥T` no longer act on the last window you used.
 - Tidy windows from the menu bar, and other actions outside the overview, now show their message on screen. Before, it only showed in the overview.
 - Messages say "1 window", not "1 windows".

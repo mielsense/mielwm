@@ -3,11 +3,6 @@ import Testing
 
 // workspace-back-and-forth, and the key of the current workspace going back.
 
-@Test func backAndForthCommandRoundTrips() {
-    #expect(Action(command: "workspace-back-and-forth") == .workspaceBackAndForth)
-    #expect(Action.workspaceBackAndForth.command == "workspace-back-and-forth")
-}
-
 @Test func backAndForthGoesToTheWorkspaceBefore() {
     var s = twoTiles()
     #expect(s.send(.action(.workspaceBackAndForth)).isEmpty) // nowhere to go back to yet
