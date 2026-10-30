@@ -16,9 +16,15 @@ public enum PaletteMetrics {
     public static let cardRadius = 20.0 // the card's corners; its rows' are this minus listInset, so they share a centre
 
     /// Height of the field (a capsule) and, with `rows` result rows, the card below it.
+    /// The camera keeps the canvas clear of this, so both renderers size the card with `cardHeight`.
     public static func height(_ look: Look, rows: Int, footer: Bool) -> Double {
         guard rows > 0 else { return look.searchHeight }
-        return look.searchHeight + cardGap + listInset * 2 + Double(rows) * look.rowHeight + (footer ? footerHeight : 0)
+        return look.searchHeight + cardGap + cardHeight(look, rows: rows, footer: footer)
+    }
+
+    /// The card of results below the field: its inset, `rows` rows and the "more results" footer.
+    public static func cardHeight(_ look: Look, rows: Int, footer: Bool) -> Double {
+        listInset * 2 + Double(rows) * look.rowHeight + (footer ? footerHeight : 0)
     }
 
     /// The ⌥Tab switcher's icons that fit `maxTiles` across: the selected one

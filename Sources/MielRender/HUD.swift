@@ -174,7 +174,7 @@ final class HUDPainter {
         let fieldHeight = look.searchHeight * s
         // The field is a capsule; results and the shortcuts sheet sit in a card of their own just below it.
         var cardHeight: CGFloat = 0
-        if rows > 0 { cardHeight = inset * 2 + CGFloat(rows) * rowHeight + (showFooter ? footHeight : 0) }
+        if rows > 0 { cardHeight = PaletteMetrics.cardHeight(look, rows: rows, footer: showFooter) * s }
         if help { cardHeight = helpHeight(sections, s: s) }
         let gap = cardHeight > 0 ? PaletteMetrics.cardGap * s : 0
         let cardRadius = PaletteMetrics.cardRadius * s

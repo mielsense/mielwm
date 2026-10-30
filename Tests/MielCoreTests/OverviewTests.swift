@@ -312,3 +312,13 @@ func threeWindows() -> CanvasState {
     let tall = PaletteMetrics.fieldFrame(look, screenSize: CGSize(width: 600, height: 400), topInset: 120) // a narrow display, a deep notch
     #expect(abs(tall.width - 600 * 0.94) < 1e-9 && abs(tall.minY - (120 + 12)) < 1e-9)
 }
+
+@Test func thePalettesHeightIsTheFieldTheGapAndTheCard() {
+    let look = Look()
+    #expect(PaletteMetrics.height(look, rows: 0, footer: false) == look.searchHeight)
+    for (rows, footer) in [(1, false), (6, true)] {
+        #expect(PaletteMetrics.height(look, rows: rows, footer: footer)
+            == look.searchHeight + PaletteMetrics.cardGap + PaletteMetrics.cardHeight(look, rows: rows, footer: footer))
+    }
+    #expect(PaletteMetrics.cardHeight(look, rows: 6, footer: true) == 8 * 2 + 6 * look.rowHeight + 28)
+}

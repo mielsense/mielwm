@@ -144,6 +144,8 @@ private struct Results: View {
             }
         }
         .padding(inset)
+        // Exactly the card Core keeps the canvas clear of (PaletteMetrics.height), whatever the text measures.
+        .frame(height: PaletteMetrics.cardHeight(look, rows: max(1, count), footer: !hud.footer.isEmpty) * s, alignment: .top)
     }
 }
 
