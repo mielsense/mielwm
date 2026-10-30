@@ -216,7 +216,8 @@ private func saveMenuPreview(to url: URL) {
                                                                          appName: app.localizedName ?? "", title: "", frame: screen.insetBy(dx: 100, dy: 100)))))
     }
     _ = controller.state.send(.action(.workspace(1)))
-    let menu = AppDelegate(mode: .normal).previewMenu(controller)
+    let delegate = AppDelegate(mode: .normal) // the menu items' target, which they hold weakly
+    let menu = delegate.previewMenu(controller)
     guard let screen = NSScreen.main else { return }
     let at = NSPoint(x: screen.frame.midX - 120, y: screen.frame.midY + 150)
     let rect = "\(Int(at.x) - 12),\(Int(screen.frame.maxY - at.y) - 12),\(Int(menu.size.width) + 24),\(Int(menu.size.height) + 24)"
@@ -226,7 +227,7 @@ private func saveMenuPreview(to url: URL) {
         open.cancelTracking()
     }
     RunLoop.main.add(timer, forMode: .common)
-    menu.popUp(positioning: nil, at: at, in: nil)
+    withExtendedLifetime(delegate) { _ = menu.popUp(positioning: nil, at: at, in: nil) }
 }
 
 /// The workspace indicator and the icon as the menu bar tints them: 2x on the left, 1x (scaled up) on the right.
