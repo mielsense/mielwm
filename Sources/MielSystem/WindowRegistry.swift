@@ -143,7 +143,7 @@ public final class WindowRegistry {
     private func activated(_ pid: pid_t) {
         activePid = pid
         lastFocused = nil
-        trackers[pid]?.reportFocus()
+        if let tracker = trackers[pid] { tracker.reportFocus() } else { deliver(.unmanagedFocus(pid: pid)) }
     }
 
     /// Keeps `windows` current and drops what Core must never see: events
@@ -171,6 +171,9 @@ public final class WindowRegistry {
         case .windowFocused(let id):
             guard id.pid == activePid, id != lastFocused, windows[id] != nil else { return }
             lastFocused = id
+        case .unmanagedFocus(let pid):
+            guard pid == activePid else { return }
+            lastFocused = nil // coming back to the same window is news again
         case .appHidden(let pid, _):
             guard trackers[pid] != nil else { return }
         case .appTerminated, .screensChanged:
@@ -377,7 +380,7 @@ final class AppTracker {
 
     private func postFocus() {
         guard let value = app.value(kAXFocusedWindowAttribute), CFGetTypeID(value) == AXUIElementGetTypeID(),
-              let id = adopt(value as! AXUIElement) else { return }
+              let id = adopt(value as! AXUIElement) else { return post(.unmanagedFocus(pid: pid)) } // the desktop, a sheet, a panel
         post(.windowFocused(id))
     }
 

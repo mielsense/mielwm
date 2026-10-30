@@ -115,7 +115,7 @@ extension CanvasState {
     mutating func handle(_ event: SystemEvent) {
         defer { // the search list follows windows coming, going and being renamed
             switch event {
-            case .windowFrameChanged, .windowFocused, .screensChanged: break
+            case .windowFrameChanged, .windowFocused, .unmanagedFocus, .screensChanged: break
             default:
                 if overview.isOpen {
                     overview.rebuild(overviewContext, resetSelection: false)
@@ -125,6 +125,7 @@ extension CanvasState {
         }
         switch event {
         case let .windowAppeared(snapshot): appeared(snapshot)
+        case let .unmanagedFocus(pid): focusLeft(pid)
         case let .windowClosed(id): remove { $0.id == id }
         case let .windowFrameChanged(id, frame): frameChanged(id, frame)
         case let .windowTitleChanged(id, title):
@@ -288,7 +289,8 @@ extension CanvasState {
     /// parked brings the camera to it. Our own windows don't count, nor do
     /// stray reports while a focus we asked for lands.
     mutating func focusedFromOutside(_ id: WindowID) {
-        guard id.pid != ownPID, let i = index(id), windows[i].isShown else { return }
+        guard id.pid != ownPID else { return }
+        guard let i = index(id), windows[i].isShown else { return focusLeft(id.pid) } // a dialog or sheet, say
         if let f = expectedFocus, f.id != id, now < f.until { return }
         focused = id
         mru.note(id)
@@ -300,6 +302,16 @@ extension CanvasState {
         } else if w.pinned == nil, !isFullyVisible(w) {
             cut(to: landingCamera(id))
         }
+    }
+
+    /// Focus went to something mielwm doesn't manage (no window, or one it
+    /// leaves alone): no managed window has it, so
+    /// window keys do nothing rather than act on the last one. mielwm's own
+    /// windows (the overview, Settings) and a focus we just asked for keep it.
+    mutating func focusLeft(_ pid: Int32) {
+        guard pid != ownPID, !isOverview, !overview.isOpen else { return }
+        if let f = expectedFocus, now < f.until { return }
+        focused = nil
     }
 
     /// (h) Screens came or went: keep canvas frames and the camera's offset

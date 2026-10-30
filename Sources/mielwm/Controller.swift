@@ -198,7 +198,7 @@ final class Controller {
     /// Reports, text and modifiers never bring the overlay up: no need to try them on a copy first.
     private func mayOpenOverlay(_ input: CoreInput) -> Bool {
         switch input {
-        case .system(.windowFrameChanged), .system(.windowTitleChanged), .modifiersChanged, .text, .markedText: false
+        case .system(.windowFrameChanged), .system(.windowTitleChanged), .system(.unmanagedFocus), .modifiersChanged, .text, .markedText: false
         default: true
         }
     }

@@ -91,6 +91,9 @@ public enum SystemEvent: Sendable, Equatable {
     /// Focus from any source: our own commands, Cmd-Tab, the Dock, a click,
     /// an app raising itself.
     case windowFocused(WindowID)
+    /// Focus went to nothing mielwm manages: the desktop, a sheet or panel,
+    /// an app it leaves alone. No managed window has focus now.
+    case unmanagedFocus(pid: Int32)
     case appHidden(pid: Int32, Bool)
     case appTerminated(pid: Int32)
     case screensChanged([ScreenInfo])
