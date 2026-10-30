@@ -69,12 +69,16 @@ final class SettingsWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
             placed = true
         }
         NSApp.mainMenu = SettingsWindow.mainMenu // ⌘W, ⌘Q and editing keys while it is open
+        let opening = !window.isVisible
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
         model.readScreen(window.screen)
-        // The sidebar list has the focus, as in System Settings, not the search field it starts with.
-        DispatchQueue.main.async { [self] in // after the list's first layout
-            if let list = firstView(NSTableView.self, in: sidebarView) { window.makeFirstResponder(list) }
+        // On opening, the sidebar list has the focus, as in System Settings, not the search field it
+        // starts with. Brought forward again, the focus stays where the user left it.
+        if opening {
+            DispatchQueue.main.async { [self] in // after the list's first layout
+                if let list = firstView(NSTableView.self, in: sidebarView) { window.makeFirstResponder(list) }
+            }
         }
     }
 
