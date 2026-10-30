@@ -341,6 +341,7 @@ private struct Chevron: View {
 
 /// A key as a light capsule behind its glyphs.
 struct KeyCap: View {
+    @Environment(\.colorSchemeContrast) private var contrast
     let key: String
     let size: CGFloat
     var onAccent: Color?
@@ -358,7 +359,7 @@ struct KeyCap: View {
             .foregroundStyle(onAccent.map(AnyShapeStyle.init) ?? AnyShapeStyle(.secondary))
             .padding(.horizontal, size * 0.42)
             .frame(minWidth: height, minHeight: height)
-            .background(Capsule().fill(onAccent != nil ? AnyShapeStyle(.white.opacity(0.22)) : AnyShapeStyle(.primary.opacity(0.1))))
+            .background(Capsule().fill(onAccent != nil ? AnyShapeStyle(.white.opacity(0.22)) : AnyShapeStyle(.primary.opacity(contrast == .increased ? 0.2 : 0.1))))
             .fixedSize()
     }
 }
