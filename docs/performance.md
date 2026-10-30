@@ -4,7 +4,7 @@ How much CPU and memory mielwm uses, and how to check it on your own Mac.
 
 ## At rest
 
-Most of the time mielwm does nothing at all. There are no timers polling and nothing redrawing in the background, so between your actions it sits at about 0.01% of one CPU core. Memory starts around 90 MB and settles near 180 MB once you've opened the overview, because it keeps a small still of each window. You won't find it in Activity Monitor's top list unless you go looking.
+Most of the time mielwm does nothing at all. There are no timers polling and nothing redrawing in the background, so between your actions it sits at about 0.01% of one CPU core. Memory starts around 50 MB and settles near 145 MB once you've opened the overview, because it keeps a small still of each window. You won't find it in Activity Monitor's top list unless you go looking.
 
 Switching workspaces or moving a window costs a short spike, about 1% of a core for the moment the windows move, then it drops back to rest.
 
@@ -14,18 +14,18 @@ The overview is the part that does real work. It shows a live picture of every w
 
 | While the overview is open | CPU | Memory |
 | --- | ---: | ---: |
-| Windows sitting still | about 1% | about 265 MB |
-| Every window playing video | about 10% | about 395 MB |
+| Windows sitting still | about 1% | about 225 MB |
+| Every window playing video | about 10% | about 355 MB |
 
 Most windows sit still most of the time, so the first row is what you'll see day to day. A window that doesn't change costs almost nothing to show, and when nothing on screen changes the overview stops redrawing until something does. One playing video updates up to 60 times a second, and that's where the CPU goes.
 
-When you close the overview, the live pictures turn into small stills. mielwm keeps those so the overview opens with pictures right away next time. Within a minute it's back to about 0.01% CPU and about 180 MB, and the stills of windows you haven't seen for a few minutes shrink further.
+When you close the overview, the live pictures turn into small stills. mielwm keeps those so the overview opens with pictures right away next time. Within a minute it's back to about 0.01% CPU and about 145 MB, and the stills of windows you haven't seen for a few minutes shrink further.
 
 ## With AeroSpace-compatible apps
 
 A menu bar app pointed at mielwm, as [AeroSpace-compatible apps](compatible-apps.md) describes, asks for your workspaces on a timer. How often depends on the app.
 
-An app that asks every 5 seconds costs nothing you'd notice. One that asks ten times a second runs the `aerospace` command that often. Each answer is cheap, but at that pace it adds up to about a fifth of a CPU core, plus whatever the app spends on its side. If that matters to you, pick an app or a version that asks less often.
+An app that asks every 5 seconds costs nothing you'd notice. One that updates ten times a second runs the `aerospace` command about 40 times a second, since each update takes several calls. Each call costs about 4 ms of CPU, so at that pace it adds up to about a seventh of a CPU core, plus whatever the app spends on its side. If that matters to you, pick an app or a version that asks less often.
 
 ## Check it yourself
 
