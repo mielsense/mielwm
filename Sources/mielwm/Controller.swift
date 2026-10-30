@@ -96,6 +96,7 @@ final class Controller {
         state.systemAccent = Self.systemAccent()
         state.systemDark = Self.systemDark()
         state.accessibility = Self.accessibility()
+        state.liquidGlassAvailable = Self.liquidGlassAvailable
         state.stopwords = Self.stopwords()
         savedLayoutRevision = state.layoutRevision
         configStamp = paths.configModified

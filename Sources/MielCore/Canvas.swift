@@ -64,6 +64,8 @@ public struct CanvasState: Sendable {
     public var systemDark = true { didSet { resolveLook() } }
     /// Reduce Motion, Reduce Transparency, Increase Contrast; the app sets them.
     public var accessibility = AccessibilityOptions() { didSet { resolveLook() } }
+    /// macOS 26 and later draw Liquid glass; the app sets it, so Core stays the same on every Mac.
+    public var liquidGlassAvailable = false { didSet { resolveLook() } }
     /// `settings.look` with the accent resolved, kept current so frames and hit tests don't re-resolve it.
     public private(set) var look: Look
     /// The screen the user acts on (pointer or keyboard). The HUD shows there
@@ -146,6 +148,7 @@ public struct CanvasState: Sendable {
         look.reduceMotion = accessibility.reduceMotion
         look.reduceTransparency = accessibility.reduceTransparency
         look.increaseContrast = accessibility.increaseContrast
+        look.liquidGlassAvailable = liquidGlassAvailable
         animator.enabled = settings.animationEnabled && !accessibility.reduceMotion
     }
 

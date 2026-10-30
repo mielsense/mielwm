@@ -72,6 +72,7 @@ final class AppearancePreview: ObservableObject {
         state.settings = wanted.settings
         state.systemAccent = accent
         state.systemDark = wanted.dark
+        state.liquidGlassAvailable = Controller.liquidGlassAvailable
         var t = state.now
         for _ in 0 ..< 600 where !state.animator.isSettled { // a new zoomed-out level flies there first
             t += 1.0 / 60

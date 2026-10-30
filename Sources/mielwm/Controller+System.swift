@@ -38,6 +38,12 @@ extension Controller {
                                     increaseContrast: w.accessibilityDisplayShouldIncreaseContrast)
     }
 
+    /// Liquid glass came with macOS 26.
+    static var liquidGlassAvailable: Bool {
+        if #available(macOS 26, *) { return true }
+        return false
+    }
+
     static func systemDark() -> Bool {
         NSApplication.shared.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
     }

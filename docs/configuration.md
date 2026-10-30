@@ -65,7 +65,7 @@ If the file isn't valid JSON, mielwm keeps its defaults and shows the error in t
 | `navigator:row_height` | `44` | Height of a result row. |
 | `navigator:rounding` | `8` | Corner radius of rows and pills. |
 | `navigator:panel_opacity` | `0.8` | Opacity of the search panel. |
-| `appearance:glass` | `"liquid"` on macOS 26, `"frosted"` before | What panels are made of: `liquid` or `frosted`. |
+| `appearance:glass` | `"liquid"` | What panels are made of: `liquid` or `frosted`. Before macOS 26 they are always frosted. |
 | `navigator:corner_labels` | `false` | A small readout of zoom, window count and display. |
 | `canvas:minimap_enabled` | `true` | The minimap. |
 | `canvas:minimap_width`, `canvas:minimap_height` | `240`, `150` | Its size. |
