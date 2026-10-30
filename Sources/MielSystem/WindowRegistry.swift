@@ -156,7 +156,7 @@ public final class WindowRegistry {
             windows[snapshot.id] = snapshot
         case .windowClosed(let id):
             guard windows.removeValue(forKey: id) != nil else { return }
-        case .windowFrameChanged(let id, let frame):
+        case .windowFrameChanged(let id, let frame, _):
             guard windows[id] != nil else { return }
             windows[id]?.frame = frame
         case .windowTitleChanged(let id, let title):
@@ -308,7 +308,7 @@ final class AppTracker {
                 fullScreen.insert(id)
                 post(.windowFullScreen(id, true))
             }
-            post(.windowFrameChanged(id, frame))
+            post(.windowFrameChanged(id, frame, dragging: NSEvent.pressedMouseButtons & 1 != 0))
             if changed, !on { // after, so Core knows where macOS put it back
                 fullScreen.remove(id)
                 post(.windowFullScreen(id, false))

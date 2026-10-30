@@ -8,6 +8,7 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 
 - Leaving macOS full screen, like a full screen video, no longer flashes two desktops side by side. mielwm leaves a full screen window alone and keeps its tile for when it comes back.
 - Closing, minimizing or hiding the focused window keeps you on the same workspace. The most recent window on screen takes focus.
+- An app that resizes its own window, like an Electron app restoring its size, no longer shifts the split between tiles. Only dragging an edge does.
 
 ## 0.1.0
 

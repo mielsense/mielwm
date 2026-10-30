@@ -315,14 +315,14 @@ extension CanvasState {
 
     // MARK: The user moved or resized a tiled window
 
-    /// A resize along the split axis moves the edge it shares with the
-    /// neighbour that way; anything else snaps back to the tile. An app that
-    /// keeps refusing gets its way after a couple of tries.
-    mutating func userChangedTile(_ i: Int, to frame: CGRect) {
+    /// A resize along the split axis by the user (`resizing`) moves the edge
+    /// it shares with the neighbour that way; anything else snaps back to the
+    /// tile. An app that keeps refusing gets its way after a couple of tries.
+    mutating func userChangedTile(_ i: Int, to frame: CGRect, resizing: Bool = true) {
         let id = windows[i].id
         guard let ws = workspace(of: id) else { return }
         let t = tiles(ws)
-        if ws.mode == .tiles, fills[id] == nil, fullscreens[id] == nil, let p = t.firstIndex(where: { $0.id == id }) {
+        if resizing, ws.mode == .tiles, fills[id] == nil, fullscreens[id] == nil, let p = t.firstIndex(where: { $0.id == id }) {
             let h = isHorizontal(ws), tile = t[p].frame
             let length = h ? frame.width : frame.height, old = h ? tile.width : tile.height
             if abs(length - old) > Self.frameTolerance {

@@ -369,12 +369,12 @@ extension CanvasState {
 
 @Test func userResizeAlongTheSplitMovesTheNeighbour() {
     var s = twoTiles()
-    let commands = s.send(.system(.windowFrameChanged(wid(1), CGRect(x: 12, y: 50, width: 840, height: 850))))
+    let commands = s.send(.system(.windowFrameChanged(wid(1), CGRect(x: 12, y: 50, width: 840, height: 850), dragging: true)))
     #expect(s.canvasFrame(1) == CGRect(x: 12, y: 50, width: 840, height: 850))
     #expect(moves(commands) == [wid(2): CGRect(x: 860, y: 50, width: 640, height: 850)])
     // The left edge of the right tile moves the other one.
     _ = s.send(.system(.windowFrameChanged(wid(2), CGRect(x: 860, y: 50, width: 640, height: 850)))) // our move lands
-    _ = s.send(.system(.windowFrameChanged(wid(2), right)))
+    _ = s.send(.system(.windowFrameChanged(wid(2), right, dragging: true)))
     #expect(s.canvasFrame(1) == left && s.canvasFrame(2) == right)
 }
 

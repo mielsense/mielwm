@@ -65,7 +65,7 @@ func play(_ s: inout CanvasState, _ first: [WindowCommand], minWidth: [UInt32: C
         var s = tilingState([snapshot(1, onBuiltIn), snapshot(2, onBuiltIn), snapshot(3, onBuiltIn)])
         for w in s.windows { _ = s.send(.system(.windowFrameChanged(w.id, w.frame))) }
         var f = s.canvasFrame(2)!; f.size.width = 800
-        let n = play(&s, s.send(.system(.windowFrameChanged(wid(2), f))), minWidth: [2: 800], echo: echo)
+        let n = play(&s, s.send(.system(.windowFrameChanged(wid(2), f, dragging: true))), minWidth: [2: 800], echo: echo)
         #expect(n < 40)
     }
 }
@@ -75,7 +75,7 @@ func play(_ s: inout CanvasState, _ first: [WindowCommand], minWidth: [UInt32: C
         var s = tilingState([snapshot(1, onBuiltIn), snapshot(2, onBuiltIn)])
         for w in s.windows { _ = s.send(.system(.windowFrameChanged(w.id, w.frame))) }
         var f = s.canvasFrame(1)!; f.size.width = 800
-        let n = play(&s, s.send(.system(.windowFrameChanged(wid(1), f))), minWidth: [1: 800, 2: 800], echo: echo)
+        let n = play(&s, s.send(.system(.windowFrameChanged(wid(1), f, dragging: true))), minWidth: [1: 800, 2: 800], echo: echo)
         #expect(n < 40)
     }
 }
@@ -88,7 +88,7 @@ func play(_ s: inout CanvasState, _ first: [WindowCommand], minWidth: [UInt32: C
         let order = s.members(1)!
         let mid = order[1]
         var f = s.canvasFrame(mid)!; f.size.width = 900
-        let n = play(&s, s.send(.system(.windowFrameChanged(wid(mid), f))), minWidth: [mid: 900], echo: echo, rounds: 12)
+        let n = play(&s, s.send(.system(.windowFrameChanged(wid(mid), f, dragging: true))), minWidth: [mid: 900], echo: echo, rounds: 12)
         #expect(n < 12)
     }
 }
@@ -98,7 +98,7 @@ func play(_ s: inout CanvasState, _ first: [WindowCommand], minWidth: [UInt32: C
     _ = s.send(.system(.windowFocused(wid(1))))
     for w in s.windows { _ = s.send(.system(.windowFrameChanged(w.id, w.frame))) }
     var f = s.canvasFrame(2)!; f.size.width = 900
-    var commands = s.send(.system(.windowFrameChanged(wid(2), f))), n = 0
+    var commands = s.send(.system(.windowFrameChanged(wid(2), f, dragging: true))), n = 0
     while n < 12, let m = moves(commands)[wid(2)] {
         n += 1
         commands = s.advance(1.5) // the app answers late

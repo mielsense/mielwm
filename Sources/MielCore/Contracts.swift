@@ -82,7 +82,9 @@ public struct WindowSnapshot: Hashable, Codable, Sendable {
 public enum SystemEvent: Sendable, Equatable {
     case windowAppeared(WindowSnapshot)
     case windowClosed(WindowID)
-    case windowFrameChanged(WindowID, CGRect)
+    /// `dragging`: the left mouse button was down, so the user may be dragging
+    /// it. Only then does a resize move the split with a neighbour tile.
+    case windowFrameChanged(WindowID, CGRect, dragging: Bool = false)
     case windowTitleChanged(WindowID, String)
     case windowMinimized(WindowID, Bool)
     /// Entered or left macOS full screen. Entering arrives before the

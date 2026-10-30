@@ -126,7 +126,7 @@ extension CanvasState {
         switch event {
         case let .windowAppeared(snapshot): appeared(snapshot)
         case let .windowClosed(id): remove { $0.id == id }
-        case let .windowFrameChanged(id, frame): frameChanged(id, frame)
+        case let .windowFrameChanged(id, frame, dragging): frameChanged(id, frame, dragging: dragging)
         case let .windowTitleChanged(id, title):
             guard let i = index(id) else { return }
             windows[i].title = title
@@ -237,7 +237,7 @@ extension CanvasState {
     /// for is ignored, never adopted. While an expectation lives (size, then
     /// position, then size again gives three reports) only the newest report
     /// is kept, and judged if the expectation lapses without a match.
-    mutating func frameChanged(_ id: WindowID, _ frame: CGRect) {
+    mutating func frameChanged(_ id: WindowID, _ frame: CGRect, dragging: Bool = false) {
         guard let i = index(id) else { return }
         windows[i].real = frame
         if windows[i].isFullScreen { return } // the screen-sized frame is not a resize to adopt
@@ -252,12 +252,12 @@ extension CanvasState {
             return
         }
         windows[i].expected = nil
-        judge(i, frame, answering: false)
+        judge(i, frame, answering: false, dragging: dragging)
     }
 
     /// A report that did not match: the newest one left when a move we
-    /// asked for lapsed (`answering`), or one nobody asked for.
-    mutating func judge(_ i: Int, _ frame: CGRect, answering: Bool) {
+    /// asked for lapsed (`answering`), or one nobody asked for, `dragging` when the mouse button was down.
+    mutating func judge(_ i: Int, _ frame: CGRect, answering: Bool, dragging: Bool = false) {
         let id = windows[i].id
         if windows[i].pinned != nil { // moved while pinned: it stays pinned there
             windows[i].pinned = frame
@@ -292,8 +292,10 @@ extension CanvasState {
             return
         }
         // (b) The user dragged it, or the app moved or resized itself: adopt.
-        // A tiled window keeps its tile, or moves the edge it shares with a neighbour.
-        if windows[i].workspace != nil { return userChangedTile(i, to: deskCamera.toCanvas(frame, deskCenter: deskCenter)) }
+        // A tiled window keeps its tile, or the user drags the edge it shares with a neighbour.
+        if windows[i].workspace != nil {
+            return userChangedTile(i, to: deskCamera.toCanvas(frame, deskCenter: deskCenter), resizing: dragging)
+        }
         windows[i].frame = deskCamera.toCanvas(frame, deskCenter: deskCenter)
         if fills[id].map({ !frame.size.isClose(to: $0.filled.size) }) ?? false { fills[id] = nil }
         layoutRevision += 1

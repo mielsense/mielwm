@@ -51,3 +51,13 @@ func losingTheFocusedWindowKeepsTheWorkspace(_ how: String) {
     _ = s.send(.system(.windowFocused(wid(1)))) // later focus is the user's again
     #expect(s.currentWorkspace == 1)
 }
+
+// MARK: Reports nobody dragged
+
+@Test func appResizingItselfSnapsBackWithoutMovingTheSplit() {
+    var s = twoTiles()
+    // An Electron app restores its saved bounds: wider, with no mouse button down.
+    let commands = s.send(.system(.windowFrameChanged(wid(1), CGRect(x: 12, y: 50, width: 840, height: 850))))
+    #expect(moves(commands) == [wid(1): left])
+    #expect(s.canvasFrame(1) == left && s.canvasFrame(2) == right)
+}
