@@ -33,7 +33,7 @@
 	{@const target = groupLook(groupOf(item.slug)?.title)}
 	<a
 		href={docHref(item.slug)}
-		class="tile group group/section press-soft flex items-center gap-3.5 p-4 hover:shadow-[0_0_0_1px_var(--color-border-strong),0_6px_20px_-10px_rgb(0_0_0/0.2)] {label === 'Next' ? 'flex-row-reverse text-end' : ''}"
+		class="tile group group/section press-soft flex items-center gap-3.5 p-4 hover:shadow-[var(--card-edge),0_6px_20px_-10px_rgb(0_0_0/0.2)] {label === 'Next' ? 'flex-row-reverse text-end' : ''}"
 	>
 		<Sticker icon={pageIcon(item.slug)} bg={target.mesh} size={32} />
 		<span class="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -66,7 +66,7 @@
 
 		<!-- below xl the outline folds into the top of the page -->
 		{#if doc.toc.length > 2}
-			<details class="group mb-10 rounded-[12px] bg-plate shadow-[0_0_0_1px_var(--color-border)] xl:hidden">
+			<details class="group mb-10 rounded-[12px] bg-plate shadow-[var(--card-edge)] xl:hidden">
 				<summary class="flex h-11 cursor-pointer list-none items-center justify-between px-4 text-sm text-strong [&::-webkit-details-marker]:hidden">
 					On this page
 					<Icon icon={ChevronRightIcon} size={14} class="text-subtle transition-transform duration-200 group-open:rotate-90" />
@@ -91,7 +91,7 @@
 
 		<footer class="mt-16 flex flex-col gap-6">
 			<a href={edit} target="_blank" rel="noreferrer" class="self-start text-sm text-subtle hover:text-strong">Edit this page on GitHub</a>
-			<nav aria-label="Previous and next page" class="grid gap-3 sm:grid-cols-2">
+			<nav aria-label="Previous and next page" class="grid gap-4 sm:grid-cols-2">
 				{#if prev}
 					{@render step(prev, 'Previous')}
 				{:else}

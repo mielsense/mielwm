@@ -47,7 +47,7 @@
 		</div>
 	</section>
 
-	<div class="grid grid-cols-[minmax(0,1fr)] gap-3 sm:gap-4 lg:grid-cols-12">
+	<div class="grid grid-cols-[minmax(0,1fr)] gap-4 sm:gap-5 lg:grid-cols-12">
 		<!-- install, in the order macOS asks -->
 		<section class="tile group/section flex flex-col gap-5 p-6 sm:p-8 lg:col-span-7" aria-labelledby="install">
 			{@render label('Install', BookIcon, mesh.violet)}

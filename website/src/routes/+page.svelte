@@ -97,7 +97,7 @@ scripts/build-app.sh --install`;
 	</section>
 
 	<!-- the features: quiet cards, a wide one, then pairs of uneven widths -->
-	<div class="wrap grid grid-cols-[minmax(0,1fr)] gap-3 sm:gap-4 lg:grid-cols-12">
+	<div class="wrap grid grid-cols-[minmax(0,1fr)] gap-4 sm:gap-5 lg:grid-cols-12">
 		<section class="tile group/section grid grid-cols-[minmax(0,1fr)] gap-2 p-2 lg:col-span-12 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]" aria-labelledby="workspaces">
 			<div class="{copy} justify-center lg:p-8">
 				{@render label('Workspaces', LayersIcon, mesh.violet)}
