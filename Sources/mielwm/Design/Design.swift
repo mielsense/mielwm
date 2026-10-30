@@ -83,6 +83,8 @@ enum Design {
         static let padding = EdgeInsets(top: 3, leading: 8, bottom: 3, trailing: 8)
         static let minHeight: CGFloat = 22
         static let rest = 0.05, hover = 0.09
+        /// On glass the backdrop shows through, so 5% vanishes: the cap needs more to keep its shape.
+        static let onGlass = 0.12
     }
 
     /// A floating pill with one line in it: a toast in the overview or over the desktop.

@@ -367,7 +367,7 @@ struct KeyCap: View {
             .lineLimit(1)
             .padding(EdgeInsets(top: p.top * k, leading: p.leading * k, bottom: p.bottom * k, trailing: p.trailing * k))
             .frame(minHeight: Design.KeyCap.minHeight * k)
-            .background(cap.fill(onAccent != nil ? AnyShapeStyle(.white.opacity(0.22)) : AnyShapeStyle(.primary.opacity(Design.KeyCap.rest))))
+            .background(cap.fill(onAccent != nil ? AnyShapeStyle(.white.opacity(0.22)) : AnyShapeStyle(.primary.opacity(Design.KeyCap.onGlass))))
             .overlay(cap.strokeBorder(Design.edge(contrast), lineWidth: 1))
             .fixedSize()
     }
