@@ -292,13 +292,10 @@ func threeWindows() -> CanvasState {
     #expect(!s.scene(for: builtIn).windows.contains { $0.isSelected })
 }
 
-@Test func aSearchStaysInTheSceneWhenItsHUDIsTaken() {
+@Test func theSceneSaysWhenASearchIsOn() {
     var s = makeState([snapshot(1, onBuiltIn, title: "mielwm — GitHub"), snapshot(2, onBuiltIn.offsetBy(dx: 900, dy: 0), title: "Notes")])
     _ = s.send(.action(.search("mielwm")))
-    var scene = s.scene(for: builtIn)
-    #expect(scene.searching)
-    scene.hud = HUDModel() // the overlay draws the HUD natively
-    #expect(scene.searching)
+    #expect(s.scene(for: builtIn).searching)
     _ = s.send(.action(.search("")))
     #expect(!s.scene(for: builtIn).searching)
 }

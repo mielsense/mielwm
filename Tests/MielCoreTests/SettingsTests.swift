@@ -114,10 +114,11 @@ func tempDir() throws -> URL {
                              .switchWindow(forward: false), .zoomIn, .zoomOut, .fit, .frame, .summon, .land, .back, .fill,
                              .fullscreen, .pin, .grow, .shrink, .arrange, .undo, .redo, .refresh, .noop,
                              .layoutTiles, .layoutStack, .toggleFloating, .workspace(3), .workspaceStep(forward: true),
-                             .workspaceStep(forward: false), .moveToWorkspace(9), .settings]
+                             .workspaceStep(forward: false), .moveToWorkspace(9), .workspaceBackAndForth, .settings, .close, .minimize,
+                             .resize(.smart, 50), .resize(.width, -100), .resize(.height, 20)]
     for d in Direction.allCases { actions += [.focus(d), .nudge(d), .pan(d)] }
     for a in actions { #expect(Action(command: a.command) == a, "\(a.command)") }
-    #expect(Action(command: "explode") == nil && Action(command: "focus sideways") == nil)
+    #expect(Action(command: "explode") == nil && Action(command: "focus sideways") == nil && Action(command: "close now") == nil)
 }
 
 // MARK: Layout persistence

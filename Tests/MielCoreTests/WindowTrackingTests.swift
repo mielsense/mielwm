@@ -62,15 +62,8 @@ func losingTheFocusedWindowKeepsTheWorkspace(_ how: String) {
     #expect(s.canvasFrame(1) == CGRect(x: 12, y: 50, width: 840, height: 850))
     #expect(!isUserDrag(buttonDown: false, sinceMouseDown: 4, sinceDrag: 3, sinceMouseUp: 2)) // long after a drag it is the app's own
     #expect(isUserDrag(buttonDown: true, sinceMouseDown: 30, sinceDrag: 30, sinceMouseUp: 31))
-}
-
-@Test func aResizeJustAfterAPlainClickSnapsBack() {
-    var s = twoTiles()
-    // A click on the Dock icon 0.2 s ago, no drag since the press; the app restores its bounds.
-    let dragging = isUserDrag(buttonDown: false, sinceMouseDown: 0.3, sinceDrag: 60, sinceMouseUp: 0.2)
-    let commands = s.send(.system(.windowFrameChanged(wid(1), CGRect(x: 12, y: 50, width: 840, height: 850), dragging: dragging)))
-    #expect(moves(commands) == [wid(1): left])
-    #expect(s.canvasFrame(1) == left && s.canvasFrame(2) == right)
+    // A click on the Dock icon 0.2 s ago, no drag since the press: the app's own, which snaps back (below).
+    #expect(!isUserDrag(buttonDown: false, sinceMouseDown: 0.3, sinceDrag: 60, sinceMouseUp: 0.2))
 }
 
 @Test func appResizingItselfSnapsBackWithoutMovingTheSplit() {
@@ -140,13 +133,12 @@ func whatComesBackAfterAWiderDisplayKeepsItsPlaceInItsSlot(_ back: Action) throw
 @Test func aLayoutSavedOnNarrowerDisplaysSpreadsTheSlots() throws {
     let old = builtInAloneOnWorkspace3()
     let floating = try #require(old.canvasFrame(2)).offsetBy(dx: -old.slots.origin(3).x, dy: 0)
-    var s = makeState([snapshot(1, onBuiltIn), snapshot(2, onBuiltIn, app: "Calculator", bundle: "com.apple.calculator")],
+    let s = makeState([snapshot(1, onBuiltIn), snapshot(2, onBuiltIn, app: "Calculator", bundle: "com.apple.calculator")],
                       settings: testSettings(layout: .tiles), saved: LayoutSnapshot(old))
     #expect(s.slots.step == 3672)
     #expect(s.restingSlot(s.deskCamera)?.slot == 3 && s.currentWorkspace == 3)
     #expect(s.window(wid(1))?.workspace == 3)
     #expect(s.canvasFrame(2)?.offsetBy(dx: -s.slots.origin(3).x, dy: 0) == floating)
-    _ = s.advance(1)
 }
 
 // MARK: Windows that fight back

@@ -79,15 +79,13 @@ private func render(_ scene: Scene, _ state: String, frames: SyntheticFrames? = 
         #expect(MemoryLayout<LensUniforms>.stride == 224)
     }
 
-    @Test func lensIsIdentityAtRestAndKeepsTheCenter() {
+    /// The shader's parameters; Core's lensMatchesTheShaderFormula checks the formula itself.
+    @Test func lensParametersFollowTheLook() {
         var look = Look()
         let size = CGSize(width: 3024, height: 1964)
-        func near(_ a: CGPoint, _ b: CGPoint) -> Bool { abs(a.x - b.x) < 1e-9 && abs(a.y - b.y) < 1e-9 }
         #expect(LensParameters(look: look, transition: 0).isIdentity)
-        #expect(near(lensSourcePoint(CGPoint(x: 10, y: 20), screenSize: size, look: look, transition: 0), CGPoint(x: 10, y: 20)))
         let full = LensParameters(look: look, transition: 1)
         #expect(full.distort == look.lensStrength && full.contrast == look.lensEdgeScale)
-        #expect(near(lensSourcePoint(CGPoint(x: 1512, y: 982), screenSize: size, look: look, transition: 1), CGPoint(x: 1512, y: 982)))
         // At the defaults the barrel outweighs the edge scale: the edge reads past the screen, which the world's overscan covers.
         let edge = lensSourcePoint(CGPoint(x: 0, y: 0), screenSize: size, look: look, transition: 1)
         #expect(edge.x < 0 && -edge.x < size.width * LensParameters.overscan(look))
