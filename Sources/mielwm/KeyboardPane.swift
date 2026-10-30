@@ -205,18 +205,16 @@ struct ShortcutNotes: View {
 struct ShortcutRecorder: View {
     let slot: ShortcutSlot
     @EnvironmentObject var model: SettingsModel
+    @StateObject private var hover = Hover() // its own, so pointing at it redraws only it
 
     var body: some View {
         let recording = model.recording == slot
         let (text, dim) = label(recording: recording)
-        let id = "\(slot)"
         Button { recording ? (model.recording = nil) : model.startRecording(slot) } label: {
-            KeyCaps(text: text, dim: dim, hovering: model.hovered == id, recording: recording)
+            KeyCaps(text: text, dim: dim, hovering: hover.on, recording: recording)
         }
         .buttonStyle(.plain)
-        .onHover { inside in
-            if inside { model.hovered = id } else if model.hovered == id { model.hovered = nil }
-        }
+        .onHover { hover.on = $0 }
         .help(recording ? hint : "Click to change")
         .accessibilityLabel(recording ? "Recording a shortcut" : "Shortcut: \(text)")
         .accessibilityHint(hint)

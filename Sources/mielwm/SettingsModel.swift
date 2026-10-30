@@ -41,8 +41,6 @@ final class SettingsModel: ObservableObject {
     private var windowScreenID: CGDirectDisplayID?
     @Published var paneQuery = "" // the sidebar's search
     @Published var keyQuery = "" // the Keyboard pane's search
-    @Published var focusedGap: String? // the gap field being edited, highlighted in the diagram
-    @Published var hovered: String? // the row under the pointer, where a row shows more on hover
     /// The Appearance pane's canvas, made on the first visit; its GPU textures go when the window closes.
     var preview: AppearancePreview {
         if let madePreview { return madePreview }

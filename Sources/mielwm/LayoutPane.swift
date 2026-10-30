@@ -5,6 +5,7 @@ import SwiftUI
 
 struct LayoutPane: View {
     @EnvironmentObject var model: SettingsModel
+    @StateObject private var gapFocus = GapFocus()
 
     var body: some View {
         let s = model.settings
@@ -21,14 +22,14 @@ struct LayoutPane: View {
                 Text("Automatic puts tiles side by side on a wide display and above each other on a tall one.").settingsFooter()
             }
             Section("Gaps") {
-                GapDiagram(settings: s, screen: model.screen, focused: model.focusedGap)
+                GapDiagram(settings: s, screen: model.screen, focus: gapFocus)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, Design.Space.s)
-                GapField(title: "Between windows, side by side", key: "gaps:inner_horizontal")
-                GapField(title: "Between windows, above each other", key: "gaps:inner_vertical")
-                GapField(title: "Left edge", key: "gaps:outer_left")
-                GapField(title: "Right edge", key: "gaps:outer_right")
-                GapField(title: "Bottom edge", key: "gaps:outer_bottom")
+                GapField(title: "Between windows, side by side", key: "gaps:inner_horizontal", focus: gapFocus)
+                GapField(title: "Between windows, above each other", key: "gaps:inner_vertical", focus: gapFocus)
+                GapField(title: "Left edge", key: "gaps:outer_left", focus: gapFocus)
+                GapField(title: "Right edge", key: "gaps:outer_right", focus: gapFocus)
+                GapField(title: "Bottom edge", key: "gaps:outer_bottom", focus: gapFocus)
                 Picker(selection: Binding(get: { s.topGapMode }, set: setTopGapMode)) {
                     Text("Automatic").tag(TopGapMode.auto)
                     Text("Same as other edges").tag(TopGapMode.same)
@@ -37,8 +38,8 @@ struct LayoutPane: View {
                     Text("Top edge")
                     Text(topEdgeNote).monospacedDigit()
                 }
-                GapField(title: s.topGapMode == .custom ? "Top gap, built-in display" : "Top gap", key: "gaps:outer_top")
-                if s.topGapMode == .custom { GapField(title: "Top gap, other displays", key: "gaps:outer_top_external") }
+                GapField(title: s.topGapMode == .custom ? "Top gap, built-in display" : "Top gap", key: "gaps:outer_top", focus: gapFocus)
+                if s.topGapMode == .custom { GapField(title: "Top gap, other displays", key: "gaps:outer_top_external", focus: gapFocus) }
             }
         }
     }
@@ -148,7 +149,9 @@ struct OrientationThumbnail: View {
 struct GapField: View {
     let title: String
     let key: String
+    let focus: GapFocus // written, not watched: only the diagram redraws
     @EnvironmentObject var model: SettingsModel
+    @FocusState private var editing: Bool
 
     var body: some View {
         let value = model.number(key)
@@ -158,16 +161,19 @@ struct GapField: View {
                     .labelsHidden()
                     .textFieldStyle(.roundedBorder)
                     .multilineTextAlignment(.trailing)
+                    .focused($editing)
                     .frame(width: 48)
                 Stepper(title, value: value, in: 0 ... 400, step: 2).labelsHidden()
                 Text("pt").foregroundStyle(.secondary).frame(width: 16, alignment: .leading)
             }
         }
-        // Pointing at a field lights up its gap in the diagram.
+        // Pointing at a field, or typing in it, lights up its gap in the diagram.
         .onHover { inside in
-            if inside { model.focusedGap = key } else if model.focusedGap == key { model.focusedGap = nil }
+            if inside { focus.key = key } else if focus.key == key, !editing { focus.key = nil }
         }
-        .onChange(of: value.wrappedValue) { model.focusedGap = key }
+        .onChange(of: editing) { _, now in
+            if now { focus.key = key } else if focus.key == key { focus.key = nil }
+        }
     }
 }
 

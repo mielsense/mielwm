@@ -43,3 +43,14 @@ extension Text {
 func doublingText(_ exponent: Double) -> String {
     String(format: pow(2, exponent) < 0.95 ? "%.2g×" : "%.1f×", pow(2, exponent)).replacingOccurrences(of: ".0×", with: "×")
 }
+
+/// View state that changes as the pointer moves, kept out of SettingsModel so it redraws only
+/// the views that show it. (The Command Line Tools can't expand @State; @StateObject works.)
+final class Hover: ObservableObject {
+    @Published var on = false
+}
+
+/// The gap field being pointed at or typed in, lit up in the gaps diagram.
+final class GapFocus: ObservableObject {
+    @Published var key: String?
+}

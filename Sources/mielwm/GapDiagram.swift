@@ -7,7 +7,7 @@ import SwiftUI
 struct GapDiagram: View {
     let settings: MielCore.Settings
     let screen: ScreenInfo? // the top gap and status bar on this display
-    var focused: String? // a gaps:… key
+    @ObservedObject var focus: GapFocus // the gaps:… key being pointed at or edited
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     static let size = CGSize(width: 248, height: 155)
@@ -44,14 +44,14 @@ struct GapDiagram: View {
                     MiniWindow().frame(width: tile.width, height: tile.height).offset(x: tile.minX, y: tile.minY)
                 }
                 ForEach(markers, id: \.keys) { marker in
-                    MarkerView(marker: marker, focused: focused.map(marker.keys.contains) ?? false)
+                    MarkerView(marker: marker, focused: focus.key.map(marker.keys.contains) ?? false)
                 }
             }
             .frame(width: size.width, height: size.height, alignment: .topLeading)
         }
         .frame(width: size.width, height: size.height)
         .animation(Design.follow(reduceMotion: reduceMotion), value: [area.minX, area.minY, area.width, area.height, tileWidth, rightHeight, bar])
-        .animation(.easeOut(duration: 0.12), value: focused)
+        .animation(.easeOut(duration: 0.12), value: focus.key)
         .accessibilityElement()
         .accessibilityLabel("A display with three windows and the gaps around them, \(Int(topGap)) pt at the top")
     }
