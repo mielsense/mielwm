@@ -9,6 +9,8 @@
 	import { mesh } from '@/mesh';
 	import { site } from '@/site';
 
+	let { data } = $props();
+
 	// screenshot sizes, from the source files in scripts/images.sh
 	const wide = { width: 3600, height: 2188 };
 	const desktop = { width: 3600, height: 2338 };
@@ -67,16 +69,26 @@ scripts/build-app.sh --install`;
 {/snippet}
 
 <main>
-	<!-- hero -->
-	<section class="group/section wrap flex flex-col gap-12 pt-12 pb-16 sm:gap-16 sm:pt-20 sm:pb-20">
-		<div class="stagger flex max-w-[46rem] flex-col gap-5">
-			<img src="/icon-128.png" alt="" width="64" height="64" class="size-16 rounded-[15px] shadow-[0_4px_14px_rgb(0_0_0/0.18)]" />
-			<h1 class="display text-5xl sm:text-6xl lg:text-7xl">Every window on one <span class="accent">endless</span> canvas</h1>
-			<p class="max-w-[38rem] text-lg leading-relaxed text-subtle">
+	<!-- hero: centred over a lavender glow, the overview rising out of it -->
+	<section class="group/section relative isolate flex flex-col gap-12 pt-12 pb-16 sm:gap-16 sm:pt-20 sm:pb-24">
+		<div class="hero-glow pointer-events-none absolute inset-x-0 -top-28 -z-10 h-[44rem]" aria-hidden="true"></div>
+		<div class="wrap stagger flex flex-col items-center gap-6 text-center">
+			{#if data.latest}
+				<a
+					href="/download"
+					class="group press flex h-8 items-center gap-2 rounded-full bg-plate ps-1.5 pe-3 text-sm text-strong shadow-[var(--card-edge)] focus-visible:shadow-[var(--focus-ring)] focus-visible:outline-none"
+				>
+					<Sticker icon={SparkleIcon} bg={mesh.violet} size={20} />
+					mielwm {data.latest.version} is out
+					<Icon icon={ChevronRightIcon} size={13} class="text-subtle {lean}" />
+				</a>
+			{/if}
+			<h1 class="display max-w-[14ch] text-5xl text-balance sm:text-6xl lg:text-7xl">Every window on one <span class="accent">endless</span> canvas</h1>
+			<p class="max-w-[36rem] text-lg leading-relaxed text-default">
 				mielwm is a tiling window manager for macOS. Workspaces tile the way AeroSpace does, and when you lose track of something, the
 				view pulls back to show every window at once.
 			</p>
-			<div class="flex flex-wrap items-center gap-2">
+			<div class="flex flex-wrap items-center justify-center gap-2">
 				<Button href="/download" size="lg" class="ps-4">
 					<Icon icon={DownloadIcon} size={16} />
 					Download for macOS
@@ -86,12 +98,14 @@ scripts/build-app.sh --install`;
 					Read the docs
 				</Button>
 			</div>
-			<p class="text-sm text-subtle">Free and open source. macOS 15 or later, Apple silicon.</p>
+			<p class="text-sm text-default">Free and open source. macOS 15 or later, Apple silicon.</p>
 		</div>
 		<!-- the lavender mesh drifts slowly behind the overview -->
-		<div class="grain dusk rounded-[24px] p-3 sm:p-8 lg:p-12" data-rise>
-			<div class="overflow-hidden rounded-[12px] shadow-[0_0_0_1px_rgb(0_0_0/0.14),0_30px_70px_-20px_rgb(20_10_80/0.55)]">
-				<Shot name="overview" widths={[2200, 1200]} {...wide} priority sizes="(min-width: 88rem) 77rem, (min-width: 64rem) calc(100vw - 11rem), (min-width: 40rem) calc(100vw - 8rem), calc(100vw - 4rem)" alt="The overview: windows from every workspace laid out on the canvas, the focused one outlined, the capsule search field on top." />
+		<div class="wrap">
+			<div class="grain dusk rounded-[24px] p-3 sm:p-8 lg:p-12" data-rise>
+				<div class="overflow-hidden rounded-[12px] shadow-[0_0_0_1px_rgb(0_0_0/0.14),0_30px_70px_-20px_rgb(20_10_80/0.55)]">
+					<Shot name="overview" widths={[2200, 1200]} {...wide} priority sizes="(min-width: 88rem) 77rem, (min-width: 64rem) calc(100vw - 11rem), (min-width: 40rem) calc(100vw - 8rem), calc(100vw - 4rem)" alt="The overview: windows from every workspace laid out on the canvas, the focused one outlined, the capsule search field on top." />
+				</div>
 			</div>
 		</div>
 	</section>
@@ -222,9 +236,9 @@ scripts/build-app.sh --install`;
 			{@render label('Keyboard first', CommandIcon, mesh.lime)}
 			<h2 id="keys" class={title}>Your hands stay on the keys</h2>
 			<p class="text-base leading-relaxed">Everything has a shortcut, and every shortcut can be changed in Settings. These are the ones you'll use most.</p>
-			<ul class="flex flex-col">
+			<ul class="tile flex flex-col divide-y divide-border overflow-hidden rounded-[16px]">
 				{#each keys as row (row.does)}
-					<li class="flex items-center gap-4 border-t border-border py-2.5 first:border-t-0">
+					<li class="flex items-center gap-4 px-4 py-3">
 						<span class="flex w-28 shrink-0 items-center gap-1.5 text-subtle">
 							<kbd class="key text-base">{row.keys[0]}</kbd>
 							{#if row.keys[1]}<span aria-label="to">…</span><kbd class="key text-base">{row.keys[1]}</kbd>{/if}

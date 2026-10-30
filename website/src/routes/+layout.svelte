@@ -17,6 +17,12 @@
 	let { children } = $props();
 
 	const path = $derived(page.url.pathname);
+
+	const footerLinks = [
+		{ title: 'Product', links: [{ text: 'Download', href: '/download' }, { text: 'Changelog', href: '/docs/changelog' }, { text: 'Releases', href: site.releases }] },
+		{ title: 'Docs', links: [{ text: 'Introduction', href: '/docs' }, { text: 'Install', href: '/docs/install' }, { text: 'Keyboard', href: '/docs/keyboard' }, { text: 'Configuration file', href: '/docs/configuration' }] },
+		{ title: 'Project', links: [{ text: 'Source on GitHub', href: site.repo }, { text: 'Report a bug', href: `${site.repo}/issues/new/choose` }, { text: 'License', href: `${site.repo}/blob/main/LICENSE` }] }
+	];
 	const canonical = $derived(site.url + (path === '/' ? '' : path));
 	// an error page under /docs has no docs sidebar, so it keeps the site nav
 	const inDocs = $derived(!page.error && (path === '/docs' || path.startsWith('/docs/')));
@@ -96,19 +102,21 @@
      the docs have no header at all, their sidebar holds the logo, search and tools -->
 <div class="flex min-h-dvh flex-col">
 	{#if !inDocs}
-		<header>
-			<div class="wrap flex h-16 items-center gap-2">
-				<a href="/" class="brand me-auto flex shrink-0 items-center gap-2.5 rounded-[9px]" aria-label="mielwm, home">
-					<img src="/icon-128.png" alt="" width="28" height="28" class="size-7 rounded-[7px] outline-none" />
+		<!-- a floating pill that stays at the top: solid, with the cards' double edge -->
+		<header class="sticky top-3 z-40 px-3 pt-3 sm:top-4 sm:pt-4">
+			<div class="mx-auto flex h-12 w-full max-w-[46rem] items-center gap-1 rounded-full bg-plate ps-2 pe-1.5 shadow-[var(--card-edge),0_10px_30px_-14px_rgb(0_0_0/0.3)]">
+				<a href="/" class="brand me-auto flex shrink-0 items-center gap-2 rounded-full pe-2" aria-label="mielwm, home">
+					<img src="/icon-128.png" alt="" width="32" height="32" class="size-8 rounded-[9px] outline-none" />
 					<span class="text-base font-medium tracking-[-0.01em] text-strong">mielwm</span>
 				</a>
-				<nav aria-label="Site" class="flex items-center gap-1.5">
-					<a href="/docs" class="nav-item press h-8 rounded-[9px] px-3 text-sm">Docs</a>
-					<Button variant="ghost" size="icon" href={site.repo} target="_blank" rel="noreferrer" class="size-8 text-subtle hover:text-strong" aria-label="mielwm on GitHub">
+				<nav aria-label="Site" class="flex items-center gap-0.5">
+					<a href="/docs" class="nav-item press h-8 rounded-full px-3 text-sm">Docs</a>
+					<a href="/docs/changelog" class="nav-item press hidden h-8 rounded-full px-3 text-sm sm:flex">Changelog</a>
+					<Button variant="ghost" size="icon" href={site.repo} target="_blank" rel="noreferrer" class="size-8 rounded-full text-subtle hover:text-strong" aria-label="mielwm on GitHub">
 						<Icon icon={GithubIcon} size={16} />
 					</Button>
 					<ThemeToggle />
-					<Button href="/download" size="sm" class="ms-1.5 hidden ps-2.5 sm:inline-flex">
+					<Button href="/download" size="sm" class="ms-1 rounded-full ps-2.5">
 						<Icon icon={DownloadIcon} size={14} />
 						Download
 					</Button>
@@ -121,16 +129,55 @@
 		{@render children()}
 	</div>
 
-	<footer>
-		<div class="flex h-16 items-center justify-between gap-6 text-xs text-subtle {gutter}">
-			<span>MIT licensed. Made by <a class="link" href="https://miel.my" target="_blank" rel="noreferrer">mielsense</a>.</span>
-			<nav aria-label="Elsewhere" class="flex items-center gap-4">
-				<a href="/docs" class="hover:text-strong">Docs</a>
-				<a href={site.releases} target="_blank" rel="noreferrer" class="hover:text-strong">Releases</a>
-				<a href={site.repo} target="_blank" rel="noreferrer" class="hover:text-strong">GitHub</a>
-			</nav>
-		</div>
-	</footer>
+	{#if inDocs}
+		<footer>
+			<div class="flex h-16 items-center justify-between gap-6 text-xs text-subtle {gutter}">
+				<span>MIT licensed. Made by <a class="link" href="https://miel.my" target="_blank" rel="noreferrer">mielsense</a>.</span>
+				<nav aria-label="Elsewhere" class="flex items-center gap-4">
+					<a href="/download" class="hover:text-strong">Download</a>
+					<a href={site.releases} target="_blank" rel="noreferrer" class="hover:text-strong">Releases</a>
+					<a href={site.repo} target="_blank" rel="noreferrer" class="hover:text-strong">GitHub</a>
+				</nav>
+			</div>
+		</footer>
+	{:else}
+		<!-- the site's index: what mielwm is, where everything lives, and a big quiet wordmark to end on -->
+		<footer class="wrap pb-6">
+			<div class="tile flex flex-col gap-10 overflow-hidden p-6 sm:p-10">
+				<div class="grid gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+					<div class="flex flex-col items-start gap-4">
+						<a href="/" class="brand flex items-center gap-2.5 rounded-[9px]" aria-label="mielwm, home">
+							<img src="/icon-128.png" alt="" width="36" height="36" class="size-9 rounded-[9px] outline-none" loading="lazy" />
+							<span class="text-lg font-medium tracking-[-0.01em] text-strong">mielwm</span>
+						</a>
+						<p class="max-w-[22rem] text-sm leading-relaxed text-default">{site.description}</p>
+						<Button href="/download" size="sm" class="ps-2.5">
+							<Icon icon={DownloadIcon} size={14} />
+							Download for macOS
+						</Button>
+					</div>
+					<div class="grid grid-cols-2 gap-8 sm:grid-cols-3">
+						{#each footerLinks as column (column.title)}
+							<nav aria-label={column.title} class="flex flex-col gap-3">
+								<h2 class="text-sm font-medium text-strong">{column.title}</h2>
+								<ul class="flex flex-col gap-2 text-sm">
+									{#each column.links as link (link.href)}
+										<li>
+											<a href={link.href} class="text-default hover:text-strong" target={link.href.startsWith('http') ? '_blank' : undefined} rel={link.href.startsWith('http') ? 'noreferrer' : undefined}>{link.text}</a>
+										</li>
+									{/each}
+								</ul>
+							</nav>
+						{/each}
+					</div>
+				</div>
+				<p class="border-t border-border pt-6 text-xs text-default">
+					MIT licensed. Made by <a class="link" href="https://miel.my" target="_blank" rel="noreferrer">mielsense</a>.
+				</p>
+				<p class="footer-mark select-none text-center" aria-hidden="true">mielwm</p>
+			</div>
+		</footer>
+	{/if}
 </div>
 
 <Search />

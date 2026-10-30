@@ -851,6 +851,27 @@ html:not(.dark) .only-dark {
 	}
 }
 
+/* The footer's last word: the name set huge in a faint ink, cut off by the card's bottom edge. */
+.footer-mark {
+	font-size: clamp(5rem, 22vw, 17rem);
+	font-weight: 600;
+	line-height: 0.8;
+	letter-spacing: -0.06em;
+	color: color-mix(in oklab, var(--color-strong) 6%, transparent);
+	/* past the card's bottom padding, so its edge cuts the letters */
+	margin-bottom: -0.34em;
+}
+
+/* The homepage hero: the overview's lavender as a glow that fades into the page from the top. */
+.hero-glow {
+	background: radial-gradient(60% 70% at 50% 0%, #b8b4ff 0, transparent 70%);
+	opacity: 0.5;
+}
+
+.dark .hero-glow {
+	opacity: 0.2;
+}
+
 /* Docs: a panel of the page group's tint behind the title, rounded at both top corners and fading
    straight down to nothing, so it has no bottom edge. A mask instead of a blur, so it paints once. */
 .mesh-glow {
