@@ -1,8 +1,7 @@
 // Real macOS: opens throwaway windows (mielwm-testwindows) and drives them
 // through WindowRegistry, CaptureManager and EventTap. Off by default; run
 //   swift build && MIELWM_SYSTEM_TESTS=1 swift test --filter WindowTests
-// Only ever touches windows of the helper process it launched. Writes the
-// AX event sequences it sees to Fixtures/ for the Core reducer.
+// Only ever touches windows of the helper process it launched.
 
 import ApplicationServices
 import CoreVideo
@@ -12,12 +11,11 @@ import MielCore
 import Testing
 
 private let enabled = ProcessInfo.processInfo.environment["MIELWM_SYSTEM_TESTS"] == "1"
-private let testsDir = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
-private let packageDir = testsDir.deletingLastPathComponent().deletingLastPathComponent()
+private let packageDir = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
 
-/// One recorded step of a scenario, for Core's reducer tests: what the test
-/// asked for (`command`) or what the registry reported (`event`).
-struct FixtureStep: Codable {
+/// One recorded step of a scenario: what the test asked for (`command`) or
+/// what the registry reported (`event`).
+struct RecordedStep {
     var t: Double // seconds since the scenario began
     var command: String? // "setFrame", "minimize", "deminimize"
     var event: String? // "frameChanged", "minimized", "focused", "appeared", "closed", "title"
@@ -25,21 +23,12 @@ struct FixtureStep: Codable {
     var value: Bool?
 }
 
-struct Fixture: Codable {
-    var scenario: String
-    var note: String
-    var screens: [ScreenInfo]
-    var window: WindowID
-    var initialFrame: CGRect
-    var steps: [FixtureStep]
-}
-
 @MainActor
 final class Session {
     let process = Process()
     let pid: Int32
     let registry: WindowRegistry
-    private(set) var steps: [FixtureStep] = []
+    private(set) var steps: [RecordedStep] = []
     private(set) var events: [SystemEvent] = [] // everything the registry reported, in order
     private var origin = Date()
     private var watched: WindowID?
@@ -89,7 +78,7 @@ final class Session {
     }
 
     func setMinimized(_ id: WindowID, _ minimized: Bool) {
-        steps.append(FixtureStep(t: now(), command: minimized ? "minimize" : "deminimize"))
+        steps.append(RecordedStep(t: now(), command: minimized ? "minimize" : "deminimize"))
         axWindow(id)?.set(kAXMinimizedAttribute, minimized as CFBoolean)
     }
 
@@ -117,33 +106,23 @@ final class Session {
 
     func reportedFrames() -> [CGRect] { steps.filter { $0.event == "frameChanged" }.compactMap(\.frame) }
 
-    func writeFixture(_ scenario: String, note: String, initial: CGRect) throws {
-        let fixture = Fixture(scenario: scenario, note: note, screens: Displays.screens(), window: watched!,
-                              initialFrame: initial, steps: steps)
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        let dir = testsDir.appendingPathComponent("Fixtures")
-        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        try encoder.encode(fixture).write(to: dir.appendingPathComponent("\(scenario).json"))
-    }
-
     private func now() -> Double { (Date().timeIntervalSince(origin) * 1000).rounded() / 1000 }
 
     private func log(_ commands: [WindowCommand]) {
         for case .setFrame(let id, let frame) in commands where id == watched {
-            steps.append(FixtureStep(t: now(), command: "setFrame", frame: frame))
+            steps.append(RecordedStep(t: now(), command: "setFrame", frame: frame))
         }
     }
 
     private func record(_ event: SystemEvent) {
         events.append(event)
-        let step: FixtureStep? = switch event {
-        case .windowFrameChanged(watched, let frame, _): FixtureStep(t: now(), event: "frameChanged", frame: frame)
-        case .windowMinimized(watched, let value): FixtureStep(t: now(), event: "minimized", value: value)
-        case .windowFocused(watched): FixtureStep(t: now(), event: "focused")
-        case .windowTitleChanged(watched, _): FixtureStep(t: now(), event: "title")
-        case .windowClosed(watched): FixtureStep(t: now(), event: "closed")
-        case .windowAppeared(let s) where s.id == watched: FixtureStep(t: now(), event: "appeared", frame: s.frame)
+        let step: RecordedStep? = switch event {
+        case .windowFrameChanged(watched, let frame, _): RecordedStep(t: now(), event: "frameChanged", frame: frame)
+        case .windowMinimized(watched, let value): RecordedStep(t: now(), event: "minimized", value: value)
+        case .windowFocused(watched): RecordedStep(t: now(), event: "focused")
+        case .windowTitleChanged(watched, _): RecordedStep(t: now(), event: "title")
+        case .windowClosed(watched): RecordedStep(t: now(), event: "closed")
+        case .windowAppeared(let s) where s.id == watched: RecordedStep(t: now(), event: "appeared", frame: s.frame)
         default: nil
         }
         if let step { steps.append(step) }
@@ -177,7 +156,6 @@ struct WindowTests {
         #expect(await s.until { s.frame(id) == target })
         await s.settle()
         #expect(s.reportedFrames().last == target)
-        try s.writeFixture("set-frame", note: "One setFrame (size, position, size) on a visible window.", initial: start)
     }
 
     @Test func eventsArriveInOrder() async throws {
@@ -206,8 +184,6 @@ struct WindowTests {
             #expect(firstA < minimized && minimized < restored && restored < lastB)
         }
         #expect(s.reportedFrames().last == b)
-        try s.writeFixture("minimize", note: "setFrame, minimize, deminimize, setFrame; minimize driven over AX by the test.",
-                           initial: start)
     }
 
     @Test func smallStepsLikeADrag() async throws {
@@ -227,8 +203,6 @@ struct WindowTests {
         #expect(await s.until { s.frame(id) == last })
         await s.settle()
         #expect(s.reportedFrames().last == last)
-        try s.writeFixture("drag-steps", note: "12 setFrame moves 16 ms apart, same size, like a drag at 60 Hz.",
-                           initial: start)
     }
 
     @Test func parksInACornerAndComesBack() async throws {
@@ -247,8 +221,6 @@ struct WindowTests {
         #expect(s.performAndWait([.setFrame(id, start)]))
         #expect(await s.until { s.frame(id) == start })
         await s.settle()
-        try s.writeFixture("park", note: "Park in the bottom-right corner with 1 pt showing, then back. Asked \(parked), landed \(landed).",
-                           initial: start)
     }
 
     @Test func clampedAboveTheTopEdge() async throws {
@@ -266,8 +238,6 @@ struct WindowTests {
         #expect(s.performAndWait([.setFrame(id, start)]))
         #expect(await s.until { s.frame(id) == start })
         await s.settle()
-        try s.writeFixture("clamp-top", note: "setFrame fully above every display; macOS pulls it back. Asked \(above), landed \(landed).",
-                           initial: start)
     }
 
     @Test func closeIsReported() async throws {
