@@ -125,11 +125,17 @@ func settingsPreview(_ args: [String]) -> Never {
         model.recording = nil
         model.conflict = nil
         model.expanded = []
-        // The Layout pane with a status bar found on this display.
+        // The Layout pane's gaps, as they are and with a status bar found on this display.
         settings.show(.layout)
-        model.screen?.topBar = TopBar(owner: "Barik", height: 40)
         pump(0.8)
-        savePNG(settings.window, to: out.appendingPathComponent("settings-layout-bar-\(name).png"))
+        if let scroll = detailScrollView(in: settings.window.contentView), let doc = scroll.documentView {
+            doc.scroll(NSPoint(x: 0, y: doc.isFlipped ? 380 : doc.frame.height - 380 - scroll.contentView.bounds.height))
+        }
+        for (file, bar) in [("gaps", nil), ("bar", TopBar(owner: "Barik", height: 40))] {
+            model.screen?.topBar = bar
+            pump(0.5)
+            savePNG(settings.window, to: out.appendingPathComponent("settings-layout-\(file)-\(name).png"))
+        }
         if let saved { try? saved.write(to: paths.config) } else { try? fm.removeItem(at: paths.config) }
         model.reload()
         settings.window.orderOut(nil)
