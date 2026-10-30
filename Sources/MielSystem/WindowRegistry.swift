@@ -227,6 +227,7 @@ final class AppTracker {
     private var elements: [WindowID: AXUIElement] = [:]
     private var ids: [AXUIElement: WindowID] = [:]
     private var fullScreen: Set<WindowID> = []
+    private var sizes: [WindowID: CGSize] = [:] // last size read or written, so a move that keeps it sets only the position
 
     init(pid: pid_t, bundleID: String?, appName: String, observerThread: RunLoopThread,
          post: @escaping (SystemEvent) -> Void) {
@@ -298,11 +299,13 @@ final class AppTracker {
             guard let id = ids.removeValue(forKey: element) else { return }
             elements[id] = nil
             fullScreen.remove(id)
+            sizes[id] = nil
             post(.windowClosed(id))
         case kAXMovedNotification, kAXResizedNotification:
-            guard let id = ids[element], let frame = frame(of: element) else { return }
+            guard let id = ids[element], let (frame, isFullScreen) = frame(of: element) else { return }
+            sizes[id] = frame.size
             let was = fullScreen.contains(id)
-            let on = element.value(kAXFullScreen) as? Bool ?? was // a failed read changes nothing
+            let on = isFullScreen ?? was // a failed read changes nothing
             let changed = on != was
             if changed, on { // before the screen-sized frame, so Core does not take it for a resize
                 fullScreen.insert(id)
@@ -334,6 +337,7 @@ final class AppTracker {
             elements[id] = nil
             ids[element] = nil
             fullScreen.remove(id)
+            sizes[id] = nil
             post(.windowClosed(id))
         }
     }
@@ -358,11 +362,16 @@ final class AppTracker {
         case .setFrame(let id, let frame):
             // Core may have sent it before hearing the window went full screen.
             guard !fullScreen.contains(id), let window = element(id) else { return }
+            guard sizes[id] != frame.size else { // the same size: a move alone (parking, workspace switches)
+                window.set(kAXPositionAttribute, axValue(frame.origin))
+                return
+            }
             // Size first so a move onto a smaller display is not clamped,
             // size again in case the old position limited the first one.
             window.set(kAXSizeAttribute, axValue(frame.size))
             window.set(kAXPositionAttribute, axValue(frame.origin))
             window.set(kAXSizeAttribute, axValue(frame.size))
+            sizes[id] = frame.size
         case .focus(let id):
             guard let window = element(id) else { return }
             if window.value(kAXMinimizedAttribute) as? Bool == true { window.set(kAXMinimizedAttribute, kCFBooleanFalse) }
@@ -399,6 +408,7 @@ final class AppTracker {
         elements[id] = element
         ids[element] = id
         if snapshot.isFullScreen { fullScreen.insert(id) }
+        sizes[id] = snapshot.frame.size
         if let observer, let refcon {
             for name in windowNotifications {
                 AXObserverAddNotification(observer, element, name as CFString, refcon.toOpaque())
@@ -421,9 +431,10 @@ final class AppTracker {
                               isMovable: element.isSettable(kAXPositionAttribute), isFullScreen: v[6] as? Bool ?? false)
     }
 
-    private func frame(of element: AXUIElement) -> CGRect? {
-        let v = element.values([kAXPositionAttribute, kAXSizeAttribute])
+    /// The frame, and whether it is in full screen (nil when that read failed), in one round trip.
+    private func frame(of element: AXUIElement) -> (CGRect, Bool?)? {
+        let v = element.values([kAXPositionAttribute, kAXSizeAttribute, kAXFullScreen])
         guard let origin = cgPoint(v[0]), let size = cgSize(v[1]) else { return nil }
-        return CGRect(origin: origin, size: size)
+        return (CGRect(origin: origin, size: size), v[2] as? Bool)
     }
 }

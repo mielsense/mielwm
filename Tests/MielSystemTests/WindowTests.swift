@@ -326,6 +326,23 @@ struct WindowTests {
         #expect(s.performAndWait([.setFrame(id, start)]))
     }
 
+    @Test func aMoveThatKeepsTheSizeOnlySetsThePosition() async throws {
+        let start = CGRect(x: 240, y: 200, width: 420, height: 300)
+        let s = try Session([start])
+        defer { s.end() }
+        let id = try #require(try await s.start(count: 1).first).id
+        await s.settle()
+        let calls = axCalls.withLock { $0 }
+        let moved = start.offsetBy(dx: 80, dy: 40)
+        #expect(s.performAndWait([.setFrame(id, moved)]))
+        // AXEnhancedUserInterface read, the position; size, position, size would make 4. One report read may slip in.
+        #expect(axCalls.withLock { $0 } - calls <= 3)
+        #expect(await s.until { s.frame(id) == moved })
+        let resized = CGRect(x: 260, y: 220, width: 500, height: 340)
+        #expect(s.performAndWait([.setFrame(id, resized)]))
+        #expect(await s.until { s.frame(id) == resized })
+    }
+
     @Test func streamOfAVisibleWindow() async throws {
         let start = CGRect(x: 260, y: 200, width: 600, height: 400)
         let s = try Session([start])
