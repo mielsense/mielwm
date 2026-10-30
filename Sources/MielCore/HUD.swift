@@ -12,7 +12,8 @@ public enum PaletteMetrics {
     public static let footerHeight = 28.0
     public static let cardGap = 8.0 // between the field and the card of results below it
     public static let helpWidth = 1040.0 // the shortcuts sheet is wider than the field, for three columns
-    public static let cardRadius = 20.0 // the card's corners; its rows' are this minus listInset, so they share a centre
+    public static let cardRadius = 20.0 // the card's corners
+    public static let rowRadius = cardRadius - listInset // a row's, so the two share a centre
 
     /// Height of the field (a capsule) and, with `rows` result rows, the card below it.
     /// The camera keeps the canvas clear of this, so both renderers size the card with `cardHeight`.
@@ -38,9 +39,14 @@ public enum PaletteMetrics {
         max(screenHeight * look.paletteTop, topInset + 12 * look.hudScale)
     }
 
+    /// The palette's width in points: the field's, or the shortcuts sheet's with `help`.
+    public static func width(_ look: Look, help: Bool = false, screenWidth: Double) -> Double {
+        min((help ? max(look.paletteWidth, helpWidth) : look.paletteWidth) * look.hudScale, screenWidth * 0.94)
+    }
+
     /// The search field, the capsule at the top, in points from the screen's top-left.
     public static func fieldFrame(_ look: Look, screenSize: CGSize, topInset: Double) -> CGRect {
-        let width = min(look.paletteWidth * look.hudScale, screenSize.width * 0.94)
+        let width = width(look, screenWidth: screenSize.width)
         return CGRect(x: (screenSize.width - width) / 2, y: top(look, screenHeight: screenSize.height, topInset: topInset),
                       width: width, height: look.searchHeight * look.hudScale)
     }

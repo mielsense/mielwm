@@ -154,7 +154,7 @@ final class NoticeBoard {
         guard !state.isOverview else { return hideAll() }
         let n = state.notices
         place(toast, n.toastInOverview ? nil : n.toast, NoticeContent.toast, state) { _, f, _, s in
-            (f.midX, f.minY + f.height * 0.22 + s.height / 2) // where the overview draws its toasts
+            (f.midX, f.maxY - f.height * Notices.toastCenter + s.height / 2)
         }
         place(workspace, state.workspacePill, NoticeContent.workspace, state) { _, f, visible, s in
             (f.midX, visible.minY + 20 + s.height) // just above the Dock

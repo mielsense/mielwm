@@ -51,7 +51,7 @@ struct SteadyChrome: View {
             if let toast = c.hud.toast, !toast.isEmpty {
                 Pill(text: toast, look: c.look, worldShown: c.worldShown, toast: true)
                     .opacity(c.toastOpacity)
-                    .position(x: c.size.width / 2, y: c.size.height * 0.78) // where the notices put theirs
+                    .position(x: c.size.width / 2, y: c.size.height * Notices.toastCenter)
             }
         }
         .frame(width: c.size.width, height: c.size.height)
@@ -69,7 +69,7 @@ private struct Palette: View {
         let hud = content.hud, look = content.look, s = look.hudScale
         let help = hud.mode == .help
         let list = hud.mode == .search && (!hud.rows.isEmpty || !hud.query.isEmpty)
-        let width = min((help ? max(look.paletteWidth, PaletteMetrics.helpWidth) : look.paletteWidth) * s, content.size.width * 0.94)
+        let width = PaletteMetrics.width(look, help: help, screenWidth: content.size.width)
         VStack(spacing: PaletteMetrics.cardGap * s) {
             QueryField(hud: hud, look: look)
                 .frame(width: width, height: look.searchHeight * s)
@@ -180,7 +180,7 @@ private struct ResultRow: View {
         .frame(maxHeight: .infinity)
         .background {
             if selected {
-                RoundedRectangle(cornerRadius: (PaletteMetrics.cardRadius - PaletteMetrics.listInset) * s, style: .continuous)
+                RoundedRectangle(cornerRadius: PaletteMetrics.rowRadius * s, style: .continuous)
                     .fill(Color(look.accent))
             }
         }

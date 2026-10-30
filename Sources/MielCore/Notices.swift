@@ -69,6 +69,8 @@ public struct StackNotice: Equatable, Sendable {
 public struct Notices: Equatable, Sendable {
     static let hold = 0.7 // seconds the workspace and stack notices stay
     public static let fade = 0.15
+    /// Where a toast's centre sits, as a share of the screen's height from the top, in the overview and out of it.
+    public static let toastCenter = 0.78
 
     /// A short message, e.g. "Tidied 12 windows". The overview's overlay draws it while
     /// it is up; one raised outside the overview also shows in a panel.
