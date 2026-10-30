@@ -732,6 +732,11 @@ html:not(.dark) .only-dark {
 		line-height: 1.55;
 	}
 
+	/* four columns and more keep room for the last one and scroll sideways on a phone */
+	& table:has(th:nth-child(4)) {
+		min-width: 40rem;
+	}
+
 	& th {
 		color: var(--color-strong);
 		font-weight: 500;
@@ -750,9 +755,92 @@ html:not(.dark) .only-dark {
 		background-color: color-mix(in oklab, var(--color-strong) 3%, transparent);
 	}
 
-	/* the first column is usually the keys; keep each cell on one line */
-	& td:first-child {
+	/* a config key or value breaks only between words, never inside one */
+	& td code {
+		overflow-wrap: normal;
 		white-space: nowrap;
+	}
+
+	/* the first column is usually the keys; keep a cell of keys on one line */
+	& td:first-child:has(kbd) {
+		white-space: nowrap;
+	}
+
+	/* an index of pages, like ui.miel.my's introduction: one row per page with its lead and a chevron */
+	& ul.rows {
+		overflow: hidden;
+		padding: 0;
+		border-radius: 14px;
+		background-color: var(--color-plate);
+		box-shadow: 0 0 0 1px var(--color-border);
+		list-style: none;
+		font-size: var(--text-sm);
+		line-height: 1.5;
+
+		& li + li {
+			margin-top: 0;
+			border-top: 1px solid var(--color-border);
+		}
+
+		& a {
+			display: flex;
+			align-items: center;
+			gap: 1rem;
+			padding: 0.75rem 1rem;
+			color: var(--color-default);
+			text-decoration: none;
+			transition: background-color var(--motion-duration-hover) ease;
+
+			&:hover {
+				background-color: color-mix(in oklab, var(--color-strong) 4%, transparent);
+			}
+
+			&:focus-visible {
+				outline: none;
+				box-shadow: inset var(--focus-ring);
+			}
+		}
+
+		& .row-title {
+			flex-shrink: 0;
+			width: 12rem;
+			color: var(--color-strong);
+			font-weight: 500;
+		}
+
+		& .row-lead {
+			flex: 1;
+			min-width: 0;
+		}
+
+		& .row-chevron {
+			flex-shrink: 0;
+			color: var(--color-subtle);
+			transition: transform var(--motion-duration-hover) ease;
+		}
+
+		& a:hover .row-chevron {
+			color: var(--color-strong);
+			transform: translateX(2px);
+		}
+
+		/* narrow: the lead goes under the title */
+		@media (width < 40rem) {
+			& a {
+				flex-wrap: wrap;
+				gap: 0.15rem 1rem;
+			}
+
+			& .row-title {
+				width: auto;
+				flex: 1 1 calc(100% - 2rem);
+			}
+
+			& .row-lead {
+				order: 3;
+				flex-basis: 100%;
+			}
+		}
 	}
 }
 

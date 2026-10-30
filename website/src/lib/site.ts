@@ -8,3 +8,6 @@ export const site = {
 	download: 'https://github.com/mielsense/mielwm/releases/latest/download/mielwm.dmg',
 	editBase: 'https://github.com/mielsense/mielwm/edit/main/docs/'
 };
+
+/** Where a docs page lives: the introduction is the docs' front page. */
+export const docHref = (slug: string) => (slug === 'introduction' ? '/docs' : `/docs/${slug}`);
