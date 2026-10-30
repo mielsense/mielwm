@@ -27,6 +27,7 @@ If the file isn't valid JSON, mielwm keeps its defaults and shows the error in t
 | `layout:default` | `"tiles"` | The layout new windows join: `tiles`, `stack` or `floating`. |
 | `layout:orientation` | `"auto"` | Tiles side by side (`horizontal`), above each other (`vertical`), or by the display's shape (`auto`). |
 | `layout:workspace_rules` | `""` | `bundle.id=N` pairs, comma separated: that app's windows open on workspace N. |
+| `layout:stack_peek` | `0` | Points the windows behind a stack's front one move aside, 0 to 16, so their edges show. |
 | `layout:floating_apps` | System Settings, Activity Monitor, Calculator, Archive Utility | Bundle ids, comma separated, whose windows always float. |
 | `gaps:inner_horizontal` | `8` | Points between tiles side by side. |
 | `gaps:inner_vertical` | `8` | Points between tiles above each other. |

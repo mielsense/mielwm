@@ -41,6 +41,8 @@ A stack shows one window at a time at full size, like AeroSpace's accordion. `�
 
 When you go to a stack, or another of its windows comes to the front, a strip at the top of the stack shows its windows in order: each app's icon and the window's title, the front one highlighted, and where it sits, like "2 of 4". It goes after 0.7 seconds and never takes space from the windows. When the titles don't fit, the strip shows only the front window's title.
 
+Peek edges, in Layout & workspaces settings, move the windows behind the front one aside by up to 16 points, so you can see that they are there. The window before the front one shows its left edge and the one after it shows its right edge, like the padding in AeroSpace's accordion. It's off by default.
+
 ### Floating
 
 `⌥.` floats the focused window. A floating window keeps whatever size and place you give it. `⌥.` again tiles it back into the workspace it sits on. A floating window belongs to the workspace it's on, so it's still there when you come back.

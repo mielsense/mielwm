@@ -370,6 +370,8 @@ public struct CanvasState: Sendable {
 
     mutating func raise(_ i: Int) {
         windows.append(windows.remove(at: i))
+        // With peek edges a stack's frames follow its front window.
+        if settings.stackPeek > 0, let ws = workspace(of: windows[windows.count - 1].id), ws.mode == .stack { retile(ws.slot) }
     }
 
     mutating func showToast(_ text: String) {

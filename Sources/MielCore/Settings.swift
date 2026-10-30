@@ -43,6 +43,8 @@ public struct Settings: Hashable, Codable, Sendable {
     public var floatingApps = "com.apple.systempreferences,com.apple.ActivityMonitor,com.apple.calculator,com.apple.archiveutility"
     /// "bundle.id=N" pairs, comma separated: windows of that app open on workspace N.
     public var workspaceRules = ""
+    /// layout:stack_peek: points each window behind a stack's front one shows of its edge (AeroSpace's accordion padding).
+    public var stackPeek = 0.0
 
     // animation:*
     public var animationEnabled = true

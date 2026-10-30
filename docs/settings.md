@@ -19,6 +19,7 @@ Open Settings from the menu bar item, with `⌘,` in the overview, or with `miel
 ## Layout & workspaces
 
 - The layout new windows get, tiles, stack or floating, and which way tiles split.
+- Peek edges for stacks, so the windows behind the front one show their edges.
 - The gaps between windows and around the screen edge, with a small diagram that updates as you type.
 - Three-finger swipes between workspaces, with a warning when macOS's own swipe gets in the way.
 - Workspace rules, which send an app's windows to a fixed workspace.
