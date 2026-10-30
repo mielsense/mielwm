@@ -25,7 +25,7 @@ When you close the overview, the live pictures turn into small stills. mielwm ke
 
 A menu bar app pointed at mielwm, as [AeroSpace-compatible apps](compatible-apps.md) describes, asks for your workspaces on a timer. How often depends on the app.
 
-An app that asks every 5 seconds costs nothing you'd notice. One that asks ten times a second runs the `aerospace` command that often. Each answer is cheap, but at that pace it adds up to about a seventh of a CPU core, plus whatever the app spends on its side. If that matters to you, pick an app or a version that asks less often.
+An app that asks every 5 seconds costs nothing you'd notice. One that updates ten times a second runs the `aerospace` command about 40 times a second, since each update takes several calls. Each call costs about 4 ms of CPU, so at that pace it adds up to about a seventh of a CPU core, plus whatever the app spends on its side. If that matters to you, pick an app or a version that asks less often.
 
 ## Check it yourself
 
