@@ -52,7 +52,9 @@ struct TrackpadPane: View {
                 LabeledSlider("Panning speed", value: doubling("input:pan_sensitivity"), in: -2 ... 2, format: doublingText)
                 LabeledSlider("Zoom speed", value: doubling("input:scroll_factor"), in: -2 ... 2, format: doublingText)
             } header: {
-                Text("Overview")
+                Text("Pointer and scrolling")
+            } footer: {
+                Text("Panning speed is for dragging the canvas, with the middle button or in the overview. Zoom speed is for the scroll wheel, in the overview or with the keys above held.").settingsFooter()
             }
         }
     }
