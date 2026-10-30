@@ -23,7 +23,7 @@ func tilingState(_ windows: [WindowSnapshot] = [], settings: Settings = testSett
 func twoTiles() -> CanvasState {
     var s = tilingState([snapshot(1, onBuiltIn), snapshot(2, onBuiltIn.offsetBy(dx: 40, dy: 40))])
     _ = s.send(.system(.windowFocused(wid(1))))
-    for w in s.windows { _ = s.send(.system(.windowFrameChanged(w.id, w.frame))) }
+    s.confirmMoves()
     return s
 }
 
