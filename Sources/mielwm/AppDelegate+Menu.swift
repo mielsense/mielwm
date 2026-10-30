@@ -139,6 +139,7 @@ extension AppDelegate {
             model.onRecording = { [weak self] on in self?.controller?.bindingsSuspended = on }
             model.onBarik = { [weak self, weak model] on in if let model { self?.setBarik(on, model) } }
             model.barikAvailable = barik != nil
+            model.readScreens = { [weak self] in self?.controller?.state.screens ?? Displays.screens() }
             settingsWindow = SettingsWindow(model: model)
         }
         settingsWindow?.show(pane)

@@ -32,7 +32,11 @@ final class SettingsModel: ObservableObject {
     @Published var expanded: Set<ShortcutFamily> = [] // custom families showing their keys
     @Published var scrolled = false // the pane is scrolled: a line under the title bar
     @Published var cliStatus = CLITool.status()
-    @Published var screen: ScreenInfo? // the display the window is on, with its status bar
+    @Published var screens: [ScreenInfo] = [] // as tiling sees them, each with its status bar
+    @Published var screen: ScreenInfo? // the one the window is on
+    /// The running canvas's screens, else a fresh read.
+    var readScreens: () -> [ScreenInfo] = { Displays.screens() }
+    private var windowScreenID: CGDirectDisplayID?
     /// The Appearance pane's canvas, made on the first visit; its GPU textures go when the window closes.
     var preview: AppearancePreview {
         if let madePreview { return madePreview }
@@ -125,9 +129,14 @@ final class SettingsModel: ObservableObject {
     }
 
     func readScreen(_ screen: NSScreen?) {
-        let id = screen?.displayID
-        let info = Displays.screens().first { $0.id == id }
-        if info != self.screen { self.screen = info }
+        windowScreenID = screen?.displayID
+        refreshScreens()
+    }
+
+    func refreshScreens() {
+        let all = readScreens(), info = all.first { $0.id == windowScreenID }
+        if all != screens { screens = all }
+        if info != screen { screen = info }
     }
 
     // MARK: Bindings for controls
