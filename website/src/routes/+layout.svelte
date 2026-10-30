@@ -18,6 +18,15 @@
 
 	const path = $derived(page.url.pathname);
 
+	// the nav turns into a pill once the page leaves its top
+	let scrolled = $state(false);
+	$effect(() => {
+		const update = () => (scrolled = scrollY > 16);
+		update();
+		addEventListener('scroll', update, { passive: true });
+		return () => removeEventListener('scroll', update);
+	});
+
 	const footerLinks = [
 		{ title: 'Product', links: [{ text: 'Download', href: '/download' }, { text: 'Changelog', href: '/docs/changelog' }, { text: 'Releases', href: site.releases }] },
 		{ title: 'Docs', links: [{ text: 'Introduction', href: '/docs' }, { text: 'Install', href: '/docs/install' }, { text: 'Keyboard', href: '/docs/keyboard' }, { text: 'Configuration file', href: '/docs/configuration' }] },
@@ -102,9 +111,12 @@
      the docs have no header at all, their sidebar holds the logo, search and tools -->
 <div class="flex min-h-dvh flex-col">
 	{#if !inDocs}
-		<!-- a floating pill that stays at the top: solid, with the cards' double edge -->
-		<header class="sticky top-3 z-40 px-3 pt-3 sm:top-4 sm:pt-4">
-			<div class="mx-auto flex h-12 w-full max-w-[46rem] items-center gap-1 rounded-full bg-plate ps-2 pe-1.5 shadow-[var(--card-edge),0_10px_30px_-14px_rgb(0_0_0/0.3)]">
+		<!-- a plain bar at the top of the page that draws in to a solid pill once the page scrolls -->
+		<header class="sticky top-0 z-40 px-3 pt-3 sm:pt-4">
+			<div
+				class="mx-auto flex h-12 w-full items-center gap-1 rounded-full transition-[max-width,padding,background-color,box-shadow] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none
+					{scrolled ? 'max-w-[46rem] bg-plate ps-2 pe-1.5 shadow-[var(--card-edge),0_10px_30px_-14px_rgb(0_0_0/0.3)]' : 'max-w-[88rem] px-2 sm:px-5 lg:px-7'}"
+			>
 				<a href="/" class="brand me-auto flex shrink-0 items-center gap-2 rounded-full pe-2" aria-label="mielwm, home">
 					<img src="/icon-128.png" alt="" width="32" height="32" class="size-8 rounded-[9px] outline-none" />
 					<span class="text-base font-medium tracking-[-0.01em] text-strong">mielwm</span>
