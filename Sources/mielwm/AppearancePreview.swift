@@ -94,7 +94,7 @@ struct AppearancePreviewView: View {
     var body: some View {
         let aspect = preview.screen.frame.width / max(preview.screen.frame.height, 1)
         ZStack {
-            RoundedRectangle(cornerRadius: 8, style: .continuous).fill(.black.opacity(0.85))
+            RoundedRectangle(cornerRadius: Design.Radius.thumbnail, style: .continuous).fill(.black.opacity(0.85))
             if let image = preview.image {
                 Image(decorative: image, scale: 2).resizable().interpolation(.high)
                 GeometryReader { g in
@@ -107,7 +107,7 @@ struct AppearancePreviewView: View {
         }
         .aspectRatio(aspect, contentMode: .fit)
         .frame(maxWidth: 400)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: Design.Radius.thumbnail, style: .continuous))
         .shadow(color: .black.opacity(0.15), radius: 3, y: 1)
         .frame(maxWidth: .infinity)
         .padding(.vertical, 6)

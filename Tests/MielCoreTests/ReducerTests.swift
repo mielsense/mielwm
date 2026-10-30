@@ -98,7 +98,7 @@ func panDesk(_ s: inout CanvasState, dx: CGFloat) -> [WindowCommand] {
     _ = s.send(.system(.windowFrameChanged(wid(1), slot)))
     for _ in 0 ..< 3 { _ = s.run(.system(.windowFrameChanged(wid(1), CGRect(x: 200, y: 200, width: 800, height: 600))),
                                  .system(.windowFrameChanged(wid(1), slot))) }
-    let retry = try #require(s.nextWake)
+    let retry = try #require(s.nextRetry)
     s.graceUntil = retry + 5 // the screens settling, say
     #expect(s.tickPlan(overlayShown: false) == .once(at: retry))
     #expect(s.tickPlan(overlayShown: true) == .once(at: retry))
@@ -120,7 +120,7 @@ func panDesk(_ s: inout CanvasState, dx: CGFloat) -> [WindowCommand] {
     #expect(s.send(.system(.windowFrameChanged(wid(1), pulled))).isEmpty)
     #expect(s.window(wid(1))?.parked == true)
     #expect(s.canvasFrame(1) == onBuiltIn)
-    #expect(s.nextWake != nil)
+    #expect(s.nextRetry != nil)
     #expect(moves(s.advance(1.1))[wid(1)] == slot)
     // Each try the app undoes waits twice as long as the last.
     _ = s.run(.system(.windowFrameChanged(wid(1), slot)), .system(.windowFrameChanged(wid(1), pulled)))

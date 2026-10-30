@@ -215,7 +215,7 @@ func dragByTitleBar(_ s: inout CanvasState, by dx: CGFloat) -> [WindowCommand] {
         if moves(commands)[wid(1)] == slot { tries += 1; commands = pullBack() } else { commands = s.advance(0.2) }
     }
     #expect(tries == Int(CanvasState.maxReparks + CanvasState.maxRetries))
-    #expect(s.nextWake == nil)
+    #expect(s.nextRetry == nil)
     #expect(moves(s.send(.action(.workspace(3))))[wid(1)] != nil) // switching tries again
 }
 

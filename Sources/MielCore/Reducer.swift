@@ -94,7 +94,7 @@ public extension CanvasState {
 
     /// When a window waits to go back where it belongs. Not a reason to
     /// tick meanwhile, nor to keep the overview's frames awake.
-    var nextWake: Double? { windows.compactMap(\.retryAt).min() }
+    var nextRetry: Double? { windows.compactMap(\.retryAt).min() }
 
     enum TickPlan: Equatable { case none, everyFrame, once(at: Double) }
 
@@ -103,7 +103,7 @@ public extension CanvasState {
     /// ticks with its frames, which pause when only a retry is left.
     func tickPlan(overlayShown: Bool) -> TickPlan {
         if !overlayShown, needsTicks, tickDeadline == nil { return .everyFrame }
-        let due = [overlayShown ? nil : tickDeadline, nextWake].compactMap { $0 }.min()
+        let due = [overlayShown ? nil : tickDeadline, nextRetry].compactMap { $0 }.min()
         return due.map { .once(at: $0) } ?? .none
     }
 

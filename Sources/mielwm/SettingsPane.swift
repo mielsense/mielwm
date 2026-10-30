@@ -95,14 +95,12 @@ enum SettingsPane: String, CaseIterable {
 
     var tint: Color {
         switch self {
-        case .general, .keyboard, .trackpad, .advanced: Design.Tint.gray
-        case .layout: Design.Tint.blue
+        case .general, .keyboard, .trackpad, .advanced, .about: Design.Tint.gray
+        case .layout, .menubar: Design.Tint.blue
         case .windows: Design.Tint.indigo
         case .overview: Design.Tint.cyan
         case .appearance: Design.Tint.graphite
-        case .menubar: Design.Tint.blue
         case .integrations: Design.Tint.green
-        case .about: Design.Tint.gray
         }
     }
 

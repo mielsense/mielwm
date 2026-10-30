@@ -125,8 +125,8 @@ final class SettingsModel: ObservableObject {
     func resetAll() {
         flushWork?.cancel()
         pending = [:]
-        for url in [paths.config] where FileManager.default.fileExists(atPath: url.path) {
-            do { try FileManager.default.trashItem(at: url, resultingItemURL: nil) } catch { problem = "\(error.localizedDescription)" }
+        if FileManager.default.fileExists(atPath: paths.config.path) {
+            do { try FileManager.default.trashItem(at: paths.config, resultingItemURL: nil) } catch { problem = error.localizedDescription }
         }
         reload()
         onWrite()
