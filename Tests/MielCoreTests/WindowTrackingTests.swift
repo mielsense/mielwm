@@ -115,6 +115,19 @@ func builtInAloneOnWorkspace3() -> CanvasState {
     #expect(s.currentWorkspace == 3 && s.window(wid(1))?.parked == false && s.window(wid(2))?.parked == false)
 }
 
+@Test(arguments: [Action.undo, .fullscreen, .fill])
+func whatComesBackAfterAWiderDisplayKeepsItsPlaceInItsSlot(_ back: Action) throws {
+    var s = builtInAloneOnWorkspace3()
+    _ = s.send(.system(.windowFocused(wid(2)))) // the floating one
+    let inSlot = { (s: CanvasState) in s.canvasFrame(2)?.offsetBy(dx: -s.slots.origin(3).x, dy: 0) }
+    let start = try #require(inSlot(s))
+    _ = s.send(.action(back == .undo ? .nudge(.right) : back))
+    _ = s.send(.system(.screensChanged([builtIn, external])))
+    _ = s.advance(2)
+    _ = s.send(.action(back))
+    #expect(inSlot(s) == start)
+}
+
 @Test func aLayoutSavedOnNarrowerDisplaysSpreadsTheSlots() throws {
     let old = builtInAloneOnWorkspace3()
     let floating = try #require(old.canvasFrame(2)).offsetBy(dx: -old.slots.origin(3).x, dy: 0)

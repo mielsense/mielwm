@@ -279,7 +279,8 @@ extension CanvasState {
 
     /// Screens wider than the slots were spaced for (a display came, or the
     /// layout was saved with other ones): the slots move apart. Windows, the
-    /// saved layout and the cameras keep their place in their slot.
+    /// cameras and every frame kept to go back to (undo, fill, fullscreen,
+    /// the saved layout) keep their place in their slot.
     mutating func widenSlots() {
         let step = SlotGrid.step(for: screens), old = slots
         guard step > old.step else { return }
@@ -293,6 +294,11 @@ extension CanvasState {
             windows[i].frame = moved(windows[i].frame)
             windows[i].floatingFrame = windows[i].floatingFrame.map(moved)
         }
+        fills = fills.mapValues { RestoreEntry(before: moved($0.before), filled: moved($0.filled)) }
+        fullscreens = fullscreens.mapValues { FullscreenEntry(before: moved($0.before), suspended: $0.suspended) }
+        func moved(_ e: UndoEntry) -> UndoEntry { UndoEntry(frames: e.frames.mapValues(moved), workspaces: e.workspaces) }
+        undoStack = undoStack.map(moved)
+        redoStack = redoStack.map(moved)
         if var s = saved {
             for k in s.windows.indices { s.windows[k].frame = moved(s.windows[k].frame) }
             saved = s
