@@ -19,7 +19,7 @@ public struct ManagedWindow: Hashable, Sendable {
     var floatingFrame: CGRect? // where it last floated, for going back
     var reparks = 0 // tries to put it back where it belongs, in a row
     var reparkedAt = 0.0 // the last try
-    var reparkRetry: Double? // when to try parking it again
+    var retryAt: Double? // when to put it where it belongs again: parked, or back in its tile after a drag
     var expected: Expectation?
     var pending: CGRect? // newest unconfirmed report while an expectation lives
     var sent: [Expectation] = [] // the last frames we set, kept a few seconds to know late reports of them
@@ -360,7 +360,7 @@ public struct CanvasState: Sendable {
             let (desired, parked) = desiredFrame(windows[i])
             if parked != windows[i].parked {
                 windows[i].reparks = 0
-                windows[i].reparkRetry = nil
+                windows[i].retryAt = nil
                 layoutRevision += 1 // the crash watcher needs to know what is parked
             }
             windows[i].parked = parked

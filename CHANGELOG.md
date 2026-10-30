@@ -11,7 +11,7 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 - An app that resizes its own window, like an Electron app restoring its size, no longer shifts the split between tiles. Only dragging an edge does.
 - With displays of different widths, showing a workspace on one display no longer shows part of the workspace before it on another. Workspaces move further apart when a wider display is plugged in.
 - A window from another workspace that its app keeps putting back on screen is tucked away again after a short wait, instead of staying over the workspace you're on.
-- A tiled window snaps back to its tile each time you drag it away, not only the first two times.
+- A tiled window you drag away goes back to its tile when you let go, every time, instead of staying where you dropped it after the second time.
 - A window whose app refuses its tile size settles at the size it wants, instead of being resized again each time the app reports a move.
 - Switching workspaces with many windows open no longer leaves some of them behind when their apps are slow to answer.
 - A window whose app misses a move, because it was busy at the time, gets the move once more a second later.

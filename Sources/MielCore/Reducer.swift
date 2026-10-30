@@ -83,8 +83,8 @@ public extension CanvasState {
         isOverview || isPanning || !animator.isSettled || overview.switcherRevealed(now: now)
     }
 
-    /// When a tick is next due while `needsTicks` is false: a window waits to be parked again.
-    var nextWake: Double? { windows.compactMap(\.reparkRetry).min() }
+    /// When a tick is next due while `needsTicks` is false: a window waits to go back where it belongs.
+    var nextWake: Double? { windows.compactMap(\.retryAt).min() }
 
     /// Some setFrame we sent is not confirmed yet (the landing fade waits for it).
     var movesInFlight: Bool { windows.contains { $0.expected != nil } }
@@ -108,8 +108,8 @@ extension CanvasState {
             }
         }
         for i in windows.indices {
-            guard let t = windows[i].reparkRetry, now >= t else { continue }
-            windows[i].reparkRetry = nil
+            guard let t = windows[i].retryAt, now >= t else { continue }
+            windows[i].retryAt = nil
             windows[i].reparkedAt = now // the app's answer to this try counts on from it
             sync([windows[i].id], force: true)
         }
@@ -291,8 +291,8 @@ extension CanvasState {
             let n = countRepark(i)
             if n <= Self.maxReparks {
                 sync([id], force: true)
-            } else if windows[i].reparkRetry == nil {
-                windows[i].reparkRetry = now + min(16, pow(2, Double(n - Self.maxReparks - 1)))
+            } else if windows[i].retryAt == nil {
+                windows[i].retryAt = now + min(16, pow(2, Double(n - Self.maxReparks - 1)))
             }
             return
         }
@@ -308,6 +308,11 @@ extension CanvasState {
         }
         // (b) The user dragged it, or the app moved or resized itself: adopt.
         // A tiled window keeps its tile, or the user drags the edge it shares with a neighbour.
+        // Dragged by its title bar, it goes back once the reports stop, without counting as a try.
+        if windows[i].workspace != nil, dragging, sameSize {
+            windows[i].retryAt = now + dragGrace
+            return
+        }
         if windows[i].workspace != nil {
             return userChangedTile(i, to: deskCamera.toCanvas(frame, deskCenter: deskCenter), resizing: dragging)
         }

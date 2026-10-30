@@ -129,6 +129,26 @@ func builtInAloneOnWorkspace3() -> CanvasState {
 
 // MARK: Windows that fight back
 
+/// Drags tile 1 by its title bar: a report every frame for half a second, then the button comes up.
+func dragByTitleBar(_ s: inout CanvasState, by dx: CGFloat) -> [WindowCommand] {
+    var out: [WindowCommand] = []
+    for k in 1 ... 30 {
+        out += s.send(.system(.windowFrameChanged(wid(1), left.offsetBy(dx: dx * CGFloat(k) / 30, dy: 10), dragging: true)))
+        out += s.advance(1.0 / 60)
+    }
+    return out
+}
+
+@Test func aTileDraggedAwayGoesBackWhenLetGoEveryTime() {
+    var s = twoTiles()
+    for _ in 0 ..< 3 {
+        #expect(moves(dragByTitleBar(&s, by: 300))[wid(1)] == nil) // no fighting the user mid-drag
+        #expect(moves(s.advance(1))[wid(1)] == left)
+        _ = s.send(.system(.windowFrameChanged(wid(1), left)))
+        #expect(s.canvasFrame(1) == left && s.canvasFrame(2) == right)
+    }
+}
+
 @Test func tileSnapBacksStartOverAfterAQuietSpell() {
     var s = twoTiles()
     let moved = left.offsetBy(dx: 30, dy: 30)
