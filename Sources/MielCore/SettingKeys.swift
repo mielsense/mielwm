@@ -206,7 +206,7 @@ public extension Settings {
             }
             menuBarStyle = style
             return nil
-        case "menubar:workspaces": // before menubar:style; true was the default
+        case "menubar:workspaces": // before menubar:style, which wins in a file with both; true was the default
             guard let on = value.number else { return wrongType }
             if on < 0.5 { menuBarStyle = .icon }
             return nil

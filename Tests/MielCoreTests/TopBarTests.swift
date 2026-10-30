@@ -91,3 +91,11 @@ import Testing
     #expect(both.errors.isEmpty && both.settings.menuBarStyle == .current)
     #expect(parseSettings(config: json(#"{"menubar:style": "numbers"}"#)).errors.count == 1)
 }
+
+@Test func menuBarStyleWinsOverTheOldSwitch() {
+    // Both in a hand-edited file: the newer key decides, whatever order they apply in.
+    for text in [#"{"menubar:style": "all", "menubar:workspaces": false}"#, #"{"menubar": {"workspaces": false, "style": "current"}}"#] {
+        let both = parseSettings(config: json(text))
+        #expect(both.errors.isEmpty && both.settings.menuBarStyle != .icon, "\(text)")
+    }
+}
