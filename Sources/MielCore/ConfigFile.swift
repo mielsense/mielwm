@@ -61,7 +61,8 @@ func parseSettings(config: Data?, configName: String = "config.json") -> LoadedS
                 continue
             }
             guard let value = settingValue(raw) else { result.errors.append("\(name): '\(key)' has an unsupported value"); continue }
-            if let error = result.settings.set(value, forKey: key) { result.errors.append("\(name): \(error)") }
+            let error = key.hasPrefix("rules:") ? result.settings.setRule(key, value) : result.settings.set(value, forKey: key)
+            if let error { result.errors.append("\(name): \(error)") }
         }
     }
     apply(config, name: configName)

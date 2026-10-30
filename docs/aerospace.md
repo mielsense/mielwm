@@ -10,9 +10,12 @@ The model is close too. A workspace tiles its windows, a window can float, and a
 
 A few things work differently or aren't there yet:
 
-- `⌥Tab` is mielwm's recent-windows switcher, not `workspace-back-and-forth`.
+- `⌥Tab` is mielwm's recent-windows switcher. `workspace-back-and-forth` is there with no key, so bind it in Settings > Keyboard.
+- `workspace --auto-back-and-forth` is a setting for all the workspace keys, Settings > Layout > Workspace key goes back, instead of a flag on each key.
 - `⌥⇧Tab`, which moves a workspace to another monitor in AeroSpace, has no equivalent yet.
-- There are no binding modes like AeroSpace's service mode, and no nested containers. A workspace is tiles or a stack, one level deep.
+- There are no binding modes like AeroSpace's service mode, and no nested containers. A workspace is tiles or a stack, one level deep, so `join-with` and `split` don't exist.
+- `resize` changes a tile only along its split, and only by an amount. `resize width 800`, which sets a size, isn't supported.
+- Window rules match the app's bundle id, its name or the window's title, and can float a window or send it to a workspace. The other `on-window-detected` conditions and commands aren't there.
 
 Quit AeroSpace before you start mielwm, because two window managers fight over the same windows. mielwm offers to do it and waits until AeroSpace is gone. Set `start-at-login = false` in your AeroSpace config so it stays gone.
 
@@ -23,7 +26,8 @@ Settings > AeroSpace & Barik > Import from AeroSpace reads `~/.config/aerospace/
 - `[gaps]`, including the per-monitor form. `monitor."built-in"` becomes the built-in display's top gap, and the plain value the other displays'.
 - `default-root-container-layout`, with `accordion` becoming a stack, and `default-root-container-orientation`.
 - `[[on-window-detected]]` blocks with `if.app-id`. `run = "move-node-to-workspace N"` becomes a workspace rule, and `run = "layout floating"` a floating app.
-- `[mode.main.binding]` keys whose command mielwm has: `focus`, `move`, `workspace N|next|prev`, `move-node-to-workspace N`, also as the first of several commands, `layout tiles|accordion|floating`, `fullscreen` and `resize smart ±N`.
+- `[[on-window-detected]]` blocks with `if.app-name-regex-substring` or `if.window-title-regex-substring` become [window rules](configuration.md#window-rules) with the same `run`. Importing again replaces the rules an earlier import added.
+- `[mode.main.binding]` keys whose command mielwm has: `focus`, `move`, `workspace N|next|prev`, `workspace-back-and-forth`, `move-node-to-workspace N`, also as the first of several commands, `layout tiles|accordion|floating`, `fullscreen`, `resize smart|width|height ±N`, `close` and `macos-native-minimize`. A key using `--auto-back-and-forth` turns on `layout:auto_back_and_forth`. `alt-tab` keeps mielwm's window switcher.
 
 The very first time mielwm starts, before any config exists, it imports the gaps, layout and rules on its own and tells you. It leaves the keys alone, since the defaults already match AeroSpace's.
 

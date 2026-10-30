@@ -19,6 +19,8 @@ The sidebar lists the panes in groups. The search field at its top finds a pane 
 - The layout new windows get, tiles, stack or floating, and which way tiles split. Each choice is a small picture you click.
 - The gaps between windows and around the screen edge, with a small desktop that redraws as you type. Point at a gap's field and its gap lights up, with its size. It shows the top gap on the display the Settings window is on.
 - The top edge: Automatic, Same as other edges, or Custom. [Workspaces and layouts](workspaces.md#a-status-bar-at-the-top) explains each.
+- Workspace key goes back: the key of the workspace you're on takes you to the one before.
+- Focus and move past the edge: `⌥` arrows and `⌥⇧` arrows go on into the next workspace instead of stopping at the edge.
 
 [Workspaces and layouts](workspaces.md) explains what each of these does.
 

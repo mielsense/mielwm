@@ -48,7 +48,8 @@ enum SettingsPane: String, CaseIterable {
         case .general: ["Open at login", "Remember where windows are", "Animation", "Animate the camera", "Speed", "Startup", "Restart"]
         case .layout: ["New windows", "Layout", "Tiles", "Stack", "Floating", "Orientation", "Automatic", "Side by side", "Above each other",
                        "Gaps", "Between windows, side by side", "Between windows, above each other", "Left edge", "Right edge", "Bottom edge",
-                       "Top edge", "Same as other edges", "Custom", "Top gap", "Top gap, built-in display", "Top gap, other displays", "Status bar"]
+                       "Top edge", "Same as other edges", "Custom", "Top gap", "Top gap, built-in display", "Top gap, other displays", "Status bar",
+                       "Workspaces", "Workspace key goes back", "Back and forth", "Focus and move past the edge"]
         case .windows: ["Floating apps", "Workspace rules", "Add app", "Open apps", "Choose an app…", "Apps"]
         case .overview: ["Zoomed-out level", "Show window names", "Show the minimap", "Lens", "Bend the edges", "Strength", "Magnification", "Zoom"]
         case .keyboard: ["Shortcuts", "Keys", "Hotkeys", "From config.json", "In the overview", "Restore all shortcuts", "Restore defaults"]

@@ -65,6 +65,8 @@ final class Controller {
     var restingSince: Double?
     var fadeStart: Double?
     var tickTimer: Timer?
+    var wakeTimer: Timer? // one tick at `wakeAt`
+    var wakeAt: Double?
     var keyCaptureFallback = false
 
     // Pointer gestures.
@@ -151,6 +153,8 @@ final class Controller {
         configWatcher?.stop()
         tickTimer?.invalidate()
         tickTimer = nil
+        wakeTimer?.invalidate()
+        wakeTimer = nil
         gate?.timeout.cancel()
         gate = nil
         hideOverlays()
@@ -200,7 +204,7 @@ final class Controller {
     /// Reports, text and modifiers never bring the overlay up: no need to try them on a copy first.
     private func mayOpenOverlay(_ input: CoreInput) -> Bool {
         switch input {
-        case .system(.windowFrameChanged), .system(.windowTitleChanged), .modifiersChanged, .text, .markedText: false
+        case .system(.windowFrameChanged), .system(.windowTitleChanged), .system(.unmanagedFocus), .modifiersChanged, .text, .markedText: false
         default: true
         }
     }
@@ -224,6 +228,8 @@ final class Controller {
             switch c {
             case .focus:
                 if mode != .normal { continue } // tests never take the user's focus
+                now.append(c)
+            case .close, .minimize:
                 now.append(c)
             case let .setFrame(id, _):
                 commandSerial[id, default: 0] += 1

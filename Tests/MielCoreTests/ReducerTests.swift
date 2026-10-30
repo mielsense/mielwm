@@ -91,7 +91,7 @@ func panDesk(_ s: inout CanvasState, dx: CGFloat) -> [WindowCommand] {
     #expect(isHiddenFrame(parked, screens: s.screens))
 }
 
-@Test func parkedWindowPulledBackIsReparkedTwiceThenAdopted() throws {
+@Test func parkedWindowPulledBackIsReparkedTwiceThenRetriedLater() throws {
     var s = focusedState()
     let slot = try #require(moves(panDesk(&s, dx: -3000))[wid(1)])
     _ = s.send(.system(.windowFrameChanged(wid(1), slot))) // our park confirmed
@@ -101,10 +101,16 @@ func panDesk(_ s: inout CanvasState, dx: CGFloat) -> [WindowCommand] {
         #expect(moves(again)[wid(1)] == slot)
         _ = s.send(.system(.windowFrameChanged(wid(1), slot)))
     }
-    let third = s.send(.system(.windowFrameChanged(wid(1), pulled)))
-    #expect(third.isEmpty)
-    #expect(s.window(wid(1))?.parked == false)
-    #expect(s.window(wid(1)).map { s.deskFrame($0) } == pulled)
+    // The third time it waits, and the window keeps its place on the canvas, parked.
+    #expect(s.send(.system(.windowFrameChanged(wid(1), pulled))).isEmpty)
+    #expect(s.window(wid(1))?.parked == true)
+    #expect(s.canvasFrame(1) == onBuiltIn)
+    #expect(s.nextWake != nil)
+    #expect(moves(s.advance(1.1))[wid(1)] == slot)
+    // Each try the app undoes waits twice as long as the last.
+    _ = s.run(.system(.windowFrameChanged(wid(1), slot)), .system(.windowFrameChanged(wid(1), pulled)))
+    #expect(moves(s.advance(1.5)).isEmpty)
+    #expect(moves(s.advance(0.6))[wid(1)] == slot)
 }
 
 @Test func repeatedReportsOfTheParkSlotAreNotPullBacks() throws {
@@ -239,7 +245,7 @@ func panDesk(_ s: inout CanvasState, dx: CGFloat) -> [WindowCommand] {
     _ = s.run(.system(.windowFocused(wid(1))), .system(.windowFocused(wid(2))))
     _ = s.send(.system(.windowClosed(wid(2))))
     #expect(s.mru.order == [wid(1)])
-    #expect(s.focused == nil)
+    #expect(s.focused == wid(1)) // the next on screen takes focus
     _ = s.send(.system(.appTerminated(pid: 100)))
     #expect(s.windows.isEmpty)
 }

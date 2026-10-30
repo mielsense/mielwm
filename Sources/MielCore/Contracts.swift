@@ -84,7 +84,10 @@ public struct WindowSnapshot: Hashable, Codable, Sendable {
 public enum SystemEvent: Sendable, Equatable {
     case windowAppeared(WindowSnapshot)
     case windowClosed(WindowID)
-    case windowFrameChanged(WindowID, CGRect)
+    /// `dragging`: the left mouse button is down, or just came up at the end
+    /// of a drag (see `isUserDrag`), so the user may be dragging it. Only then does a resize
+    /// move the split with a neighbour tile.
+    case windowFrameChanged(WindowID, CGRect, dragging: Bool = false)
     case windowTitleChanged(WindowID, String)
     case windowMinimized(WindowID, Bool)
     /// Entered or left macOS full screen. Entering arrives before the
@@ -93,9 +96,25 @@ public enum SystemEvent: Sendable, Equatable {
     /// Focus from any source: our own commands, Cmd-Tab, the Dock, a click,
     /// an app raising itself.
     case windowFocused(WindowID)
+    /// Focus went to nothing mielwm manages: the desktop, a sheet or panel,
+    /// an app it leaves alone. No managed window has focus now.
+    case unmanagedFocus(pid: Int32)
     case appHidden(pid: Int32, Bool)
     case appTerminated(pid: Int32)
     case screensChanged([ScreenInfo])
+}
+
+/// Seconds after the left button comes up that frame reports still belong to
+/// the user's drag: slow apps report its last steps late, some resize only on release.
+public let dragGrace = 0.5
+
+/// Whether a frame report is part of a user drag (`windowFrameChanged`'s
+/// `dragging`): the button is down, or it came up recently after a press that
+/// dragged. Seconds since the last press, drag and release, from the same clock.
+/// A plain click (a Dock icon, a double-click on a title bar) has no drag after
+/// its press, so an app's own resize right after it is never taken for the user's.
+public func isUserDrag(buttonDown: Bool, sinceMouseDown: Double, sinceDrag: Double, sinceMouseUp: Double) -> Bool {
+    buttonDown || (sinceMouseUp < dragGrace && sinceDrag < sinceMouseDown)
 }
 
 /// What Core asks System to do. System runs these off the main thread, one
@@ -107,6 +126,10 @@ public enum WindowCommand: Sendable, Equatable {
     case setFrame(WindowID, CGRect)
     /// Raise the window, make it main and key, activate its app.
     case focus(WindowID)
+    /// Press the window's close button, as a click on it would.
+    case close(WindowID)
+    /// Minimize it to the Dock.
+    case minimize(WindowID)
 }
 
 // MARK: - Live window images
@@ -208,6 +231,8 @@ public enum Action: Hashable, Codable, Sendable {
     case fullscreen
     case pin
     case grow, shrink
+    case resize(ResizeAxis, Int) // AeroSpace's resize: points more (or fewer, below zero)
+    case close, minimize // the window itself (its close button, the Dock)
     case arrange
     case undo, redo
     case refresh
@@ -218,8 +243,14 @@ public enum Action: Hashable, Codable, Sendable {
     case toggleFloating // tiled ⇄ floating
     case workspace(Int) // 1...9: fly to that workspace
     case workspaceStep(forward: Bool) // next / previous workspace
+    case workspaceBackAndForth // the workspace shown before this one
     case moveToWorkspace(Int) // the window moves there and the camera follows
     case settings // opens the Settings window (handled by the app)
+}
+
+/// Which side `resize` changes: along the tiles' split (smart), or one dimension.
+public enum ResizeAxis: String, Hashable, Codable, Sendable, CaseIterable {
+    case smart, width, height
 }
 
 /// How a workspace lays out its windows. Floating windows belong to none.

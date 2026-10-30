@@ -67,7 +67,7 @@ import Testing
     #expect(found.gaps == ["gaps:inner_horizontal": 4, "gaps:outer_top": 30, "gaps:outer_top_external": 40])
     #expect(found.layout == .stack && found.orientation == .vertical)
     #expect(found.floatingApps == ["com.apple.finder", "com.x"] && found.workspaceRules == ["com.x": 6])
-    #expect(found.bindings == ["opt+cmd+grave": "move-to-workspace 2", "opt+shift+leftbracket": "shrink"])
+    #expect(found.bindings == ["opt+cmd+grave": "move-to-workspace 2", "opt+shift+leftbracket": "resize smart -10"])
     #expect(found.summary().count == 5)
     let summary = found.summary { $0 == "com.x" ? "X" : $0 }
     #expect(summary.contains("Workspace rules: X → 6.") && summary.contains("New windows: a stack, above each other orientation."))
@@ -77,4 +77,52 @@ import Testing
 @Test func emptyOrJunkImportsNothing() {
     #expect(AeroSpaceImport(toml: "").isEmpty)
     #expect(AeroSpaceImport(toml: "[[[\n= = =\n'unterminated").isEmpty)
+}
+
+@Test func importReadsTheNewCommandsAndRules() {
+    let found = AeroSpaceImport(toml: """
+    [[on-window-detected]]
+    if.app-id = 'org.mozilla.firefox'
+    if.window-title-regex-substring = 'Picture-in-Picture'
+    run = 'layout floating'
+    [[on-window-detected]]
+    if.window-title-regex-substring = '(['
+    run = 'layout floating'
+    [[on-window-detected]]
+    if.app-name-regex-substring = 'zoom'
+    run = ['move-node-to-workspace 3']
+    [[on-window-detected]]
+    if.window-title-regex-substring = 'nothing to do'
+    run = 'exec-and-forget true'
+    [mode.main.binding]
+    alt-b = 'workspace-back-and-forth'
+    alt-tab = 'workspace-back-and-forth'
+    alt-1 = 'workspace --auto-back-and-forth 1'
+    alt-w = 'close'
+    alt-m = 'macos-native-minimize'
+    alt-shift-minus = 'resize width -100'
+    alt-shift-equal = 'resize smart +50'
+    alt-r = 'resize smart 900'
+    """)
+    #expect(found.windowRules == [
+        "aerospace-1": WindowRule(appID: "org.mozilla.firefox", title: "Picture-in-Picture", floating: true),
+        "aerospace-3": WindowRule(app: "zoom", workspace: 3), // numbered by block; the second's pattern doesn't compile
+    ])
+    #expect(found.workspaceRules.isEmpty && found.floatingApps.isEmpty)
+    #expect(found.bindings == [
+        "opt+b": "workspace-back-and-forth", "opt+1": "workspace 1", "opt+w": "close", "opt+m": "minimize",
+        "opt+shift+minus": "resize width -100", "opt+shift+equal": "grow",
+    ]) // ⌥Tab stays the window switcher; a size to set has no mielwm command
+    #expect(found.autoBackAndForth)
+    var before = Settings()
+    before.windowRules = ["aerospace-7": WindowRule(title: "gone from AeroSpace", floating: true), "mine": WindowRule(app: "x", floating: true)]
+    let changes = found.changes(onto: before, keys: false)
+    #expect(changes["rules:aerospace-1:title"] == .some(.text("Picture-in-Picture")))
+    #expect(changes["rules:aerospace-1:floating"] == .some(.flag(true)))
+    #expect(changes["rules:aerospace-1:workspace"] == .some(nil)) // cleared, in case an earlier import set it
+    #expect(changes["rules:aerospace-3:workspace"] == .some(.number(3)))
+    #expect(changes["rules:aerospace-7:title"] == .some(nil) && changes["rules:aerospace-7:floating"] == .some(nil)) // an old import's rule goes
+    #expect(!changes.keys.contains { $0.hasPrefix("rules:mine:") }) // the user's own stay
+    #expect(changes["layout:auto_back_and_forth"] == .some(.flag(true)))
+    #expect(found.summary().contains("2 window rules by app name or title."))
 }

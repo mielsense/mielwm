@@ -41,6 +41,18 @@ struct LayoutPane: View {
                 GapField(title: s.topGapMode == .custom ? "Top gap, built-in display" : "Top gap", key: "gaps:outer_top", focus: gapFocus)
                 if s.topGapMode == .custom { GapField(title: "Top gap, other displays", key: "gaps:outer_top_external", focus: gapFocus) }
             }
+            Section {
+                Toggle(isOn: model.flag("layout:auto_back_and_forth")) {
+                    Text("Workspace key goes back")
+                    Text("The key of the workspace you're on takes you to the one before.")
+                }
+                Toggle(isOn: model.flag("layout:cross_workspaces")) {
+                    Text("Focus and move past the edge")
+                    Text("At the edge of a workspace, ⌥ arrows and ⌥⇧ arrows go on into the next one instead of stopping.")
+                }
+            } header: {
+                Text("Workspaces")
+            }
         }
     }
 
