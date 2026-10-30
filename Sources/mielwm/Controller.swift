@@ -66,6 +66,7 @@ final class Controller {
     var restingSince: Double?
     var fadeStart: Double?
     var tickTimer: Timer?
+    var tickTimerDeadline: Double? // a one-shot tick timer's deadline; nil while it ticks every frame
     var keyCaptureFallback = false
 
     /// MIELWM_TIMINGS: logs how long each action's moves take, from the action to the last move confirmed.
