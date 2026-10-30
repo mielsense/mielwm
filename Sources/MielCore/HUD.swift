@@ -145,7 +145,7 @@ public extension CanvasState {
             }
             h.selectedRow = h.rows.isEmpty ? nil : overview.selected - overview.listOffset
             let more = overview.results.count - end
-            if more > 0 { h.footer = "\(more) more \(more == 1 ? "result" : "results"), keep typing or press ↓" }
+            if more > 0 { h.footer = counted(more, "more result") + ", keep typing or press ↓" }
         }
         h.markedText = overview.markedText
         if overview.helpOpen { h.help = helpSections }
@@ -164,7 +164,7 @@ public extension CanvasState {
     /// The top-right pill: zoom, window count, display.
     private func readout(for screen: ScreenInfo) -> String {
         let total = windows.count { $0.isShown && $0.pinned == nil }
-        return "\(Int((camera.zoom * 100).rounded()))%  ·  \(total) \(total == 1 ? "window" : "windows")  ·  \(screen.name)"
+        return "\(Int((camera.zoom * 100).rounded()))%  ·  \(counted(total, "window"))  ·  \(screen.name)"
     }
 
     /// Every key, for ⌘/, as (keys, action), most used first. The last two

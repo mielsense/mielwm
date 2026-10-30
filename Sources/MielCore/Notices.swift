@@ -35,7 +35,7 @@ public struct WorkspaceNotice: Equatable, Sendable {
     /// What VoiceOver says: "Workspace 3, stack, 4 windows".
     public var spoken: String {
         let layout = mode == .stack ? "stack, " : ""
-        return "Workspace \(current), \(layout)\(windowCount) \(windowCount == 1 ? "window" : "windows")"
+        return "Workspace \(current), \(layout)\(counted(windowCount, "window"))"
     }
 }
 

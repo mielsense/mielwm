@@ -158,15 +158,30 @@ public struct AeroSpaceImport: Hashable, Sendable {
         }
         if !floatingApps.isEmpty { lines.append("Floating apps: " + floatingApps.map(appName).joined(separator: ", ") + ".") }
         if !windowRules.isEmpty {
-            lines.append("\(windowRules.count) window \(windowRules.count == 1 ? "rule" : "rules") by app name or title.")
+            lines.append(counted(windowRules.count, "window rule") + " by app name or title.")
         }
         if autoBackAndForth { lines.append("Going to the workspace you are on goes back to the one before.") }
         if !bindings.isEmpty {
             let changed = bindings.filter { chord, command in KeyChord(chord).flatMap { Settings.bindingEntry($0, command) } != nil }.count
-            lines.append("\(bindings.count) shortcuts" + (changed == 0 ? ", all the same as mielwm's." : ", \(changed) of them different from mielwm's."))
+            lines.append(counted(bindings.count, "shortcut") + (changed == 0 ? ", all the same as mielwm's." : ", \(changed) of them different from mielwm's."))
         }
         return lines
     }
+}
+
+/// The one-time notice after a first-launch import from AeroSpace.
+public func aeroSpaceImportNote(_ found: AeroSpaceImport) -> String {
+    var parts: [String] = []
+    if !found.gaps.isEmpty { parts.append("gaps") }
+    if found.layout != nil || found.orientation != nil { parts.append("layout") }
+    if !found.workspaceRules.isEmpty { parts.append(counted(found.workspaceRules.count, "workspace rule")) }
+    if !found.floatingApps.isEmpty { parts.append(counted(found.floatingApps.count, "floating app")) }
+    if found.autoBackAndForth { parts.append("workspace back and forth") }
+    if !found.windowRules.isEmpty { parts.append(counted(found.windowRules.count, "window rule")) }
+    let list = parts.count > 1 ? parts.dropLast().joined(separator: ", ") + " and " + parts.last! : parts.joined()
+    var place = "in Settings > Layout and Settings > Windows" // which don't edit window rules
+    if !found.windowRules.isEmpty { place = parts.count == 1 ? "in the config file" : place + ", and window rules in the config file" }
+    return "mielwm took your \(list) from AeroSpace's config. Change them any time \(place)."
 }
 
 /// "a,b" as ["a", "b"], blanks dropped.
