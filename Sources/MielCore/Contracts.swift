@@ -344,8 +344,8 @@ public struct Look: Hashable, Codable, Sendable {
     public var paletteTop = 0.1 // fraction of the screen height
     public var paletteRows = 6
     public var rowHeight = 44.0
-    public var rounding = 8.0 // rows and pills; panels add 6
-    public var panelOpacity = 0.8
+    var rounding = 8.0 // no longer drawn; kept so old configs load
+    var panelOpacity = 0.8 // no longer drawn; kept so old configs load
     /// appearance:glass: every panel the overview and the notices draw.
     public var glass = GlassStyle.liquid
     var uppercase = false // no longer drawn; kept so old configs load
