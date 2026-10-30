@@ -53,6 +53,7 @@ let shortcutGroups: [(title: String, items: [ShortcutItem])] = [
         ShortcutItem(target: .family(.moveToWorkspace), name: "Move window to workspace", detail: "And go there with it."),
         ShortcutItem(target: .action(.workspaceStep(forward: true)), name: "Next workspace"),
         ShortcutItem(target: .action(.workspaceStep(forward: false)), name: "Previous workspace"),
+        ShortcutItem(target: .action(.workspaceBackAndForth), name: "Last workspace", detail: "The one you were on before. Again goes back."),
     ]),
     ("Focus & move", [
         ShortcutItem(target: .family(.focus), name: "Focus", detail: "The nearest window in that direction."),

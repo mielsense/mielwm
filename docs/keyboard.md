@@ -26,6 +26,14 @@ Every shortcut mielwm has, and how to change them. The defaults are AeroSpace's 
 
 `⌃←` and `⌃→` are also Mission Control's keys for switching Spaces. mielwm uses one Space, so they're free, but Settings warns you about it.
 
+## Without a key
+
+These actions have no shortcut until you give them one, in Settings > Keyboard or the [configuration file](configuration.md#shortcuts):
+
+| Action | What it does |
+| --- | --- |
+| Last workspace | Go to the workspace you were on before. Again goes back. With Settings > Layout & workspaces > Workspace key goes back, `⌥1` … `⌥9` on the workspace you're on do this too. |
+
 ## In the overview
 
 | Keys | What it does |

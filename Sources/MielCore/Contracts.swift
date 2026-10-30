@@ -219,6 +219,7 @@ public enum Action: Hashable, Codable, Sendable {
     case toggleFloating // tiled ⇄ floating
     case workspace(Int) // 1...9: fly to that workspace
     case workspaceStep(forward: Bool) // next / previous workspace
+    case workspaceBackAndForth // the workspace shown before this one
     case moveToWorkspace(Int) // the window moves there and the camera follows
     case settings // opens the Settings window (handled by the app)
 }

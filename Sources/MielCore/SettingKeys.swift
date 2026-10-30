@@ -88,6 +88,7 @@ let settingPaths: [String: SettingPath] = [
     "gaps:outer_top_external": .number(\.gapOuterTopExternal, 0 ... 400),
     "layout:floating_apps": .text(\.floatingApps),
     "layout:workspace_rules": .text(\.workspaceRules),
+    "layout:auto_back_and_forth": .flag(\.autoBackAndForth),
     "animation:enabled": .flag(\.animationEnabled),
     "animation:speed": .number(\.animationSpeed, 0.2 ... 8),
     "navigator:enabled": .flag(\.navigatorEnabled),

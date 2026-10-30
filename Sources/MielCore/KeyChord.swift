@@ -83,7 +83,7 @@ public extension Action {
     /// "tune", "help", "switch next|prev", "focus|nudge|pan left|right|up|down",
     /// "zoom in|out", "fit", "frame", "summon", "land", "back", "fill",
     /// "fullscreen", "pin", "grow", "shrink", "arrange", "undo", "redo",
-    /// "refresh", "noop".
+    /// "refresh", "noop", "workspace-back-and-forth".
     init?(command: String) {
         let words = command.trimmingCharacters(in: .whitespaces).split(separator: " ", maxSplits: 1).map(String.init)
         guard let verb = words.first?.lowercased() else { return nil }
@@ -121,6 +121,7 @@ public extension Action {
         case ("layout", "floating"): self = .toggleFloating
         case ("workspace", "next"): self = .workspaceStep(forward: true)
         case ("workspace", "prev"): self = .workspaceStep(forward: false)
+        case ("workspace-back-and-forth", ""): self = .workspaceBackAndForth
         case ("workspace", _) where Int(rest).map({ (1 ... 9).contains($0) }) == true: self = .workspace(Int(rest)!)
         case ("move-to-workspace", _), ("move-node-to-workspace", _):
             guard let n = Int(rest), (1 ... 9).contains(n) else { return nil }
@@ -162,6 +163,7 @@ public extension Action {
         case .toggleFloating: "layout floating"
         case let .workspace(n): "workspace \(n)"
         case let .workspaceStep(forward): forward ? "workspace next" : "workspace prev"
+        case .workspaceBackAndForth: "workspace-back-and-forth"
         case let .moveToWorkspace(n): "move-to-workspace \(n)"
         case .settings: "settings"
         }

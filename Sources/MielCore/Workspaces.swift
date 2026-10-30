@@ -191,6 +191,7 @@ extension CanvasState {
     }
 
     mutating func setCurrent(_ slot: Int) {
+        if let c = currentWorkspace, c != slot { previousWorkspace = c }
         currentWorkspace = slot
         ensureWorkspace(slot)
         pruneWorkspaces()

@@ -46,10 +46,19 @@ extension CanvasState {
         case .layoutStack: setLayout(.stack)
         case .toggleFloating: toggleFloating()
         case let .workspace(n): goToWorkspace(n)
+        case .workspaceBackAndForth: if let p = previousWorkspace { goToWorkspace(p) }
         case let .workspaceStep(forward): stepWorkspace(forward: forward)
         case let .moveToWorkspace(n): moveToWorkspace(n)
         case .settings: break // the app opens the Settings window
         }
+    }
+
+    /// What a bound key does. With layout:auto_back_and_forth the key of the
+    /// workspace you are on goes to the one before; the command line and
+    /// Barik stay put, as AeroSpace's `workspace N` without the flag does.
+    public func boundAction(_ action: Action) -> Action {
+        guard settings.autoBackAndForth, case let .workspace(n) = action, n == currentWorkspace, let p = previousWorkspace else { return action }
+        return .workspace(p)
     }
 
     // MARK: Overview

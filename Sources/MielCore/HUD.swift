@@ -128,6 +128,7 @@ public extension CanvasState {
 
     private static let layoutLabels: [(String, String)] = [
         ("workspace", "Go to workspace"), ("move-to-workspace", "Move the window there"), ("workspace prev", "Previous, next workspace"),
+        ("workspace-back-and-forth", "Last workspace, and back again"),
         ("layout tiles", "Tiles, or flip them"), ("layout stack", "Stack"), ("layout floating", "Float, or tile again"),
     ]
 

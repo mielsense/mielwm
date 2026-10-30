@@ -4,6 +4,11 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 
 ## Unreleased
 
+### Workspaces and layouts
+
+- A new `workspace-back-and-forth` action goes to the workspace you were on before. It has no key by default, since `⌥Tab` is the window switcher.
+- Turn on Settings > Layout & workspaces > Workspace key goes back, and the key of the workspace you're on takes you to the one before.
+
 ### Fixes
 
 - After you click the desktop, a dialog or an app mielwm leaves alone, window keys like `⌥T` no longer act on the last window you used.

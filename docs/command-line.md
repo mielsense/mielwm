@@ -29,6 +29,7 @@ Every action you can bind to a key also works here:
 | `settings` | Open Settings. |
 | `help` | Show every key in the overview. |
 | `workspace 1`…`9`, `workspace next`, `workspace prev` | Go to a workspace. |
+| `workspace-back-and-forth` | Go to the workspace you were on before. |
 | `move-to-workspace 1`…`9` | Move the focused window to a workspace and go with it. |
 | `layout tiles`, `layout stack`, `layout floating` | Change the layout, or float the window. |
 | `focus left\|right\|up\|down` | Focus the nearest window that way. |

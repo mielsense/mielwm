@@ -10,7 +10,8 @@ The model is close too. A workspace tiles its windows, a window can float, and a
 
 A few things work differently or aren't there yet:
 
-- `⌥Tab` is mielwm's recent-windows switcher, not `workspace-back-and-forth`.
+- `⌥Tab` is mielwm's recent-windows switcher. `workspace-back-and-forth` is there with no key, so bind it in Settings > Keyboard.
+- `workspace --auto-back-and-forth` is a setting for all the workspace keys, Settings > Layout & workspaces > Workspace key goes back, instead of a flag on each key.
 - `⌥⇧Tab`, which moves a workspace to another monitor in AeroSpace, has no equivalent yet.
 - There are no binding modes like AeroSpace's service mode, and no nested containers. A workspace is tiles or a stack, one level deep.
 

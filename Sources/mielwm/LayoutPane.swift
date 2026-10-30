@@ -55,6 +55,12 @@ struct LayoutPane: View {
             } header: {
                 Text("Trackpad")
             }
+            Section("Workspaces") {
+                Toggle(isOn: model.flag("layout:auto_back_and_forth")) {
+                    Text("Workspace key goes back")
+                    Text("The key of the workspace you're on takes you to the one before.")
+                }
+            }
             Section {
                 ForEach(parseWorkspaceRules(s.workspaceRules).sorted { ($0.value, AppInfo(bundleID: $0.key).name) < ($1.value, AppInfo(bundleID: $1.key).name) }, id: \.key) { id, number in
                     AppRow(bundleID: id, remove: { setRule(id, nil) }) {
