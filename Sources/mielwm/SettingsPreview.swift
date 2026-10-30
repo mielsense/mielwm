@@ -6,7 +6,7 @@ import SwiftUI
 /// Opens the Settings window, the onboarding and About without the canvas
 /// (no event tap, nothing moves), saves each as a PNG in light and dark,
 /// then quits. It works on a copy of the config, so nothing it does is saved.
-/// `--live <pane> [--search <text>]` instead leaves the Settings window on screen for 10 s
+/// `--live <pane> [--search <text>] [--scroll <points>]` instead leaves the Settings window on screen for 10 s
 /// and prints its window number, for `screencapture -l`.
 @MainActor
 func settingsPreview(_ args: [String]) -> Never {
@@ -49,6 +49,11 @@ func settingsPreview(_ args: [String]) -> Never {
                 v.subviews.forEach(activate)
             }
             settings.window.contentView?.superview.map(activate)
+            // Scrolled down by this many points, to see what passes under the title bar.
+            if let y = value("--scroll", in: args).flatMap(Double.init), let scroll = detailScrollView(in: settings.window.contentView),
+               let doc = scroll.documentView {
+                doc.scroll(NSPoint(x: 0, y: doc.isFlipped ? y : doc.frame.height - y - scroll.contentView.bounds.height))
+            }
             // Bold stripes just behind the window, so its translucency shows in a screenshot.
             if args.contains("--stripes") {
                 let stripes = NSWindow(contentRect: settings.window.frame.insetBy(dx: -40, dy: -40), styleMask: .borderless, backing: .buffered, defer: false)
