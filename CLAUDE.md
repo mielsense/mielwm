@@ -33,6 +33,6 @@ These cover what only an agent does. Everything else is in CONTRIBUTING.md.
 - Your tool may add `Co-Authored-By` trailers or "Generated with" lines by default. Remove them everywhere. [Commits](CONTRIBUTING.md#commits) forbids them, and CI rejects them.
 - In a checkout other people or agents are also editing, commit by path (`git commit -- <paths>`), never `git add -A` across someone else's work.
 - Push, open pull requests, tag, publish releases and deploy the website to production only when the user asks. Never merge unless they ask, and then use a merge commit.
-- Before you say you're done, run `swift build && swift test`, `pnpm check` in `website/` if you touched it, and actionlint if you touched `.github/workflows/`. Report what you ran and what you didn't.
+- Before you say you're done, run the checks in [CONTRIBUTING.md's Commits section](CONTRIBUTING.md#commits). Report what you ran and what you didn't.
 - A change is done when it has its test, its docs page and its changelog line, as [What gets a pull request merged](CONTRIBUTING.md#what-gets-a-pull-request-merged) lists.
 - Write every sentence by the [writing rules](CONTRIBUTING.md#writing), and text in the app by [DESIGN.md](DESIGN.md#text) too.

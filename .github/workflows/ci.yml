@@ -10,7 +10,8 @@ permissions:
 
 concurrency:
   group: ci-${{ github.ref }}
-  # A new push replaces a pull request's run; every run on main finishes.
+  # A new push replaces a pull request's run. On main a run that started finishes,
+  # but a newer push replaces one still waiting to start.
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:

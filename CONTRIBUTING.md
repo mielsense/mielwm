@@ -85,8 +85,9 @@ edited.
 - The scope is an area from [labels.yml](.github/labels.yml) without its `area: ` prefix, like `settings` or `website`, or `macos` for a quirk of one macOS version. Leave it out when none fits.
 - The body says why, in plain sentences. The diff already shows what.
 - One change per commit. A refactor and the fix it made possible are two commits.
-- Run `swift build && swift test` before you commit, and `pnpm check` too if you touched `website/`.
+- Before you commit, run `swift build && swift test`, `pnpm check` in `website/` if you touched it, and actionlint if you touched `.github/workflows/`.
 - No `Co-Authored-By` trailers, no "Generated with" lines and no tool attribution, in commits, pull requests, code or docs. CI rejects a commit that has one.
+- GitHub's Apply suggestion button makes a commit titled "Apply suggestions from code review" with a `Co-authored-by` trailer, which fails both checks. Squash it into the commit it fixes, or reword it.
 
 ## Branches
 
@@ -160,7 +161,7 @@ Everything you write for mielwm reads like a person wrote it: docs, the changelo
 - Colons only before a list or an example.
 - Sentence case for headings. Straight quotes. No emoji.
 - No filler ("it's important to note"), no puffery ("seamless", "powerful", "robust") and no chatbot phrases.
-- Name other apps only as examples. Barik is one AeroSpace-compatible status bar, never the name of a feature, a setting or a pane.
+- Name other apps only as examples. Barik is one AeroSpace-compatible status bar. Don't name a new feature, setting or pane after another app. The config key `integrations:barik` keeps its name so existing config files keep working.
 
 Text inside the app has a few more rules, in [DESIGN.md](DESIGN.md#text).
 
