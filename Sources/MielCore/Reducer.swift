@@ -72,9 +72,15 @@ public extension CanvasState {
 
     /// Ticks are needed while this is true: animations, moves awaiting
     /// confirmation, the screen grace period, toasts, the switcher's delay.
-    var needsTicks: Bool {
-        !animator.isSettled || windows.contains { $0.expected != nil } || graceUntil != nil || toast != nil
-            || expectedFocus != nil || (overview.switcherRevealAt.map { $0 > now } ?? false)
+    var needsTicks: Bool { !animator.isSettled || tickDeadline != nil }
+
+    /// While nothing animates, ticks only wait for this: the earliest time a tick
+    /// changes something (nil: never). nil too while something animates.
+    var tickDeadline: Double? {
+        guard animator.isSettled else { return nil }
+        let times = windows.compactMap(\.expected?.deadline) + [graceUntil, toast.map { _ in toastUntil }, expectedFocus?.until,
+                                                               overview.switcherRevealAt.flatMap { $0 > now ? $0 : nil }].compactMap { $0 }
+        return times.min()
     }
 
     /// The overlay must be up: zoomed out, panning at full size, flying, or

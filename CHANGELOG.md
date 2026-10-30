@@ -43,6 +43,12 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 - Switching workspaces with many windows open no longer leaves some of them behind when their apps are slow to answer.
 - A window whose app misses a move, because it was busy at the time, gets the move once more a second later.
 - After restarting mielwm, windows whose title changed meanwhile, like a browser tab, come back to their places and workspaces.
+- Switching workspaces no longer flashes the old windows over the new workspace.
+
+### Performance
+
+- The overview uses about half the CPU while your windows sit still, and switching workspaces uses less too.
+- Holding `⌃⌥` to drag a window no longer starts the overview's window pictures. With the default `⌃⌥G`, the overview can take up to 0.12 seconds longer to open while it gets fresh pictures.
 
 ## 0.1.0
 
