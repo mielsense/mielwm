@@ -96,8 +96,6 @@ Settings leaves keys it didn't touch alone, but JSON comments get lost. A settin
 | `navigator:search_height` | number, 36 to 110 | `56` | Height of the search field. |
 | `navigator:rows` | number, 3 to 12 | `6` | How many results show. |
 | `navigator:row_height` | number, 36 to 96 | `44` | Height of a result row. |
-| `navigator:rounding` | number, 0 to 30 | `8` | Corner radius of rows and pills. |
-| `navigator:panel_opacity` | number, 0 to 1 | `0.8` | Opacity of the search panel. |
 | `navigator:query_size`, `navigator:title_size`, `navigator:detail_size` | number | `24`, `13`, `12` | Text sizes of the search text, result titles and their details. |
 | `navigator:label_size`, `navigator:corner_size` | number | `12`, `12` | Text sizes of window names and the corner readout. |
 

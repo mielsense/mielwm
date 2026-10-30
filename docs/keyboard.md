@@ -72,7 +72,7 @@ Open Settings > Keyboard. Click a shortcut and press the new keys. `Esc` cancels
 
 ![The Keyboard pane in Settings](images/settings-keyboard-dark.png)
 
-Keys that come in families take one row each. One row goes to a workspace, shown as "⌥1–9", one moves a window there, "⌥⇧1–9", and one covers focus and move, "⌥←→↑↓". Click the row, hold the new modifiers and press any one of its keys, and the whole family changes together. If you changed some of them one by one in the config file, the row says Custom and opens up to show each key.
+Keys that come in families take one row each. One row goes to a workspace, shown as "⌥1-9", one moves a window there, "⌥⇧1-9", and one covers focus and move, "⌥←→↑↓". Click the row, hold the new modifiers and press any one of its keys, and the whole family changes together. If you changed some of them one by one in the config file, the row says Custom and opens up to show each key.
 
 If the keys you press already belong to another action, the row says which one, and Use here moves them to this action. It also warns when macOS uses the same keys, such as screenshots or switching input sources. mielwm refuses `⌘Q`, `⌘W`, `⌘C`, `⌘V` and the other keys every app relies on, because a global shortcut on them would break them everywhere.
 

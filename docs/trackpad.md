@@ -10,7 +10,7 @@ Turn it on or off with Settings > Trackpad & mouse > Swipe between workspaces. I
 
 ### macOS's own three-finger swipe
 
-macOS swipes between full-screen apps with three fingers too. With both on, the screen does a small bounce as you swipe. Set macOS's gesture to four fingers under System Settings > Trackpad > More Gestures > Swipe between full-screen applications. Settings > Trackpad & mouse shows a warning whenever the two overlap, with an Open Trackpad Settings… button that takes you there.
+macOS swipes between full-screen apps with three fingers too. With both on, the screen does a small bounce as you swipe. Set macOS's gesture to four fingers under System Settings > Trackpad > More Gestures > Swipe between full-screen applications. Settings > Trackpad & mouse shows a warning whenever the two overlap, with an Open Trackpad settings… button that takes you there.
 
 Three-finger drag, an Accessibility setting, also uses three fingers. With both on, swipes and drags get in each other's way, so pick one.
 
