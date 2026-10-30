@@ -10,7 +10,8 @@
 	import { site } from '@/site';
 
 	// screenshot sizes, from the source files in scripts/images.sh
-	const wide = { width: 3600, height: 2338 };
+	const wide = { width: 3600, height: 2188 };
+	const desktop = { width: 3600, height: 2338 };
 	const settings = { width: 1430, height: 1280 };
 
 	const keys = [
@@ -80,7 +81,7 @@ scripts/build-app.sh --install`;
 					<Icon icon={DownloadIcon} size={16} />
 					Download for macOS
 				</Button>
-				<Button href="/docs/getting-started" variant="glow" size="lg" class="glow-plain ps-4">
+				<Button href="/docs" variant="glow" size="lg" class="glow-plain ps-4">
 					<Icon icon={BookIcon} size={15} />
 					Read the docs
 				</Button>
@@ -90,7 +91,7 @@ scripts/build-app.sh --install`;
 		<!-- the lavender mesh drifts slowly behind the overview -->
 		<div class="grain dusk rounded-[24px] p-3 sm:p-8 lg:p-12" data-rise>
 			<div class="overflow-hidden rounded-[12px] shadow-[0_0_0_1px_rgb(0_0_0/0.14),0_30px_70px_-20px_rgb(20_10_80/0.55)]">
-				<Shot name="overview" widths={[2200, 1200]} {...wide} priority sizes="(min-width: 88rem) 77rem, (min-width: 64rem) calc(100vw - 11rem), (min-width: 40rem) calc(100vw - 8rem), calc(100vw - 4rem)" alt="The overview: windows from every workspace laid out on the canvas, the focused one outlined, a search field on top." />
+				<Shot name="overview" widths={[2200, 1200]} {...wide} priority sizes="(min-width: 88rem) 77rem, (min-width: 64rem) calc(100vw - 11rem), (min-width: 40rem) calc(100vw - 8rem), calc(100vw - 4rem)" alt="The overview: windows from every workspace laid out on the canvas, the focused one outlined, the capsule search field on top." />
 			</div>
 		</div>
 	</section>
@@ -110,9 +111,15 @@ scripts/build-app.sh --install`;
 					<li class="flex items-center gap-3"><kbd class="key">⌥,</kbd><span>A stack shows one window at a time</span></li>
 					<li class="flex items-center gap-3"><kbd class="key">⌥.</kbd><span>Floating keeps its size and place</span></li>
 				</ul>
-				{@render more('/docs/workspaces', 'Workspaces and layouts')}
+				<div class="flex flex-col gap-2">
+					<div class="w-full max-w-[21rem] overflow-hidden rounded-[12px]">
+						<Shot name="strip" widths={[840]} width={840} height={170} sizes="21rem" alt="The stack strip: four app icons, the front window's title, and 2 of 4." />
+					</div>
+					<p class="text-sm text-subtle">Go to a stack and a strip at its top shows its windows and which one is in front.</p>
+				</div>
+				{@render more('/docs/workspaces', 'Workspaces')}
 			</div>
-			<Shot stage={mesh.sky} name="desktop" widths={[1600, 900]} {...wide} sizes="(min-width: 88rem) 44rem, (min-width: 64rem) 50vw, calc(100vw - 5rem)" alt="Two windows tiled side by side: a browser and a terminal." />
+			<Shot stage={mesh.sky} name="desktop" widths={[1600, 900]} {...desktop} sizes="(min-width: 88rem) 44rem, (min-width: 64rem) 50vw, calc(100vw - 5rem)" alt="Two windows tiled side by side: a browser and a terminal." />
 		</section>
 
 		<section class="tile group/section flex flex-col p-2 lg:col-span-7" aria-labelledby="overview">
@@ -124,10 +131,13 @@ scripts/build-app.sh --install`;
 					canvas. Type a few letters of a title or an app and press <kbd class="key">Return</kbd> to go there, or
 					<kbd class="key">⇧Return</kbd> to bring it to you.
 				</p>
-				<p class="text-base leading-relaxed text-subtle">It draws with Metal from ScreenCaptureKit pictures, and your windows stay ordinary macOS windows the whole time.</p>
+				<p class="text-base leading-relaxed text-subtle">
+					The search field is a capsule of Liquid glass, like Spotlight. The canvas draws with Metal from ScreenCaptureKit pictures, and your
+					windows stay ordinary macOS windows the whole time.
+				</p>
 				{@render more('/docs/overview', 'The overview')}
 			</div>
-			<Shot stage={mesh.pink} class="flex-1" name="search" widths={[1600, 900]} {...wide} sizes="(min-width: 88rem) 43rem, (min-width: 64rem) 49vw, calc(100vw - 5rem)" alt="The overview with a search for “te”, listing a terminal, TextEdit and Notes, with how far each window is." />
+			<Shot stage={mesh.pink} class="flex-1" name="search" widths={[1600, 900]} {...wide} sizes="(min-width: 88rem) 43rem, (min-width: 64rem) 49vw, calc(100vw - 5rem)" alt="The overview with a search for e, listing Terminal, Code, Notes, TextEdit, Safari and Mail windows, with how far away each one is." />
 		</section>
 
 		<section class="tile group/section flex flex-col p-2 lg:col-span-5" aria-labelledby="swipes">
@@ -135,14 +145,14 @@ scripts/build-app.sh --install`;
 				{@render label('Trackpad', SparkleIcon, mesh.teal)}
 				<h2 id="swipes" class={title}>Three fingers to the next workspace</h2>
 				<p class="text-base leading-relaxed">
-					Swipe left or right and the trackpad clicks under your fingers as the workspace changes. The menu bar shows the workspaces that
-					have windows, with the current one filled.
+					Swipe left or right and the trackpad clicks under your fingers as the workspace changes. A pill at the bottom of the display shows
+					where you landed.
 				</p>
 				<div class="flex items-center gap-4">
-					<div class="w-32 shrink-0 overflow-hidden rounded-[10px]">
-						<Shot name="menubar" widths={[350]} width={350} height={256} sizes="8rem" alt="The menu bar item: workspace numbers with the current one filled, and the mielwm icon." />
+					<div class="w-40 shrink-0 overflow-hidden rounded-[10px]">
+						<Shot name="pill" widths={[460]} width={460} height={160} sizes="10rem" alt="The workspace pill: 1, 2, 3, 5 and 9, with 3 filled." />
 					</div>
-					<p class="text-sm text-subtle">The menu bar item, in its four states. Turn the numbers off and you get the mielwm icon instead.</p>
+					<p class="text-sm text-subtle">The workspaces that have windows, the current one filled. The menu bar item can show the same numbers.</p>
 				</div>
 				{@render more('/docs/trackpad', 'Trackpad and mouse')}
 			</div>
@@ -175,12 +185,12 @@ scripts/build-app.sh --install`;
 				{@render label('Settings', WrenchIcon, mesh.sun)}
 				<h2 id="settings" class={title}>A real Settings window</h2>
 				<p class="text-base leading-relaxed">
-					Click a shortcut and press the new keys. If they belong to another action, or macOS already uses them for Mission Control, the
-					row says so and offers to take them. Changes reach the canvas right away.
+					Eleven panes, grouped the way System Settings groups them. The search field in the sidebar finds any setting by name, the gaps
+					redraw on a small desktop as you type, and every change reaches your windows right away.
 				</p>
-				{@render more('/docs/settings', 'Settings and the menu bar')}
+				{@render more('/docs/settings', 'Every setting')}
 			</div>
-			<Shot stage={mesh.orange} class="flex-1" name="keyboard" widths={[1000]} {...settings} sizes="(min-width: 88rem) 28rem, 90vw" alt="Settings, Keyboard pane: recording a new focus shortcut, with a warning that the keys already switch workspaces." />
+			<Shot stage={mesh.orange} class="flex-1" name="settings" widths={[1000]} {...settings} sizes="(min-width: 88rem) 28rem, 90vw" alt="Settings, Layout pane: pictures to pick the layout and orientation of new windows, and the Peek edges slider for stacks." />
 		</section>
 
 		<section class="tile group/section flex flex-col p-2 lg:col-span-7" aria-labelledby="aerospace">
@@ -193,10 +203,10 @@ scripts/build-app.sh --install`;
 					gaps, the layout, the app rules and the key bindings, after showing you what it found.
 				</p>
 				<div class="flex flex-col gap-1.5 border-s-2 border-border ps-3.5">
-					<span class="flex items-center gap-2 text-base text-strong">Barik <Badge variant="secondary">New</Badge></span>
-					<span class="text-sm text-subtle">Barik's workspace widget shows mielwm's workspaces and switches on click, with no change to Barik. Turn it on in Settings.</span>
+					<span class="flex items-center gap-2 text-base text-strong">Your menu bar app <Badge variant="secondary">New</Badge></span>
+					<span class="text-sm text-subtle">Any AeroSpace-compatible menu bar shows mielwm's workspaces and switches on click, with no plugin to install.</span>
 				</div>
-				{@render more('/docs/aerospace', 'AeroSpace and Barik')}
+				{@render more('/docs/aerospace', 'Coming from AeroSpace')}
 			</div>
 			<div class="grain flex flex-1 items-center justify-center rounded-[16px] px-6 py-10" style:background={mesh.coral}>
 				<div class="w-full max-w-[18rem] overflow-hidden rounded-[10px] shadow-[0_0_0_1px_rgb(0_0_0/0.12),0_18px_40px_-12px_rgb(0_0_0/0.45)]">
@@ -226,7 +236,7 @@ scripts/build-app.sh --install`;
 			{@render more('/docs/keyboard', 'Every key')}
 		</div>
 		<div class="flex flex-col gap-3">
-			<Shot stage={mesh.lime} name="switcher" widths={[1600, 900]} {...wide} sizes="(min-width: 88rem) 42rem, (min-width: 64rem) 48vw, calc(100vw - 4rem)" alt="The window switcher over two tiled windows: a row of app icons with the terminal selected." />
+			<Shot stage={mesh.lime} name="switcher" widths={[1600, 900]} {...wide} sizes="(min-width: 88rem) 42rem, (min-width: 64rem) 48vw, calc(100vw - 4rem)" alt="The window switcher over two tiled windows: a row of app icons with Terminal selected and its window's title below." />
 			<p class="text-sm text-subtle">Hold <kbd class="key">⌥</kbd> and tap <kbd class="key">Tab</kbd> for the switcher. Let go to switch.</p>
 		</div>
 	</section>
