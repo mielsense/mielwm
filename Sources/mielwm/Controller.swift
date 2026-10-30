@@ -221,7 +221,8 @@ final class Controller {
         if Self.logsTimings { noteTiming(input, commands) }
         perform(commands, before: before)
         let focusSent = commands.contains { if case .focus = $0 { true } else { false } }
-        update(from: before, focusSent: focusSent)
+        let tick = if case .tick = input { true } else { false }
+        update(from: before, focusSent: focusSent, tick: tick)
     }
 
     private func perform(_ commands: [WindowCommand], before: CanvasState) {
@@ -274,7 +275,7 @@ final class Controller {
     }
 
     /// What follows every input: overlays, keyboard, tap, files, ticking.
-    private func update(from before: CanvasState, focusSent: Bool) {
+    private func update(from before: CanvasState, focusSent: Bool, tick: Bool) {
         if state.isOverview != before.isOverview {
             state.isOverview ? didOpenOverview() : didCloseOverview(focusSent: focusSent)
         }
@@ -296,10 +297,11 @@ final class Controller {
             log("timing: \(t.moves) moves, first after \(ms(first)), last park after \(t.lastPark.map(ms) ?? "none"), "
                 + "all confirmed after \(ms(CACurrentMediaTime())), \(axCalls.withLock { $0 } - t.ax) AX calls")
         }
-        updateTap()
+        // Ticks run every frame and seldom change what the tap or the menu bar shows: check only when they could have.
+        if !tick || state.isOverview != before.isOverview || state.overview.switcher != before.overview.switcher { updateTap() }
         if state.layoutRevision != savedLayoutRevision { scheduleSave() }
         scheduleTicks()
-        reportWorkspaces()
+        if !tick || state.layoutRevision != before.layoutRevision || state.currentWorkspace != before.currentWorkspace { reportWorkspaces() }
     }
 
     /// The overlay draws windows (not only the ⌥Tab strip over the real desktop).
