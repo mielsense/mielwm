@@ -4,6 +4,10 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 
 ## Unreleased
 
+### On screen
+
+- The `⌥Tab` switcher's highlight follows the panel's rounded corners, and its arrows to more windows are drawn chevrons.
+
 ### Fixes
 
 - Messages say "1 window", not "1 windows".

@@ -346,7 +346,7 @@ final class HUDPainter {
         guard !hud.rows.isEmpty else { return nil }
         let look = theme.look
         let s = view.scale * look.hudScale
-        let pad = 16 * s, tileGap = 4 * s, tile = 104 * s, icon = 80 * s
+        let pad = 12 * s, tileGap = 4 * s, tile = 104 * s, icon = 80 * s
         let m = theme.shadowMargin(s)
         let maxTiles = max(1, Int((view.size.width * 0.9 - pad * 2 + tileGap) / (tile + tileGap)))
         let count = hud.rows.count
@@ -357,7 +357,7 @@ final class HUDPainter {
         let titleBand = 44 * s // the title, then as much room below it as above the icons
         let width = CGFloat(shown) * tile + CGFloat(shown - 1) * tileGap + pad * 2
         let height = pad + tile + titleBand
-        let radius = 22 * s
+        let radius = 22 * s, highlightRadius = radius - pad // concentric with the panel's corners
 
         guard let b = Bitmap(width: Int(ceil(width + m * 2)), height: Int(ceil(height + m * 2))) else { return nil }
         let box = CGRect(x: m, y: m, width: width, height: height)
@@ -367,13 +367,13 @@ final class HUDPainter {
             let index = first + i
             let row = hud.rows[index]
             let r = CGRect(x: m + pad + CGFloat(i) * (tile + tileGap), y: m + pad, width: tile, height: tile)
-            if index == selected { b.fill(b.roundedPath(r, 14 * s), theme.highlight) }
+            if index == selected { b.fill(b.roundedPath(r, highlightRadius), theme.highlight) }
             appIcon(b, CGRect(x: r.midX - icon / 2, y: r.midY - icon / 2, width: icon, height: icon), bundleID: row.bundleID,
                     fallback: row.detail.isEmpty ? row.title : row.detail, theme)
         }
-        let more = TextStyle(size: 16 * s)
-        if first > 0 { text(b, "‹", more, theme.textFaint, x: m + 4 * s, cy: m + pad + tile / 2) }
-        if first + shown < count { text(b, "›", more, theme.textFaint, x: m + width - 12 * s, cy: m + pad + tile / 2) }
+        // More icons that way: a chevron centred in the side padding.
+        if first > 0 { chevron(b, x: m + pad / 2, cy: m + pad + tile / 2, pointsLeft: true, s: s, theme.textFaint) }
+        if first + shown < count { chevron(b, x: m + width - pad / 2, cy: m + pad + tile / 2, pointsLeft: false, s: s, theme.textFaint) }
 
         let row = hud.rows[selected]
         let line = type.fit(type.line(row.title.isEmpty ? row.detail : row.title, titleStyle, theme.text), width - 40 * s, titleStyle, theme.text)
@@ -382,6 +382,20 @@ final class HUDPainter {
         let origin = CGPoint(x: ((view.size.width - CGFloat(b.width)) / 2).rounded(),
                              y: ((view.size.height - CGFloat(b.height)) / 2).rounded())
         return layer(b, key: key, at: origin, panel: box, radius: radius)
+    }
+
+    /// A small chevron, 4 by 8 points with round ends, centred on `x`.
+    private func chevron(_ b: Bitmap, x: CGFloat, cy: CGFloat, pointsLeft: Bool, s: CGFloat, _ color: CGColor) {
+        let w = 4 * s * (pointsLeft ? -1 : 1), h = 4 * s
+        let path = CGMutablePath()
+        path.move(to: CGPoint(x: x - w / 2, y: cy - h))
+        path.addLine(to: CGPoint(x: x + w / 2, y: cy))
+        path.addLine(to: CGPoint(x: x - w / 2, y: cy + h))
+        b.ctx.saveGState()
+        b.ctx.setLineCap(.round)
+        b.ctx.setLineJoin(.round)
+        b.stroke(path, color, width: 1.5 * s)
+        b.ctx.restoreGState()
     }
 
     // MARK: - Pills: the status readout and the key hints
