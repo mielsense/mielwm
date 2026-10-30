@@ -7,6 +7,10 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 ### Fixes
 
 - Leaving macOS full screen, like a full screen video, no longer flashes two desktops side by side. mielwm leaves a full screen window alone and keeps its tile for when it comes back.
+- Windows that open while an app is busy no longer get lost. mielwm reads every app's window list again every 5 seconds and when you switch to an app.
+- A window an app closed without telling mielwm no longer leaves an empty tile behind.
+- Apps that take a long time to start, or that turn into regular apps after they start, get their windows managed.
+- `mielwm refresh` also reads every app's window list again.
 
 ## 0.1.0
 

@@ -51,6 +51,7 @@ public final class WindowRegistry {
             self?.deliver(.appHidden(pid: app.processIdentifier, false))
         }
         observe(workspace, NSWorkspace.didActivateApplicationNotification) { [weak self] app in
+            self?.track(app) // it may have become regular since launch
             self?.activated(app.processIdentifier)
         }
         let token = NotificationCenter.default.addObserver(
@@ -81,11 +82,18 @@ public final class WindowRegistry {
         group.notify(queue: .global()) { [thread = observerThread] in thread.stop() }
     }
 
-    /// Re-reads every app's window list, catching windows whose notifications
-    /// were missed, and picks up apps that became regular after launch.
+    /// `rescan`, after picking up apps that became regular after launch.
+    /// Costs a few milliseconds on the main thread with many apps running.
     public func refresh() {
         if pidFilter == nil { NSWorkspace.shared.runningApplications.forEach(track) }
-        for tracker in trackers.values { tracker.queue.async { tracker.scan() } }
+        rescan()
+    }
+
+    /// Re-reads the window list of every tracked app, catching windows whose
+    /// notifications were missed. The reading happens on each app's queue;
+    /// only the differences are reported.
+    public func rescan() {
+        trackers.values.forEach { $0.rescan() }
     }
 
     /// Fire and forget. Commands for one app run in order on its queue. The
@@ -143,7 +151,8 @@ public final class WindowRegistry {
     private func activated(_ pid: pid_t) {
         activePid = pid
         lastFocused = nil
-        trackers[pid]?.reportFocus()
+        trackers[pid]?.reportFocus() // first: it adopts the focused window on its own
+        trackers[pid]?.rescan()
     }
 
     /// Keeps `windows` current and drops what Core must never see: events
@@ -265,8 +274,10 @@ final class AppTracker {
         }
     }
 
+    private static let attempts = 20
+
     private func setUp(attempt: Int) {
-        guard !stopped else { return }
+        guard !stopped, observer == nil else { return }
         AXUIElementSetMessagingTimeout(app, axTimeout)
         var created: AXObserver?
         guard AXObserverCreate(pid, axCallback, &created) == .success, let observer = created else { return }
@@ -276,7 +287,7 @@ final class AppTracker {
             refcon.release()
             // Apps that are still launching refuse for a while; apps without
             // AX support or a missing permission never stop refusing.
-            if attempt < 20, result != .apiDisabled, result != .notImplemented {
+            if attempt < Self.attempts, result != .apiDisabled, result != .notImplemented {
                 queue.asyncAfter(deadline: .now() + 0.25) { self.setUp(attempt: attempt + 1) }
             }
             return
@@ -295,10 +306,7 @@ final class AppTracker {
         case kAXWindowCreatedNotification:
             adopt(element)
         case kAXUIElementDestroyedNotification:
-            guard let id = ids.removeValue(forKey: element) else { return }
-            elements[id] = nil
-            fullScreen.remove(id)
-            post(.windowClosed(id))
+            if let id = ids[element] { forget(id, element) }
         case kAXMovedNotification, kAXResizedNotification:
             guard let id = ids[element], let frame = frame(of: element) else { return }
             let was = fullScreen.contains(id)
@@ -326,16 +334,24 @@ final class AppTracker {
         }
     }
 
-    /// Re-reads the window list: announces new windows, closes vanished ones.
+    /// Any thread. `scan`, or one more try for an app that refused to be watched.
+    func rescan() {
+        queue.async { self.observer == nil ? self.setUp(attempt: Self.attempts) : self.scan() } // a last attempt, no retries
+    }
+
+    /// Re-reads the window list: announces new windows, closes destroyed ones.
+    /// A window missing from the list but still alive (on another Space, say) stays.
     func scan() {
         guard observer != nil, let current = app.value(kAXWindowsAttribute) as? [AXUIElement] else { return }
         let live = Set(current.compactMap(adopt))
-        for (id, element) in elements where !live.contains(id) {
-            elements[id] = nil
-            ids[element] = nil
-            fullScreen.remove(id)
-            post(.windowClosed(id))
-        }
+        for (id, element) in elements where !live.contains(id) && element.isGone { forget(id, element) }
+    }
+
+    private func forget(_ id: WindowID, _ element: AXUIElement) {
+        elements[id] = nil
+        ids[element] = nil
+        fullScreen.remove(id)
+        post(.windowClosed(id))
     }
 
     /// Any thread.

@@ -43,10 +43,10 @@ final class Session {
     private var origin = Date()
     private var watched: WindowID?
 
-    init(_ frames: [CGRect]) throws {
+    init(_ frames: [CGRect], options: [String] = []) throws {
         try #require(Permissions.accessibility(), "grant Accessibility to the terminal running the tests")
         process.executableURL = packageDir.appendingPathComponent(".build/debug/mielwm-testwindows")
-        process.arguments = ["--frames", frames.map { "\($0.minX),\($0.minY),\($0.width),\($0.height)" }.joined(separator: ";")]
+        process.arguments = ["--frames", frames.map { "\($0.minX),\($0.minY),\($0.width),\($0.height)" }.joined(separator: ";")] + options
         let out = Pipe()
         process.standardOutput = out
         try process.run() // fails with "run swift build first" style errors if the helper is missing
@@ -279,6 +279,37 @@ struct WindowTests {
         #expect(s.steps.map(\.event) == ["closed"])
     }
 
+    /// A close whose notification never arrives (the observer thread is blocked) is caught by a rescan.
+    @Test func rescanClosesAWindowWhoseNotificationWasMissed() async throws {
+        let s = try Session([CGRect(x: 280, y: 240, width: 400, height: 280), CGRect(x: 720, y: 240, width: 400, height: 280)],
+                            options: ["--still"])
+        defer { // not s.end(): its registry never started
+            s.process.terminate()
+            s.process.waitUntilExit()
+        }
+        let thread = RunLoopThread(name: "test.blocked-observers")
+        thread.startAndWait()
+        let release = DispatchSemaphore(value: 0)
+        thread.perform { @Sendable in release.wait() } // not on the main actor: it runs on that thread
+        defer { release.signal(); thread.stop() }
+        let seen = Seen()
+        let tracker = AppTracker(pid: s.pid, bundleID: nil, appName: "", observerThread: thread) { @Sendable event in
+            DispatchQueue.main.async { seen.events.append(event) }
+        }
+        tracker.start()
+        defer { tracker.stop() }
+        let ids: () -> [WindowID] = { seen.events.compactMap { if case .windowAppeared(let w) = $0 { w.id } else { nil } } }
+        #expect(await s.until { ids().count == 2 })
+        let gone = try #require(ids().first { s.axWindow($0)?.value(kAXTitleAttribute) as? String == "PT-2" })
+        let button = s.axWindow(gone)?.value(kAXCloseButtonAttribute)
+        AXUIElementPerformAction(try #require(button as! AXUIElement?), kAXPressAction as CFString)
+        await s.settle()
+        #expect(!seen.events.contains(.windowClosed(gone)))
+        tracker.rescan()
+        #expect(await s.until { seen.events.contains(.windowClosed(gone)) })
+        #expect(seen.events.filter { if case .windowClosed = $0 { true } else { false } } == [.windowClosed(gone)])
+    }
+
     @Test func stillOfAParkedWindow() async throws {
         let start = CGRect(x: 300, y: 220, width: 480, height: 320)
         let s = try Session([start])
@@ -346,6 +377,11 @@ struct WindowTests {
         let picture = await withCheckedContinuation { done in Wallpaper.image(for: screen) { done.resume(returning: $0) } }
         #expect(picture != nil)
     }
+}
+
+/// Events from a tracker's queue, kept on the main queue.
+private final class Seen: @unchecked Sendable {
+    var events: [SystemEvent] = []
 }
 
 /// The bottom-right corner of `screen` with 1 pt showing, as AeroSpace parks.

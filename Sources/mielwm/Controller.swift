@@ -63,6 +63,7 @@ final class Controller {
     var restingSince: Double?
     var fadeStart: Double?
     var tickTimer: Timer?
+    var rescanTimer: Timer?
     var keyCaptureFallback = false
 
     // Pointer gestures.
@@ -139,6 +140,7 @@ final class Controller {
             log("socket: \(error); `mielwm <action>` will not reach this instance")
         }
         registry.start()
+        startRescans()
     }
 
     /// Quit, toggle off, signals: every window back on a screen, then stop.
@@ -149,6 +151,8 @@ final class Controller {
         configWatcher?.stop()
         tickTimer?.invalidate()
         tickTimer = nil
+        rescanTimer?.invalidate()
+        rescanTimer = nil
         gate?.timeout.cancel()
         gate = nil
         hideOverlays()
@@ -181,6 +185,7 @@ final class Controller {
     /// frame is the desktop as it is.
     func input(_ input: CoreInput) {
         if case .tick = input { return apply(input) }
+        if case .action(.refresh) = input { registry.refresh() } // Core then puts every window back in its spot
         if case .action(.settings) = input { // the overlay would sit above the window
             if state.isOverview { apply(.action(.back)) }
             onSettings?(nil)

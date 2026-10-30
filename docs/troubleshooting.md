@@ -22,7 +22,7 @@ mielwm --unpark
 
 ## Windows are out of place
 
-If windows don't sit where they should, for example after waking from sleep or plugging in a display, run `mielwm refresh`. It puts every window back where the canvas says.
+If windows don't sit where they should, for example after waking from sleep or plugging in a display, run `mielwm refresh`. It reads every app's window list again and puts every window back where the canvas says.
 
 ## Windows jump back after you move them
 

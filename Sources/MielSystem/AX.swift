@@ -35,6 +35,12 @@ extension AXUIElement {
         AXUIElementSetAttributeValue(self, attribute as CFString, value)
     }
 
+    /// The element is destroyed. A hung app or a window on another Space is not.
+    var isGone: Bool {
+        var value: CFTypeRef?
+        return AXUIElementCopyAttributeValue(self, kAXRoleAttribute as CFString, &value) == .invalidUIElement
+    }
+
     func isSettable(_ attribute: String) -> Bool {
         var settable = DarwinBoolean(false)
         return AXUIElementIsAttributeSettable(self, attribute as CFString, &settable) == .success && settable.boolValue
