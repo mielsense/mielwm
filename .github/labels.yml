@@ -7,18 +7,15 @@
   color: "#d73a4a"
   description: Something doesn't work the way it should
 - name: feature
-  from_name: enhancement
   color: "#1d76db"
   description: Something new mielwm could do
 - name: docs
-  from_name: documentation
   color: "#0075ca"
   description: The user docs, the contributor docs or the website's text
 - name: perf
   color: "#fbca04"
   description: CPU, memory or speed
 - name: chore
-  from_name: dependencies
   color: "#cfd3d7"
   description: Build, CI, dependencies and cleanup that users won't notice
 - name: question

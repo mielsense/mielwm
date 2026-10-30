@@ -50,13 +50,20 @@ jobs:
         # A change to the app needs a CHANGELOG.md line, unless the pull request has the skip changelog label.
         env:
           SKIP: ${{ contains(github.event.pull_request.labels.*.name, 'skip changelog') }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
+          # The bullet lines of the Unreleased section of CHANGELOG.md at a commit.
+          unreleased() {
+            gh api "repos/$REPO/contents/CHANGELOG.md?ref=$1" --jq .content | base64 -d \
+              | awk '/^## / { inside = ($0 ~ /^## Unreleased/) } inside && /^- /' | sort
+          }
           # The files API, not gh pr diff, which fails on very large diffs.
           gh api "repos/$REPO/pulls/$PR/files" --paginate --jq '.[].filename' > "$RUNNER_TEMP/files.txt"
           if ! grep -qE '^(Sources|Resources)/' "$RUNNER_TEMP/files.txt"; then
             echo "The app doesn't change, so no changelog line is needed."
-          elif grep -qx 'CHANGELOG.md' "$RUNNER_TEMP/files.txt"; then
-            echo "CHANGELOG.md changes."
+          elif comm -13 <(unreleased "$BASE_SHA") <(unreleased "$HEAD_SHA") | grep -q .; then
+            echo "CHANGELOG.md has a new line under Unreleased."
           elif [ "$SKIP" = true ]; then
             echo "The app changes, and the skip changelog label says users won't notice."
           else

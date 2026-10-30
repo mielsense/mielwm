@@ -16,7 +16,7 @@ concurrency:
 
 env:
   # true: any compiler warning fails the App job. Until then CI only lists them.
-  WARNINGS_AS_ERRORS: false
+  WARNINGS_AS_ERRORS: true
 
 jobs:
   app:
