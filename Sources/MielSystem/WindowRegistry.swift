@@ -370,8 +370,8 @@ final class AppTracker {
             // size again in case the old position limited the first one.
             window.set(kAXSizeAttribute, axValue(frame.size))
             window.set(kAXPositionAttribute, axValue(frame.origin))
-            window.set(kAXSizeAttribute, axValue(frame.size))
-            sizes[id] = frame.size
+            // A write that failed (a busy app timing out) leaves the size unknown, so the next move sets it again.
+            sizes[id] = window.set(kAXSizeAttribute, axValue(frame.size)) == .success ? frame.size : nil
         case .focus(let id):
             guard let window = element(id) else { return }
             if window.value(kAXMinimizedAttribute) as? Bool == true { window.set(kAXMinimizedAttribute, kCFBooleanFalse) }
