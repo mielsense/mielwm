@@ -40,6 +40,8 @@ private struct NoticeInk {
     var onAccent: NSColor { accent.onAccent }
     /// The front window's capsule in the stack strip, and keycaps.
     var raised: NSColor { NSColor.labelColor.withAlphaComponent(increaseContrast ? 0.2 : 0.1) }
+    /// A key cap's fill, after `Design.KeyCap`.
+    var keyFill: NSColor { NSColor.labelColor.withAlphaComponent(Design.KeyCap.rest) }
 }
 
 // MARK: Text
@@ -65,8 +67,11 @@ private func width(_ text: String, _ font: NSFont) -> CGFloat {
 /// "Tidied 4 windows  {⌘Z} Undo": text, with `{...}` as keycaps.
 @MainActor
 private func toastDrawing(_ text: String, _ ink: NoticeInk) -> NoticeDrawing {
-    let font = NSFont.systemFont(ofSize: 13), keyFont = NSFont.systemFont(ofSize: 11, weight: .medium)
-    let height: CGFloat = 36, padX: CGFloat = 16, keyHeight: CGFloat = 20, keyPad: CGFloat = 8
+    let font = NSFont.systemFont(ofSize: Design.rowSize), keyFont = NSFont.systemFont(ofSize: Design.secondarySize)
+    // Key caps after `Design.KeyCap`, at the secondary size.
+    let k = Design.secondarySize / Design.rowSize
+    let height = Design.Pill.height, padX = Design.Space.m + Design.Space.xs
+    let keyHeight = (Design.KeyCap.minHeight * k).rounded(), keyPad = Design.KeyCap.padding.leading * k
     let runs = hintSegments(text).map { (text: $0.text, key: $0.isKey) }
     let runWidth = { (r: (text: String, key: Bool)) in r.key ? max(width(r.text, keyFont) + keyPad * 2, keyHeight) : width(r.text, font) }
     let total = runs.map(runWidth).reduce(0, +)
@@ -76,9 +81,14 @@ private func toastDrawing(_ text: String, _ ink: NoticeInk) -> NoticeDrawing {
             let w = runWidth(r)
             if r.key {
                 let box = NSRect(x: x, y: bounds.midY - keyHeight / 2, width: w, height: keyHeight)
-                ink.raised.setFill()
-                NSBezierPath(roundedRect: box, xRadius: keyHeight / 2, yRadius: keyHeight / 2).fill() // a light capsule behind the glyphs
-                drawLine(r.text, font: keyFont, color: ink.secondary, x: box.minX + (w - width(r.text, keyFont)) / 2, midY: bounds.midY)
+                let cap = NSBezierPath(roundedRect: box, xRadius: Design.KeyCap.radius * k, yRadius: Design.KeyCap.radius * k)
+                ink.keyFill.setFill()
+                cap.fill()
+                if ink.increaseContrast {
+                    NSColor.separatorColor.setStroke()
+                    cap.stroke()
+                }
+                drawLine(r.text, font: keyFont, color: ink.primary.withAlphaComponent(0.85), x: box.minX + (w - width(r.text, keyFont)) / 2, midY: bounds.midY)
             } else {
                 drawLine(r.text, font: font, color: ink.primary, x: x, midY: bounds.midY)
             }
@@ -92,9 +102,9 @@ private func toastDrawing(_ text: String, _ ink: NoticeInk) -> NoticeDrawing {
 /// The numbers of the workspaces with windows, the current one on an accent circle.
 @MainActor
 private func workspaceDrawing(_ n: WorkspaceNotice, _ ink: NoticeInk) -> NoticeDrawing {
-    let slot: CGFloat = 28, pad: CGFloat = 8, gap: CGFloat = 4
+    let slot: CGFloat = 28, pad = Design.Space.s, gap = Design.Space.xs
     let height = slot + pad * 2, radius = height / 2 // 22: the current number's circle, 14, is concentric
-    let font = NSFont.monospacedDigitSystemFont(ofSize: 13, weight: .semibold)
+    let font = NSFont.monospacedDigitSystemFont(ofSize: Design.rowSize, weight: .semibold)
     let count = CGFloat(n.numbers.count)
     let size = NSSize(width: pad * 2 + count * slot + (count - 1) * gap, height: height)
     return NoticeDrawing(size: size, radius: radius) { bounds in
@@ -117,20 +127,20 @@ private func workspaceDrawing(_ n: WorkspaceNotice, _ ink: NoticeInk) -> NoticeD
 /// raised, then "2 of 4". Titles go when they don't fit: the others' first, then the front one's.
 @MainActor
 private func stackDrawing(_ n: StackNotice, _ ink: NoticeInk, maxWidth: CGFloat) -> NoticeDrawing {
-    let chip: CGFloat = 36, pad: CGFloat = 4, gap: CGFloat = 4, icon: CGFloat = 20, maxTitle: CGFloat = 160
+    let chip = Design.Pill.height, pad = Design.Space.xs, gap = Design.Space.xs, icon: CGFloat = 20, maxTitle: CGFloat = 160
     let height = chip + pad * 2, radius = height / 2 // 22; chips are 18, concentric
-    let titleFont = NSFont.systemFont(ofSize: 13), frontFont = NSFont.systemFont(ofSize: 13, weight: .medium)
-    let countFont = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .regular)
+    let titleFont = NSFont.systemFont(ofSize: Design.rowSize), frontFont = NSFont.systemFont(ofSize: Design.rowSize, weight: .medium)
+    let countFont = NSFont.monospacedDigitSystemFont(ofSize: Design.secondarySize, weight: .regular)
     let iconInset = (chip - icon) / 2 // 8, so the icon sits as far from the chip's edge on every side
     let position = n.position, countWidth = width(position, countFont)
     let titleWidths = n.entries.enumerated().map { i, e in min(width(e.title, i == n.front ? frontFont : titleFont), maxTitle) }
 
     func chipWidth(_ i: Int, titles: Int) -> CGFloat { // titles: 2 every chip, 1 the front one, 0 none
         let titled = titles == 2 || (titles == 1 && i == n.front)
-        return titled ? iconInset + icon + 8 + titleWidths[i] + 12 : chip
+        return titled ? iconInset + icon + Design.Space.s + titleWidths[i] + Design.Space.m : chip
     }
     func total(_ titles: Int) -> CGFloat {
-        pad * 2 + n.entries.indices.map { chipWidth($0, titles: titles) }.reduce(0, +) + CGFloat(n.entries.count - 1) * gap + 12 + countWidth + 12
+        pad * 2 + n.entries.indices.map { chipWidth($0, titles: titles) }.reduce(0, +) + CGFloat(n.entries.count - 1) * gap + Design.Space.m + countWidth + Design.Space.m
     }
     let titles = [2, 1, 0].first { total($0) <= maxWidth } ?? 0
     return NoticeDrawing(size: NSSize(width: total(titles), height: height), radius: radius) { bounds in
@@ -147,10 +157,10 @@ private func stackDrawing(_ n: StackNotice, _ ink: NoticeInk, maxWidth: CGFloat)
                        fraction: front ? 1 : 0.7, respectFlipped: true, hints: [.interpolation: NSImageInterpolation.high.rawValue])
             if w > chip {
                 drawLine(e.title, font: front ? frontFont : titleFont, color: front ? ink.primary : ink.secondary,
-                         x: r.minX + iconInset + icon + 8, midY: r.midY, maxWidth: titleWidths[i])
+                         x: r.minX + iconInset + icon + Design.Space.s, midY: r.midY, maxWidth: titleWidths[i])
             }
             x += w + gap
         }
-        drawLine(position, font: countFont, color: ink.secondary, x: x - gap + 12, midY: bounds.midY)
+        drawLine(position, font: countFont, color: ink.secondary, x: x - gap + Design.Space.m, midY: bounds.midY)
     }
 }

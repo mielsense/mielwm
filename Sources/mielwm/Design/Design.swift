@@ -85,6 +85,11 @@ enum Design {
         static let rest = 0.05, hover = 0.09
     }
 
+    /// A floating pill with one line in it: a toast in the overview or over the desktop.
+    enum Pill {
+        static let height: CGFloat = 36
+    }
+
     // MARK: Motion
 
     /// Changing pane: a short cross-fade. Controls change instantly.

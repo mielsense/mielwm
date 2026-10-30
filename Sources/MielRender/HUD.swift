@@ -91,12 +91,13 @@ final class HUDPainter {
         max(measure(key, style) + style.size * 0.84, (style.size * 1.6).rounded())
     }
 
-    /// One key as a light capsule behind its glyphs. Returns its width.
+    /// One key after the app's `Design.KeyCap` recipe (this module can't import it, so it copies it):
+    /// a continuous radius of 6 and a 5% fill at 13 pt, scaled to `style`. Returns its width.
     @discardableResult
     private func keycap(_ b: Bitmap, _ key: String, _ style: TextStyle, x: CGFloat, cy: CGFloat, onAccent: Bool, _ theme: Theme) -> CGFloat {
         let w = keycapWidth(key, style), h = (style.size * 1.6).rounded()
         let box = CGRect(x: x, y: (cy - h / 2).rounded(), width: w, height: h)
-        b.fill(b.roundedPath(box, h / 2), onAccent ? rgba(1, 1, 1, 0.22) : theme.fill)
+        b.fill(b.roundedPath(box, 6 * style.size / 13), onAccent ? rgba(1, 1, 1, 0.22) : theme.look.dark ? rgba(1, 1, 1, 0.05) : rgba(0, 0, 0, 0.05))
         let color = onAccent ? theme.onAccent : theme.textDim
         let tw = measure(key, style)
         text(b, key, style, color, x: box.midX - tw / 2, cy: cy)

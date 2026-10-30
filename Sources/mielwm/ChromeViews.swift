@@ -27,8 +27,8 @@ struct EasedChrome: View {
             if let readout = c.hud.corners[safe: 1], !readout.isEmpty {
                 Pill(text: readout, look: c.look, worldShown: c.worldShown)
                     .frame(maxWidth: .infinity, alignment: .trailing)
-                    .padding(.top, max(20 * s, c.topInset + 10 * s))
-                    .padding(.trailing, 20 * s)
+                    .padding(.top, max(Design.Space.xl * s, c.topInset + (Design.Space.s + 2) * s))
+                    .padding(.trailing, Design.Space.xl * s)
             }
         }
         .frame(width: c.size.width, height: c.size.height, alignment: .top)
@@ -92,7 +92,7 @@ private struct QueryField: View {
 
     var body: some View {
         let s = look.hudScale, size = look.querySize * s
-        HStack(spacing: 12 * s) {
+        HStack(spacing: Design.Space.m * s) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: (size * 0.8).rounded(), weight: .medium))
                 .foregroundStyle(.secondary)
@@ -110,7 +110,7 @@ private struct QueryField: View {
             .font(.system(size: size))
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, 20 * s)
+        .padding(.horizontal, Design.Space.xl * s)
     }
 }
 
@@ -128,7 +128,7 @@ private struct Results: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .frame(maxWidth: .infinity, minHeight: rowHeight, alignment: .leading)
-                    .padding(.horizontal, 12 * s)
+                    .padding(.horizontal, Design.Space.m * s)
             }
             ForEach(0 ..< count, id: \.self) { i in
                 ResultRow(row: hud.rows[i], selected: i == hud.selectedRow, look: look)
@@ -140,7 +140,7 @@ private struct Results: View {
                     .foregroundStyle(.tertiary)
                     .lineLimit(1)
                     .frame(maxWidth: .infinity, minHeight: PaletteMetrics.footerHeight * s, alignment: .leading)
-                    .padding(.horizontal, 12 * s)
+                    .padding(.horizontal, Design.Space.m * s)
             }
         }
         .padding(inset)
@@ -157,7 +157,7 @@ private struct ResultRow: View {
     var body: some View {
         let s = look.hudScale, icon = (look.rowHeight * 0.66).rounded() * s
         let onAccent = Color(nsColor: look.accent.onAccent)
-        HStack(spacing: 10 * s) {
+        HStack(spacing: Design.Space.m * s) {
             AppIcon(bundleID: row.bundleID).frame(width: icon, height: icon)
             VStack(alignment: .leading, spacing: 1 * s) {
                 Text(highlighted(row.title, row.highlights))
@@ -170,13 +170,13 @@ private struct ResultRow: View {
                 }
             }
             .lineLimit(1)
-            Spacer(minLength: 8 * s)
+            Spacer(minLength: Design.Space.s * s)
             if !row.trailing.isEmpty {
                 KeyCap(row.trailing, size: look.detailSize * s, onAccent: selected ? onAccent : nil)
             }
         }
-        .padding(.leading, 8 * s)
-        .padding(.trailing, 10 * s)
+        .padding(.leading, Design.Space.s * s)
+        .padding(.trailing, Design.Space.m * s)
         .frame(maxHeight: .infinity)
         .background {
             if selected {
@@ -207,21 +207,21 @@ private struct HelpSheet: View {
         let s = look.hudScale
         VStack(alignment: .leading, spacing: 0) {
             Text("Shortcuts")
-                .font(.system(size: 17 * s, weight: .semibold))
+                .font(.system(size: (Design.rowSize + 4) * s, weight: .semibold))
                 .frame(height: HelpSection.titleBand * s)
-            HStack(alignment: .top, spacing: 24 * s) {
+            HStack(alignment: .top, spacing: Design.Space.xxl * s) {
                 ForEach(Array(HelpSection.columns(sections, count: 3).enumerated()), id: \.offset) { _, column in
                     VStack(alignment: .leading, spacing: 0) {
                         ForEach(column, id: \.title) { section in
                             Text(section.title)
-                                .font(.system(size: 13 * s, weight: .semibold))
+                                .font(.system(size: Design.rowSize * s, weight: .semibold))
                                 .foregroundStyle(.secondary)
                                 .frame(height: HelpSection.headerHeight * s)
                             ForEach(Array(section.entries.enumerated()), id: \.offset) { _, entry in
-                                HStack(spacing: 8 * s) {
-                                    Text(entry.action).font(.system(size: 13 * s)).lineLimit(1)
+                                HStack(spacing: Design.Space.s * s) {
+                                    Text(entry.action).font(.system(size: Design.rowSize * s)).lineLimit(1)
                                     Spacer(minLength: 0)
-                                    Keys(keys: entry.keys, size: 11 * s)
+                                    Keys(keys: entry.keys, size: Design.secondarySize * s)
                                 }
                                 .frame(height: HelpSection.lineHeight * s)
                             }
@@ -232,8 +232,8 @@ private struct HelpSheet: View {
                 }
             }
         }
-        .padding(.horizontal, 24 * s)
-        .padding(.bottom, 8 * s)
+        .padding(.horizontal, Design.Space.xxl * s)
+        .padding(.bottom, Design.Space.s * s)
     }
 }
 
@@ -243,7 +243,7 @@ private struct Keys: View {
     let size: CGFloat
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: Design.Space.xs) {
             ForEach(Array(HelpSection.keyTokens(keys).enumerated()), id: \.offset) { _, token in
                 if token.isKey { KeyCap(token.text, size: size) } else { Text(token.text).font(.system(size: size)).foregroundStyle(.secondary) }
             }
@@ -263,16 +263,16 @@ private struct Pill: View {
 
     var body: some View {
         let s = look.hudScale
-        let size = toast ? 13 * s : look.cornerSize * s
+        let size = toast ? Design.rowSize * s : look.cornerSize * s
         let segments = hintSegments(text).map { (text: $0.text.trimmingCharacters(in: .whitespaces), isKey: $0.isKey) }.filter { !$0.text.isEmpty }
         HStack(spacing: 0) {
             ForEach(Array(segments.enumerated()), id: \.offset) { i, segment in
                 if i > 0 {
                     let before = segments[i - 1].isKey
-                    Spacer().frame(width: (before && !segment.isKey ? 6 : before && segment.isKey ? 4 : 16) * s)
+                    Spacer().frame(width: (before ? Design.Space.xs : Design.Space.m) * s) // a key sits close to its label
                 }
                 if segment.isKey {
-                    KeyCap(segment.text, size: (toast ? 11 : look.cornerSize - 1) * s)
+                    KeyCap(segment.text, size: (toast ? Design.secondarySize : look.cornerSize - 1) * s)
                 } else {
                     Text(segment.text).font(.system(size: size)).foregroundStyle(toast ? .primary : .secondary)
                 }
@@ -280,8 +280,8 @@ private struct Pill: View {
         }
         .lineLimit(1)
         .fixedSize()
-        .padding(.horizontal, (toast ? 16 : 12) * s)
-        .frame(height: toast ? 36 * s : PaletteMetrics.hintsHeight(look))
+        .padding(.horizontal, (toast ? Design.Space.m + Design.Space.xs : Design.Space.m) * s)
+        .frame(height: toast ? Design.Pill.height * s : PaletteMetrics.hintsHeight(look))
         .chromeMaterial(Capsule(), look: look, behindWindow: !worldShown)
     }
 }
@@ -294,7 +294,7 @@ private struct Switcher: View {
 
     var body: some View {
         let hud = content.hud, look = content.look, s = look.hudScale
-        let pad = 12 * s, gap = 4 * s, tile = 104 * s, icon = 80 * s, radius = 22 * s
+        let pad = Design.Space.m * s, gap = Design.Space.xs * s, tile = 104 * s, icon = 80 * s, radius = 22 * s
         let count = hud.rows.count
         let (first, shown, selected) = PaletteMetrics.switcherWindow(count: count, selected: hud.selectedRow,
                                                                      maxTiles: Int((content.size.width * 0.9 - pad * 2 + gap) / (tile + gap)))
@@ -344,7 +344,7 @@ private struct Chevron: View {
 
 // MARK: - Shared pieces
 
-/// A key as a light capsule behind its glyphs.
+/// A key after the recipe in `Design.KeyCap`, at `size` points (13 is the recipe's own size).
 struct KeyCap: View {
     @Environment(\.colorSchemeContrast) private var contrast
     let key: String
@@ -358,13 +358,17 @@ struct KeyCap: View {
     }
 
     var body: some View {
-        let height = (size * 1.6).rounded()
+        let k = size / Design.rowSize, p = Design.KeyCap.padding
+        let cap = RoundedRectangle(cornerRadius: Design.KeyCap.radius * k, style: .continuous)
         Text(key)
-            .font(.system(size: size, weight: .medium))
-            .foregroundStyle(onAccent.map(AnyShapeStyle.init) ?? AnyShapeStyle(.secondary))
-            .padding(.horizontal, size * 0.42)
-            .frame(minWidth: height, minHeight: height)
-            .background(Capsule().fill(onAccent != nil ? AnyShapeStyle(.white.opacity(0.22)) : AnyShapeStyle(.primary.opacity(contrast == .increased ? 0.2 : 0.1))))
+            .font(.system(size: size))
+            .tracking(Design.KeyCap.tracking * k)
+            .foregroundStyle(onAccent.map(AnyShapeStyle.init) ?? AnyShapeStyle(.primary.opacity(0.85)))
+            .lineLimit(1)
+            .padding(EdgeInsets(top: p.top * k, leading: p.leading * k, bottom: p.bottom * k, trailing: p.trailing * k))
+            .frame(minHeight: Design.KeyCap.minHeight * k)
+            .background(cap.fill(onAccent != nil ? AnyShapeStyle(.white.opacity(0.22)) : AnyShapeStyle(.primary.opacity(Design.KeyCap.rest))))
+            .overlay(cap.strokeBorder(Design.edge(contrast), lineWidth: 1))
             .fixedSize()
     }
 }
