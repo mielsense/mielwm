@@ -9,7 +9,7 @@ import os
 //   AeroSpace --mielwm-pid <pid> Contents/Helpers/AeroSpace.app: shows Barik a running
 //                                app called AeroSpace, until mielwm exits
 //
-// Barik runs the command four times every few seconds, so it starts fast and
+// Status bars like Barik run the command up to 40 times a second, so it starts fast and
 // never waits long: no mielwm, no answer within 0.3 s, or a command mielwm
 // doesn't know prints what an AeroSpace with no windows would (`[]` for a
 // list, nothing for an action).
