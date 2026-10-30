@@ -89,6 +89,7 @@ let settingPaths: [String: SettingPath] = [
     "layout:floating_apps": .text(\.floatingApps),
     "layout:workspace_rules": .text(\.workspaceRules),
     "layout:auto_back_and_forth": .flag(\.autoBackAndForth),
+    "layout:cross_workspaces": .flag(\.crossWorkspaces),
     "animation:enabled": .flag(\.animationEnabled),
     "animation:speed": .number(\.animationSpeed, 0.2 ... 8),
     "navigator:enabled": .flag(\.navigatorEnabled),

@@ -242,7 +242,11 @@ extension CanvasState {
         }
         let from = target.map { windows[$0] }
         let matches = isOverview ? overview.matchSet : nil
-        let pool = candidates.filter { $0.id != from?.id && (matches?.contains($0.id) ?? true) }
+        var pool = candidates.filter { $0.id != from?.id && (matches?.contains($0.id) ?? true) }
+        if staysInWorkspace { // AeroSpace stops at the workspace's edge; the overview roams the canvas
+            let home = from.flatMap(homeSlot) ?? currentWorkspace
+            pool = pool.filter { [nil, home].contains(homeSlot($0)) } // nil: pinned, or off every slot (another display)
+        }
         guard let id = nearestWindow(from: from?.frame, direction: d, candidates: pool.map { ($0.id, $0.frame) }) else { return }
         if isOverview {
             follow(id)
@@ -251,6 +255,9 @@ extension CanvasState {
         }
         reveal(id)
     }
+
+    /// Focus and move keys stop at the workspace's edge: at 100%, with workspaces, unless set to cross.
+    var staysInWorkspace: Bool { !isOverview && !settings.crossWorkspaces && settings.defaultLayout != .floating }
 
     /// At 100%: focus it, and move the camera only if it is not fully on screen.
     mutating func reveal(_ id: WindowID) {
@@ -471,7 +478,7 @@ extension CanvasState {
 
     /// ⌥⇧ arrows on a tiled window: it swaps with its neighbour that way (in
     /// a stack: moves in the order); past the ends, left and right take it to
-    /// the workspace before or after.
+    /// the workspace before or after, when moves cross workspaces.
     mutating func nudgeTile(_ id: WindowID, _ d: Direction) {
         guard let ws = workspace(of: id), let k = workspaceIndex(ws.slot) else { return }
         let shown = tiles(ws).map(\.id)
@@ -482,7 +489,7 @@ extension CanvasState {
             layoutRevision += 1
             return retile(ws.slot)
         }
-        guard d.isHorizontal, ws.slot + d.sign >= 1 else { return }
+        guard d.isHorizontal, ws.slot + d.sign >= 1, !staysInWorkspace else { return }
         moveToWorkspace(ws.slot + d.sign, at: d == .right ? 0 : nil)
     }
 

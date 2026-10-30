@@ -110,6 +110,9 @@ extension CanvasState {
 
     func workspace(of id: WindowID) -> Workspace? { workspaceIndex(window(id)?.workspace).map { workspaces[$0] } }
 
+    /// The workspace a window is in: its own, or for a floating one the slot it sits in (pinned: none).
+    func homeSlot(_ w: ManagedWindow) -> Int? { w.workspace ?? (w.pinned == nil ? slot(under: w.frame.center) : nil) }
+
     func layoutScreen(_ ws: Workspace) -> ScreenInfo {
         ws.screenID.flatMap { id in screens.first { $0.id == id } } ?? primaryScreen(screens) ?? activeScreen
     }

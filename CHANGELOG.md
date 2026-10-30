@@ -6,6 +6,7 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 
 ### Workspaces and layouts
 
+- `⌥` arrows and `⌥⇧` arrows stop at the edge of the workspace, as in AeroSpace. Turn on Settings > Layout & workspaces > Focus and move past the edge to keep going into the next one.
 - A new `workspace-back-and-forth` action goes to the workspace you were on before. It has no key by default, since `⌥Tab` is the window switcher.
 - Turn on Settings > Layout & workspaces > Workspace key goes back, and the key of the workspace you're on takes you to the one before.
 

@@ -13,7 +13,7 @@ Every shortcut mielwm has, and how to change them. The defaults are AeroSpace's 
 | `⌥/` | Tile. Pressed again, the tiles flip between side by side and above each other. |
 | `⌥,` | Stack the workspace, or go back to tiles. |
 | `⌥.` | Float the window, or tile it again. |
-| `⌥` arrows | Focus the nearest window that way. In a stack, the next or previous window. |
+| `⌥` arrows | Focus the nearest window that way, within the workspace. In a stack, the next or previous window. |
 | `⌥⇧` arrows | Swap tiles, or nudge a floating window a grid step. Hold to keep going. |
 | `⌥Tab`, `⌥⇧Tab` | A tap goes back to the last window. Hold `⌥` for the list and let go to switch. In a stack, the next window. |
 | `⌥T` | Fill the screen, keeping the gaps. Again to put it back. |
@@ -21,6 +21,8 @@ Every shortcut mielwm has, and how to change them. The defaults are AeroSpace's 
 | `⌥O` | Pin the window so it stays put while the canvas moves. |
 | `⌥-`, `⌥=` | Shrink, grow the window. |
 | `⌃⌥` + drag | Move a window with the left button, resize it with the right. |
+
+Focus and move stop at the edge of the workspace, the way AeroSpace's do. To have them go on into the next workspace, turn on Settings > Layout & workspaces > Focus and move past the edge. In the overview the arrows always reach every window.
 
 `⌥0`, `⌥⇧0` and `⌥;` do nothing on purpose, so they never type º, ‚ or … by accident.
 

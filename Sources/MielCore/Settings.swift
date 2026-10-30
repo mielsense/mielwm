@@ -45,6 +45,8 @@ public struct Settings: Hashable, Codable, Sendable {
     public var workspaceRules = ""
     /// Going to the workspace you are on goes back to the one before (AeroSpace's --auto-back-and-forth).
     public var autoBackAndForth = false
+    /// Focus and move keys go on into the next workspace at its edge, instead of stopping there.
+    public var crossWorkspaces = false
 
     // animation:*
     public var animationEnabled = true

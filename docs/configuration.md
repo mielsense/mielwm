@@ -28,6 +28,7 @@ If the file isn't valid JSON, mielwm keeps its defaults and shows the error in t
 | `layout:orientation` | `"auto"` | Tiles side by side (`horizontal`), above each other (`vertical`), or by the display's shape (`auto`). |
 | `layout:workspace_rules` | `""` | `bundle.id=N` pairs, comma separated: that app's windows open on workspace N. |
 | `layout:floating_apps` | System Settings, Activity Monitor, Calculator, Archive Utility | Bundle ids, comma separated, whose windows always float. |
+| `layout:cross_workspaces` | `false` | Focus and move keys go on into the next workspace at the edge, instead of stopping. |
 | `layout:auto_back_and_forth` | `false` | The key of the workspace you're on takes you to the one before. `mielwm workspace N` and Barik stay put. |
 | `gaps:inner_horizontal` | `8` | Points between tiles side by side. |
 | `gaps:inner_vertical` | `8` | Points between tiles above each other. |
