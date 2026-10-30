@@ -10,7 +10,7 @@ import SwiftUI
 @MainActor
 func snapshot(_ args: [String]) {
     guard let out = value("--out", in: args) else {
-        fail("usage: mielwm snapshot --state <state> [--real] [--screen n] [--light | --dark] [--workspaces] [--time s] --out x.png")
+        fail("usage: mielwm snapshot --state <state> [--real [--pid n]] [--screen n] [--fake-external] [--light | --dark] [--reduce-transparency] [--increase-contrast] [--workspaces] [--time s] --out x.png")
     }
     let stateName = value("--state", in: args) ?? "overview"
     let real = args.contains("--real")

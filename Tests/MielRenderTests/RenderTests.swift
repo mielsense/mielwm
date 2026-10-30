@@ -77,13 +77,6 @@ private func render(_ scene: Scene, _ state: String, frames: SyntheticFrames? = 
         #expect(MemoryLayout<SolidUniforms>.stride == 64)
         #expect(MemoryLayout<TexturedUniforms>.stride == 16)
         #expect(MemoryLayout<LensUniforms>.stride == 224)
-        #expect(MemoryLayout<MaterialUniforms>.stride == 64)
-    }
-
-    @Test func hintsSplitIntoKeysAndLabels() {
-        let segments = hintSegments("{⌃0} Fit all  {⎋} Back")
-        #expect(segments.map(\.text) == ["⌃0", " Fit all  ", "⎋", " Back"])
-        #expect(segments.map(\.isKey) == [true, false, true, false])
     }
 
     @Test func lensIsIdentityAtRestAndKeepsTheCenter() {
@@ -133,10 +126,7 @@ private func render(_ scene: Scene, _ state: String, frames: SyntheticFrames? = 
     }
 
     @Test(metal, arguments: Fixture.screens) func overview(screen: ScreenInfo) throws {
-        var hud = HUDModel()
-        hud.corners = Fixture.corners
-        hud.toast = "Tidied 12 windows  {⌃Z} Undo"
-        var scene = Fixture.overview(screen, hud: hud)
+        var scene = Fixture.overview(screen)
         scene.workspaces = Fixture.workspaces
         scene.minimap?.workspaces = Fixture.workspaces.map(\.canvasFrame)
         scene.dropIndicator = CGRect(x: -1150, y: 910, width: 900, height: 380) // open space on the Retina panel
@@ -144,42 +134,6 @@ private func render(_ scene: Scene, _ state: String, frames: SyntheticFrames? = 
         #expect(pixels.looksDrawn)
         // Opaque backdrop everywhere once zoomed out.
         #expect(pixels[2, 2][3] == 255)
-    }
-
-    @Test(metal, arguments: Fixture.screens) func search(screen: ScreenInfo) throws {
-        let (hud, windows) = Fixture.searchHUD()
-        let pixels = try render(Fixture.overview(screen, hud: hud, windows: windows, selected: windows[0].id), "search")
-        #expect(pixels.looksDrawn)
-    }
-
-    /// Light chrome: the palette's panel is light where dark chrome's is dark.
-    @Test(metal) func lightAppearance() throws {
-        let (hud, windows) = Fixture.searchHUD()
-        var look = Look()
-        func panelPixel(dark: Bool) throws -> [Int] {
-            look.dark = dark
-            var scene = Fixture.overview(Fixture.retina, look: look, hud: hud, windows: windows, selected: windows[0].id)
-            scene.workspaces = Fixture.workspaces
-            let pixels = try render(scene, dark ? "search-dark" : "search-light")
-            // Inside the search field, right of the query, where only the panel is.
-            return pixels[pixels.width / 2 + 500, Int(Fixture.retina.frame.height * look.paletteTop * 2) + 40]
-        }
-        let dark = try panelPixel(dark: true), light = try panelPixel(dark: false)
-        #expect(dark[0] < 110 && light[0] > 170, "dark \(dark), light \(light)")
-    }
-
-    @Test(metal, arguments: Fixture.screens) func help(screen: ScreenInfo) throws {
-        let pixels = try render(Fixture.overview(screen, hud: Fixture.helpHUD()), "help")
-        #expect(pixels.looksDrawn)
-    }
-
-    /// The ⌥Tab strip shows over the plain desktop.
-    @Test(metal, arguments: Fixture.screens) func switcher(screen: ScreenInfo) throws {
-        let scene = Scene(screen: screen, desk: Fixture.desk, camera: Camera(center: Fixture.desk.center), transition: 0,
-                          windows: Fixture.deskWindows, look: Look(), hud: Fixture.switcherHUD())
-        let pixels = try render(scene, "switcher")
-        #expect(pixels.looksDrawn)
-        #expect(pixels[0, 0] == [0, 0, 0, 0])
     }
 
     @Test(metal, arguments: Fixture.screens) func lensWithEveryEffect(screen: ScreenInfo) throws {
@@ -191,9 +145,7 @@ private func render(_ scene: Scene, _ state: String, frames: SyntheticFrames? = 
         look.chromatic = 0.8
         look.blur = true
         look.gridDots = false
-        var hud = HUDModel()
-        hud.corners = Fixture.corners
-        let pixels = try render(Fixture.overview(screen, look: look, hud: hud), "lens")
+        let pixels = try render(Fixture.overview(screen, look: look), "lens")
         #expect(pixels.looksDrawn)
     }
 
@@ -232,22 +184,22 @@ private final class Bumped: WindowFrameSource, @unchecked Sendable {
     func generation(for id: WindowID) -> UInt64 { inner.generation(for: id) + bump }
 }
 
-/// The live overview hands its HUD to native views and draws the scene without
-/// it; the windows that match a search keep their outline all the same.
-@Test(metal) func theSearchOutlineStaysWhenTheHUDIsDrawnElsewhere() throws {
+/// The live overview hands its HUD to native views, so the outline of the
+/// windows that match a search comes from `searching` alone.
+@Test(metal) func windowsThatMatchASearchAreOutlined() throws {
     var look = Look()
     look.lensEnabled = false
     look.labels = false
     look.minimapEnabled = false
-    let (hud, windows) = Fixture.searchHUD()
-    let full = Fixture.overview(Fixture.retina, look: look, hud: hud, windows: windows)
-    var taken = full
-    taken.hud = HUDModel() // what ChromeContent(taking:) does in the overlay
-    let a = try render(full, "search-outline-hud"), b = try render(taken, "search-outline-taken")
-    // Across the left edge of a matching window (Safari, "mielwm — GitHub"), clear of the palette.
-    let edge = Fixture.overviewCamera.toDesk(windows[0].canvasFrame, deskCenter: Fixture.desk.center)
+    var searching = Fixture.overview(Fixture.retina, look: look, windows: Fixture.searchWindows("mielwm"))
+    searching.searching = true
+    var idle = searching
+    idle.searching = false
+    let a = try render(searching, "search-outline"), b = try render(idle, "search-outline-off")
+    // Across the left edge of a matching window (Safari, "mielwm — GitHub").
+    let edge = Fixture.overviewCamera.toDesk(searching.windows[0].canvasFrame, deskCenter: Fixture.desk.center)
     let x = Int(edge.minX * 2), y = Int(edge.midY * 2)
-    for dx in -10 ... 4 { #expect(a.close(a[x + dx, y], b[x + dx, y], 2), "x \(x + dx): \(a[x + dx, y]) vs \(b[x + dx, y])") }
+    #expect((-10 ... 4).contains { !a.close(a[x + $0, y], b[x + $0, y], 8) })
 }
 
 @Test(metal) func framesThatWouldLookTheSameAreSkipped() throws {
@@ -275,21 +227,6 @@ private final class Bumped: WindowFrameSource, @unchecked Sendable {
     #expect(!renderer.needsDraw(scene, frames: frames))
     renderer.invalidate(screenID: scene.screen.id)
     #expect(renderer.needsDraw(scene, frames: frames))
-
-    // The search field's caret: steady most of its 1.06 s cycle, fading twice.
-    var search = Fixture.overview(Fixture.retina, look: look, hud: Fixture.searchHUD().0)
-    search.time = 0.1
-    try draw(search)
-    search.time = 0.3
-    #expect(!renderer.needsDraw(search, frames: frames))
-    search.time = 0.48 // fading out
-    #expect(renderer.needsDraw(search, frames: frames))
-    try draw(search)
-    search.time = 0.8 // off
-    #expect(renderer.needsDraw(search, frames: frames))
-    try draw(search)
-    search.time = 0.9
-    #expect(!renderer.needsDraw(search, frames: frames))
 }
 
 @Test(metal) func stillsInTheLiveFormatAreUploadedAsTheyAre() throws {

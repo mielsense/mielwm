@@ -94,18 +94,6 @@ struct LensUniforms {
     var pad2: Float = 0
 }
 
-struct MaterialUniforms {
-    var rect = SIMD4<Float>()
-    var map = SIMD4<Float>(0, 0, 1, 1)
-    var size = SIMD2<Float>()
-    var radius: Float = 0
-    var distort: Float = 0
-    var contrast: Float = 1
-    var alpha: Float = 1
-    var blur: Float = 0
-    var pad: Float = 0
-}
-
 extension SIMD4 where Scalar == Float {
     init(_ r: CGRect) {
         self.init(Float(r.minX), Float(r.minY), Float(r.width), Float(r.height))

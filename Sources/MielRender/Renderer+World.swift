@@ -163,7 +163,7 @@ extension Renderer {
             texture = entry.texture
             s.labels[key]?.lastUsed = frame
         } else {
-            guard let made = hud.label(title: key.title, bundleID: w.bundleID, scale: scale, theme) else { return }
+            guard let made = painter.label(title: key.title, bundleID: w.bundleID, scale: scale, theme) else { return }
             texture = made
             s.labels[key] = LabelEntry(texture: made, lastUsed: frame)
         }
@@ -198,12 +198,12 @@ extension Renderer {
             let key = "\(w.number ?? 0)/\(w.mode.rawValue)/\(w.isCurrent)/\(scale)"
             if s.workspaceLabels[key] == nil {
                 if s.workspaceLabels.count > 64 { s.workspaceLabels.removeAll() }
-                s.workspaceLabels[key] = hud.workspaceLabel(number: w.number, mode: w.mode, current: w.isCurrent, scale: scale, theme)
+                s.workspaceLabels[key] = painter.workspaceLabel(number: w.number, mode: w.mode, current: w.isCurrent, scale: scale, theme)
             }
             let desk = scene.camera.toDesk(w.canvasFrame, deskCenter: scene.desk.center)
             if !w.emptyMessage.isEmpty {
                 let messageKey = "message/\(w.emptyMessage)/\(scale)"
-                if s.workspaceLabels[messageKey] == nil { s.workspaceLabels[messageKey] = hud.notice(w.emptyMessage, scale: scale, theme) }
+                if s.workspaceLabels[messageKey] == nil { s.workspaceLabels[messageKey] = painter.notice(w.emptyMessage, scale: scale, theme) }
                 if let message = s.workspaceLabels[messageKey], r.width > CGFloat(message.width) + 32 * scale {
                     let c = lensedPx(desk.center, scene, scale: scale, t: t)
                     s.tags.append((message, CGRect(x: (c.x - CGFloat(message.width) / 2).rounded(), y: (c.y - CGFloat(message.height) / 2).rounded(),
@@ -214,6 +214,18 @@ extension Renderer {
             let corner = lensedPx(desk.origin, scene, scale: scale, t: t)
             s.tags.append((texture, CGRect(x: corner.x.rounded(), y: (corner.y - CGFloat(texture.height) - 8 * scale).rounded(),
                                            width: CGFloat(texture.width), height: CGFloat(texture.height)), t * (w.isCurrent ? 1 : 0.8)))
+        }
+    }
+
+    /// The window names, workspace pills and messages `encodeWorld` placed, over the lens.
+    func encodeTags(_ scene: Scene, enc: MTLRenderCommandEncoder, state s: ScreenState, pxSize: CGSize) {
+        let opacity = min(max(scene.opacity, 0), 1)
+        enc.setRenderPipelineState(pipelines.texture)
+        for tag in s.tags {
+            var u = TexturedUniforms(alpha: Float(tag.alpha * opacity))
+            enc.setFragmentBytes(&u, length: MemoryLayout<TexturedUniforms>.stride, index: 0)
+            enc.setFragmentTexture(tag.texture, index: 0)
+            quad(enc, tag.rect, pxSize)
         }
     }
 

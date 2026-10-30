@@ -19,13 +19,13 @@ struct EasedChrome: View {
                 Palette(content: c)
                     .padding(.top, PaletteMetrics.top(c.look, screenHeight: c.size.height, topInset: c.topInset))
             }
-            if let hints = c.hud.corners[safe: 2], !hints.isEmpty {
-                Pill(text: hints, look: c.look, worldShown: c.worldShown)
+            if !c.hud.hints.isEmpty {
+                Pill(text: c.hud.hints, look: c.look, worldShown: c.worldShown)
                     .frame(maxHeight: .infinity, alignment: .bottom)
                     .padding(.bottom, PaletteMetrics.hintsMargin(c.look, bottomInset: c.bottomInset))
             }
-            if let readout = c.hud.corners[safe: 1], !readout.isEmpty {
-                Pill(text: readout, look: c.look, worldShown: c.worldShown)
+            if !c.hud.readout.isEmpty {
+                Pill(text: c.hud.readout, look: c.look, worldShown: c.worldShown)
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .padding(.top, max(Design.Space.xl * s, c.topInset + (Design.Space.s + 2) * s))
                     .padding(.trailing, Design.Space.xl * s)
@@ -516,8 +516,4 @@ extension AppInfo {
     @MainActor static func icon(for bundleID: String?) -> NSImage {
         bundleID.map { AppInfo(bundleID: $0).icon } ?? NSWorkspace.shared.icon(for: .applicationBundle)
     }
-}
-
-extension Array {
-    subscript(safe i: Int) -> Element? { indices.contains(i) ? self[i] : nil }
 }

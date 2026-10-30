@@ -483,7 +483,8 @@ public struct HUDModel: Hashable, Sendable {
     public var rows: [HUDRow] = [] // search results or switcher entries
     public var selectedRow: Int?
     public var footer = "" // search: how many more results
-    public var corners = ["", "", "", ""] // top-left, top-right, bottom-left, bottom-right
+    public var readout = "" // top right: zoom, window count, display
+    public var hints = "" // bottom: the keys that work now
     public var help: [HelpSection] = []
     public var toast: String? // short notice, e.g. "Tidied 12 windows"
 
@@ -529,10 +530,10 @@ public struct Scene: Equatable, Sendable {
     public var minimap: MinimapModel?
     public var hud: HUDModel
     public var dropIndicator: CGRect? // canvas rect where a dragged window will land
-    public var time: Double // seconds, for the caret blink and small animations
+    public var time: Double // seconds, for the window names' fades
     public var workspaces: [SceneWorkspace] = [] // drawn behind the windows, with the transition
-    /// A search is on: windows that match get an outline. Its own field, so a
-    /// HUD drawn elsewhere (the overlay's native views) leaves it in place.
+    /// A search is on: windows that match get an outline. Its own field, since
+    /// the HUD is drawn elsewhere (the overlay's native views).
     public var searching = false
 
     public init(screen: ScreenInfo, desk: CGRect, camera: Camera, transition: Double,

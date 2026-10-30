@@ -1,13 +1,12 @@
 import CoreGraphics
 import Foundation
 
-// The HUDModel Render draws, built from the overview machine and the canvas:
-// palette rows, footer, hints, help sheet. Text is
-// sentence case as written; `{...}` in hints and toasts marks a key Render
-// draws as a keycap.
+// The HUDModel the overview's chrome draws, built from the overview machine
+// and the canvas: palette rows, footer, hints, help sheet. Text is sentence
+// case as written; `{...}` in hints and toasts marks a key drawn as a keycap.
 
-/// The search palette's layout in points (times look.hudScale). Render draws
-/// with these and the camera aims below them, so the two agree.
+/// The search palette's layout in points (times look.hudScale). The chrome
+/// draws with these and the camera aims below them, so the two agree.
 public enum PaletteMetrics {
     public static let listInset = 8.0 // above and below the rows, and beside them
     public static let footerHeight = 28.0
@@ -144,7 +143,8 @@ public extension CanvasState {
         }
         h.markedText = overview.markedText
         if overview.helpOpen { h.help = helpSections }
-        h.corners = ["", look.cornerLabels ? readout(for: screen) : "", hints, ""]
+        h.readout = look.cornerLabels ? readout(for: screen) : ""
+        h.hints = hints
         return h
     }
 

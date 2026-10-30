@@ -1,6 +1,8 @@
-// Draws one Scene for one display: the world (backdrop, windows, labels)
-// into an offscreen texture, then the lens into the target with the minimap
-// composed after it, then the HUD on top. One Renderer can serve every
+// Draws one Scene for one display: the world (backdrop, windows) into an
+// offscreen texture, then the lens into the target with the minimap composed
+// after it, then the tags (window names, workspace pills) on top. The
+// overview's chrome is native views over it (Sources/mielwm/ChromeViews.swift),
+// so the Scene's HUD is never drawn here. One Renderer can serve every
 // display; per-display state is keyed by ScreenInfo.id. Use it from one
 // thread (the main thread).
 
@@ -22,7 +24,7 @@ public final class Renderer {
     let queue: MTLCommandQueue
     let pipelines: Pipelines
     let windowTextures: WindowTextures
-    let hud: HUDPainter
+    let painter: TagPainter
     var screens: [UInt32: ScreenState] = [:]
     var frame: UInt64 = 0
     var theme = Theme(look: Look())
@@ -36,7 +38,7 @@ public final class Renderer {
         self.queue = queue
         pipelines = try Pipelines.shared(for: device)
         windowTextures = WindowTextures(device: device)
-        hud = HUDPainter(device: device)
+        painter = TagPainter(device: device)
         let desc = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .bgra8Unorm, width: 1, height: 1, mipmapped: false)
         guard let placeholder = device.makeTexture(descriptor: desc) else { throw RenderError.setup("no texture") }
         placeholderTexture = placeholder
@@ -62,18 +64,12 @@ public final class Renderer {
 
     /// False when a frame of `scene` would look like the last one drawn
     /// into a drawable of its display: same scene, no new window pictures,
-    /// no label fading, the caret not changing.
+    /// no label fading.
     public func needsDraw(_ scene: Scene, frames: WindowFrameSource) -> Bool {
         guard let s = screens[scene.screen.id], let drawn = s.drawn else { return true }
         var still = scene
         still.time = 0
-        return still != drawn.scene || generations(scene, frames) != drawn.generations
-            || s.labelAlpha.values.contains { $0 < 0.999 } || (s.palette?.caret != nil && caretMoved(from: drawn.blink, to: caretBlink(scene.time)))
-    }
-
-    /// The caret's fades in steps of about a 60 Hz frame, ending exactly on and off.
-    private func caretMoved(from drawn: Double, to now: Double) -> Bool {
-        abs(now - drawn) > 0.2 || ((now == 0 || now == 1) && now != drawn)
+        return still != drawn.scene || generations(scene, frames) != drawn.generations || s.labelAlpha.values.contains { $0 < 0.999 }
     }
 
     /// The next `needsDraw` of that display is true (its drawable was resized, hidden or replaced).
@@ -92,8 +88,8 @@ public final class Renderer {
     }
 
     /// Lets go of what only an open overlay needs: window pictures (made
-    /// again from the frame source), the offscreen world, text and HUD
-    /// pieces. The wallpaper stays: it is the slowest to prepare.
+    /// again from the frame source), the offscreen world and the tags.
+    /// The wallpaper stays: it is the slowest to prepare.
     public func purge() {
         windowTextures.removeAll()
         for s in screens.values {
@@ -102,10 +98,6 @@ public final class Renderer {
             s.labels = [:]
             s.tags = []
             s.workspaceLabels = [:]
-            s.palette = nil
-            s.switcher = nil
-            s.corners = [nil, nil, nil, nil]
-            s.toast = nil
             s.drawn = nil
         }
     }
@@ -128,7 +120,7 @@ public final class Renderer {
         encode(scene, frames: frames, target: drawable.texture, commandBuffer: cb, state: s)
         var still = scene
         still.time = 0
-        s.drawn = (still, generations(scene, frames), caretBlink(scene.time))
+        s.drawn = (still, generations(scene, frames))
         let semaphore = s.inFlight, held = s.retained
         s.retained = []
         cb.addCompletedHandler { _ in
@@ -215,7 +207,6 @@ public final class Renderer {
         // wallpaper is prepared at rest too, so the first zoomed frame has it.
         prepareWallpaper(s, look: look, width: width, height: height, scale: scale, commandBuffer: cb)
         let minimap = minimapPixels(scene, s, pxSize: pxSize, scale: scale, t: t)
-        prepareHUD(scene, s, pxSize: pxSize, scale: scale, minimapTop: minimap?.panel.minY)
 
         // When the lens pass would be a plain copy, draw the world straight
         // into the target and save a full-screen write and read.
@@ -224,7 +215,7 @@ public final class Renderer {
         s.worldPass.colorAttachments[0].texture = direct ? target : world
         if let enc = cb.makeRenderCommandEncoder(descriptor: s.worldPass) {
             encodeWorld(scene, frames: frames, enc: enc, state: s, pxSize: pxSize, pad: direct ? .zero : pad, scale: scale, t: t)
-            if direct { encodeHUD(scene, enc: enc, state: s, pxSize: pxSize, scale: scale, t: t) }
+            if direct { encodeTags(scene, enc: enc, state: s, pxSize: pxSize) }
             enc.endEncoding()
         }
         guard !direct else { return finish() }
@@ -234,7 +225,7 @@ public final class Renderer {
             let map = SIMD4(Float(pad.width) / Float(worldWidth), Float(pad.height) / Float(worldHeight),
                             Float(width) / Float(worldWidth), Float(height) / Float(worldHeight))
             encodeLens(scene, lens, map: map, enc: enc, state: s, world: world, pxSize: pxSize, scale: scale, t: t, minimap: minimap)
-            encodeHUD(scene, enc: enc, state: s, pxSize: pxSize, scale: scale, t: t, behind: (world, lens, map))
+            encodeTags(scene, enc: enc, state: s, pxSize: pxSize)
             enc.endEncoding()
         }
         finish()
@@ -250,12 +241,6 @@ public final class Renderer {
         enc.setVertexBytes(&q, length: MemoryLayout<QuadUniforms>.stride, index: 0)
         enc.drawPrimitives(type: .triangleStrip, vertexStart: 0, vertexCount: 4)
     }
-}
-
-/// The caret's opacity at `time`: on, a quick fade out, off, a fade back in.
-func caretBlink(_ time: Double) -> Double {
-    let phase = time.truncatingRemainder(dividingBy: 1.06) / 1.06
-    return min(1, 1 - smoothstep(0.42, 0.5, phase) + smoothstep(0.92, 1.0, phase))
 }
 
 func smoothstep(_ a: Double, _ b: Double, _ x: Double) -> Double {

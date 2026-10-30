@@ -198,7 +198,7 @@ fragment float4 window_fragment(VOut in [[stage_in]], constant Window& w [[buffe
     return result * w.alpha;
 }
 
-// ---- flat pieces: drop indicator, caret
+// ---- flat pieces: drop indicator, workspace frames
 
 struct Solid {
     float4 rect;
@@ -220,7 +220,7 @@ fragment float4 solid_fragment(VOut in [[stage_in]], constant Solid& s [[buffer(
     return c;
 }
 
-// ---- premultiplied textures: labels and HUD layers
+// ---- premultiplied textures: the tags
 
 struct Textured {
     float alpha;
@@ -450,27 +450,5 @@ fragment float4 lens_fragment(VOut in [[stage_in]], constant Lens& L [[buffer(0)
     }
 
     return compose_minimap(color, point, L, tex, windows, dims) * L.opacity;
-}
-
-// ---- material: the blurred world behind a HUD panel, drawn before the panel's tint
-
-struct Material {
-    float4 rect;   // panel px
-    float4 map;    // as Lens.map
-    float2 size;   // target px
-    float radius;
-    float distort;
-    float contrast;
-    float alpha;
-    float blur;    // px
-    float pad;
-};
-
-fragment float4 material_fragment(VOut in [[stage_in]], constant Material& m [[buffer(0)]], texture2d<float> tex [[texture(0)]]) {
-    float2 p = in.position.xy;
-    float mask = rounded_mask(p, m.rect, m.radius) * m.alpha;
-    if (mask <= 0.0)
-        return float4(0.0);
-    return float4(frosted(tex, p, m.size, m.distort, m.contrast, m.blur, m.map), 1.0) * mask;
 }
 """#
