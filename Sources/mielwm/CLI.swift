@@ -63,7 +63,7 @@ func screencapture(_ region: String, to url: URL) {
     let shot = Process()
     shot.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
     shot.arguments = ["-x", "-R", region, url.path]
-    try? shot.run()
+    do { try shot.run() } catch { return log("screencapture did not start: \(error)") }
     shot.waitUntilExit()
 }
 

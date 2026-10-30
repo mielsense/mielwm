@@ -95,7 +95,7 @@ final class OnboardingModel: ObservableObject {
         p.executableURL = URL(fileURLWithPath: "/bin/sh")
         p.arguments = ["-c", bundle ? "sleep 1; open -n \"$0\"" : "sleep 1; exec \"$0\"",
                        bundle ? Bundle.main.bundlePath : Bundle.main.executablePath ?? ""]
-        try? p.run()
+        do { try p.run() } catch { return log("cannot restart mielwm: \(error)") } // stay rather than quit for good
         NSApp.terminate(nil)
     }
 }

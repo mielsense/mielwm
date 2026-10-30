@@ -45,6 +45,7 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 
 ### Fixes
 
+- If Restart mielwm in the welcome window can't start the new copy, mielwm stays open instead of quitting for good.
 - Key caps look the same in Settings, the overview, the notices and the canvas. The ones in desktop toasts were too faint on glass, and the canvas drew its own size and weight.
 - Work with AeroSpace-compatible apps turns on without Barik. It starts the AeroSpace helper, and edits Barik's config only when there is one.
 - Pausing or quitting mielwm while you type or click can no longer crash it.
