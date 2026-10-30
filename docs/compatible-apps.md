@@ -4,7 +4,7 @@ Menu bars and widgets built for AeroSpace can show mielwm's workspaces and switc
 
 ## How it works
 
-An AeroSpace-compatible app learns about your workspaces by running the `aerospace` command, like `aerospace list-workspaces --all --json`, and switches by running `aerospace workspace 3`. mielwm.app holds its own `aerospace` command that answers the same questions from mielwm:
+An AeroSpace-compatible app learns about your workspaces by running the `aerospace` command, like `aerospace list-workspaces --all --json`, and switches by running `aerospace workspace 3`. Barik and SketchyBar plugins are two of them. mielwm.app holds its own `aerospace` command that answers the same questions from mielwm:
 
 ```
 /Applications/mielwm.app/Contents/Helpers/aerospace
@@ -14,11 +14,11 @@ Point the app at that command instead of AeroSpace's, and it shows mielwm's work
 
 ## Turning it on from Settings
 
-Settings > AeroSpace & Barik > Work with Barik sets this up for a supported menu bar app on its own:
+Settings > AeroSpace > Work with AeroSpace-compatible apps sets this up for a supported menu bar app on its own:
 
 1. Open the menu bar app at least once, so it writes its config file.
 2. Make sure mielwm runs from your Applications folder. From the disk image or straight from Downloads, the switch asks you to move it first, because that copy disappears when mielwm quits.
-3. Turn on Work with Barik, and confirm.
+3. Turn on Work with AeroSpace-compatible apps, and confirm.
 
 The menu bar app relaunches, and a few seconds later it shows mielwm's workspaces. mielwm's own menu bar item switches from All workspaces to Icon, so the numbers don't show twice.
 

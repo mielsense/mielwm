@@ -26,7 +26,7 @@ Your settings and window layout stay where they are. Every release is signed wit
 
 ## Uninstalling
 
-1. If Settings > AeroSpace & Barik > Work with Barik is on, turn it off first. That puts the menu bar app's config back the way it was.
+1. If Settings > AeroSpace > Work with AeroSpace-compatible apps is on, turn it off first. That puts the menu bar app's config back the way it was.
 2. Quit mielwm from its menu bar item. Every window goes back on a screen.
 3. Drag mielwm from Applications to the Trash.
 4. To remove your settings too, delete `~/.config/mielwm` and `~/Library/Application Support/mielwm`.

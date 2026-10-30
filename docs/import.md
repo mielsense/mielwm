@@ -8,7 +8,7 @@ The very first time mielwm starts, before it has a config of its own, it looks f
 
 ## Importing later
 
-1. Open Settings > AeroSpace & Barik.
+1. Open Settings > AeroSpace.
 2. Under AeroSpace, click Import… next to Import from AeroSpace. The line above the button shows which file it reads.
 3. Read the list of what will change, and click Import to apply it, or Cancel.
 

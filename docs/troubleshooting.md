@@ -58,7 +58,7 @@ macOS's own three-finger swipe between full-screen apps is still on. Set it to f
 
 ## A menu bar app doesn't show mielwm's workspaces
 
-- Check that Settings > AeroSpace & Barik > Work with Barik is on, or that the app runs mielwm's `aerospace` command.
+- Check that Settings > AeroSpace > Work with AeroSpace-compatible apps is on, or that the app runs mielwm's `aerospace` command.
 - If the switch asked you to open the app first, it had no config file yet. Open it once, quit it, and turn the switch on again.
 - If you moved mielwm.app, quit and reopen mielwm. It points the app at the new place when it starts.
 - Floating windows aren't listed, since they belong to no workspace.

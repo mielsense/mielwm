@@ -14,7 +14,7 @@ Settings > Menu bar > Menu bar item decides what the item shows:
 
 ![The Menu bar pane](images/settings-menubar-dark.png)
 
-When another menu bar app already shows your workspaces, Icon keeps them from showing twice. Turning on Settings > AeroSpace & Barik > Work with Barik switches All workspaces to Icon for you. See [AeroSpace-compatible apps](compatible-apps.md).
+When another menu bar app already shows your workspaces, Icon keeps them from showing twice. Turning on Settings > AeroSpace > Work with AeroSpace-compatible apps switches All workspaces to Icon for you. See [AeroSpace-compatible apps](compatible-apps.md).
 
 While the [configuration file](configuration.md) has errors, a warning sign shows instead of the numbers.
 

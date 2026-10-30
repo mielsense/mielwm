@@ -120,15 +120,15 @@ What the mielwm item in the menu bar shows. [Menu bar and indicators](menu-bar.m
 | Menu bar item | All workspaces, Current only, or Icon. | `menubar:style` |
 | On screen > Show workspace on switch | The workspace numbers show at the bottom of the display for a moment when you switch. | `notices:workspace` |
 
-## AeroSpace & Barik
+## AeroSpace
 
 Show your workspaces in a menu bar app built for AeroSpace, or bring your AeroSpace settings over.
 
-![The AeroSpace & Barik pane](images/settings-integrations-dark.png)
+![The AeroSpace pane](images/settings-integrations-dark.png)
 
 | Setting | What it does | Config key |
 | --- | --- | --- |
-| Work with Barik | Points a supported menu bar app at mielwm, so it shows mielwm's workspaces and windows. mielwm asks before it edits the app's config and relaunches it. See [AeroSpace-compatible apps](compatible-apps.md). | `integrations:barik` |
+| Work with AeroSpace-compatible apps | Points a supported menu bar app at mielwm, so it shows mielwm's workspaces and windows. mielwm asks before it edits the app's config and relaunches it. See [AeroSpace-compatible apps](compatible-apps.md). | `integrations:barik` |
 | Import from AeroSpace > Import… | Reads your AeroSpace config and shows what it will change before anything is applied. See [Import your config](import.md). | none |
 
 ## Advanced
