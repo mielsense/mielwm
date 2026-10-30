@@ -302,6 +302,8 @@ final class AppTracker {
         self.refcon = refcon
         CFRunLoopAddSource(observerThread.runLoop, AXObserverGetRunLoopSource(observer), .defaultMode)
         scan()
+        // After its windows, so Core has them to hide. Later changes come from NSWorkspace.
+        if app.value(kAXHiddenAttribute) as? Bool == true { post(.appHidden(pid: pid, true)) }
     }
 
     func handle(_ name: String, _ element: AXUIElement) {

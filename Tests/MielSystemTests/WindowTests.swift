@@ -40,6 +40,7 @@ final class Session {
     let pid: Int32
     let registry: WindowRegistry
     private(set) var steps: [FixtureStep] = []
+    private(set) var events: [SystemEvent] = [] // everything the registry reported, in order
     private var origin = Date()
     private var watched: WindowID?
 
@@ -135,6 +136,7 @@ final class Session {
     }
 
     private func record(_ event: SystemEvent) {
+        events.append(event)
         let step: FixtureStep? = switch event {
         case .windowFrameChanged(watched, let frame): FixtureStep(t: now(), event: "frameChanged", frame: frame)
         case .windowMinimized(watched, let value): FixtureStep(t: now(), event: "minimized", value: value)
@@ -277,6 +279,19 @@ struct WindowTests {
         AXUIElementPerformAction(try #require(button as! AXUIElement?), kAXPressAction as CFString)
         #expect(await s.until { s.registry.windows[id] == nil })
         #expect(s.steps.map(\.event) == ["closed"])
+    }
+
+    @Test func appHiddenAtStartIsReported() async throws {
+        let s = try Session([CGRect(x: 240, y: 200, width: 400, height: 280)], options: ["--hidden", "--still"])
+        defer { s.end() }
+        let app = AXUIElementCreateApplication(s.pid)
+        #expect(await s.until { app.value(kAXHiddenAttribute) as? Bool == true })
+        let id = try #require(try await s.start(count: 1).first).id
+        let hidden = SystemEvent.appHidden(pid: s.pid, true)
+        #expect(await s.until { s.events.contains(hidden) })
+        let appeared = s.events.firstIndex { if case .windowAppeared(let w) = $0 { w.id == id } else { false } }
+        let reported = s.events.firstIndex(of: hidden)
+        #expect(appeared != nil && reported != nil && appeared! < reported!, "hidden must follow the window")
     }
 
     @Test func aWindowThatBecomesStandardIsAnnouncedAgain() async throws {

@@ -1,11 +1,11 @@
 // mielwm-testwindows: opens throwaway windows for system tests, so tests
 // never touch real ones.
 //
-//   mielwm-testwindows [--count N] [--frames "x,y,w,h;x,y,w,h"] [--still] [--untitled]
+//   mielwm-testwindows [--count N] [--frames "x,y,w,h;x,y,w,h"] [--still] [--hidden] [--untitled]
 //
-// They repaint 60 times a second (like a video), unless --still. --untitled
-// opens PT-1 without a title bar, so it is not a standard window until
-// SIGUSR2 gives it one.
+// They repaint 60 times a second (like a video), unless --still. --hidden
+// hides the app once it runs. --untitled opens PT-1 without a title bar, so
+// it is not a standard window until SIGUSR2 gives it one.
 //
 // Frames are global points, y-down from the primary display's top-left, like
 // everything in mielwm. Windows are titled PT-1 ... PT-N. Prints its pid,
@@ -74,6 +74,7 @@ signal(SIGUSR2, SIG_IGN)
 let styleSignal = DispatchSource.makeSignalSource(signal: SIGUSR2, queue: .main)
 styleSignal.setEventHandler { windows.first?.styleMask = standardStyle }
 styleSignal.resume()
+if CommandLine.arguments.contains("--hidden") { DispatchQueue.main.async { app.hide(nil) } }
 
 print(ProcessInfo.processInfo.processIdentifier)
 fflush(stdout)
