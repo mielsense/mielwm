@@ -337,6 +337,7 @@ extension CanvasState {
             workspaces[k].screenID = nil // its screen left: it lays out for the primary one
             retile(workspaces[k].slot)
         }
+        widenSlots()
         graceUntil = now + Self.screenGracePeriod
         sync()
     }

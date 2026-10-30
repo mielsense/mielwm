@@ -137,7 +137,8 @@ public struct CanvasState: Sendable {
         animator.enabled = settings.animationEnabled
         restoreUntil = now + 15
         slots = saved?.slots ?? SlotGrid(screens: screens, camera: camera)
-        setCurrent(restingSlot(camera)?.slot ?? saved?.current ?? 1)
+        widenSlots()
+        setCurrent(restingSlot(deskCamera)?.slot ?? saved?.current ?? 1)
     }
 
     /// `look` from the settings and the system: accent, appearance, accessibility. Reduce Motion cuts every flight.

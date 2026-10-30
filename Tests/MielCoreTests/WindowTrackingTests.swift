@@ -61,3 +61,61 @@ func losingTheFocusedWindowKeepsTheWorkspace(_ how: String) {
     #expect(moves(commands) == [wid(1): left])
     #expect(s.canvasFrame(1) == left && s.canvasFrame(2) == right)
 }
+
+// MARK: Slots on displays of different widths
+
+let studio = ScreenInfo(id: 3, name: "Studio Display", frame: CGRect(x: 0, y: 0, width: 2560, height: 1440),
+                        visibleFrame: CGRect(x: 0, y: 25, width: 2560, height: 1415), scale: 2)
+let laptop = ScreenInfo(id: 4, name: "Built-in Retina Display", frame: CGRect(x: 2560, y: 0, width: 1512, height: 982),
+                        visibleFrame: CGRect(x: 2560, y: 38, width: 1512, height: 874), scale: 2, isBuiltIn: true)
+
+@Test(arguments: [studio.id, laptop.id])
+func noDisplayShowsANeighbouringWorkspace(_ shownOn: UInt32) {
+    var s = CanvasState(screens: [studio, laptop], settings: testSettings(layout: .tiles), ownPID: 1, now: 0)
+    _ = s.send(.tick(20))
+    for n in [1, 3] { // the neighbours lay out for the wide display
+        s.activeScreenID = studio.id
+        _ = s.send(.action(.workspace(n)))
+        _ = s.send(.system(.windowAppeared(snapshot(UInt32(n), CGRect(x: 100, y: 100, width: 800, height: 600)))))
+    }
+    s.activeScreenID = shownOn
+    _ = s.send(.action(.workspace(2)))
+    for n in [1, 3] {
+        let neighbour = s.deskCamera.toDesk(s.workspaceFrame(n), deskCenter: s.deskCenter)
+        #expect(s.screens.allSatisfy { !$0.frame.intersects(neighbour) }, "workspace \(n) shows")
+    }
+}
+
+/// Workspace 3 current with a tile and a floating window, on the built-in display alone.
+func builtInAloneOnWorkspace3() -> CanvasState {
+    var s = CanvasState(screens: [builtIn], settings: testSettings(layout: .tiles), ownPID: 1, now: 0)
+    s.activeScreenID = builtIn.id
+    _ = s.send(.tick(20))
+    _ = s.send(.action(.workspace(3)))
+    _ = s.send(.system(.windowAppeared(snapshot(1, onBuiltIn))))
+    _ = s.send(.system(.windowAppeared(snapshot(2, onBuiltIn, app: "Calculator", bundle: "com.apple.calculator"))))
+    return s
+}
+
+@Test func pluggingInADisplaySpreadsTheSlotsAndKeepsTheWorkspace() throws {
+    var s = builtInAloneOnWorkspace3()
+    let floating = try #require(s.canvasFrame(2)).offsetBy(dx: -s.slots.origin(3).x, dy: 0)
+    _ = s.send(.system(.screensChanged([builtIn, external])))
+    #expect(s.slots.step == 3672) // the desk, 3432, plus the gap
+    #expect(s.restingSlot(s.deskCamera)?.slot == 3)
+    #expect(s.canvasFrame(2)?.offsetBy(dx: -s.slots.origin(3).x, dy: 0) == floating) // same place in its slot
+    _ = s.advance(2)
+    #expect(s.currentWorkspace == 3 && s.window(wid(1))?.parked == false && s.window(wid(2))?.parked == false)
+}
+
+@Test func aLayoutSavedOnNarrowerDisplaysSpreadsTheSlots() throws {
+    let old = builtInAloneOnWorkspace3()
+    let floating = try #require(old.canvasFrame(2)).offsetBy(dx: -old.slots.origin(3).x, dy: 0)
+    var s = makeState([snapshot(1, onBuiltIn), snapshot(2, onBuiltIn, app: "Calculator", bundle: "com.apple.calculator")],
+                      settings: testSettings(layout: .tiles), saved: LayoutSnapshot(old))
+    #expect(s.slots.step == 3672)
+    #expect(s.restingSlot(s.deskCamera)?.slot == 3 && s.currentWorkspace == 3)
+    #expect(s.window(wid(1))?.workspace == 3)
+    #expect(s.canvasFrame(2)?.offsetBy(dx: -s.slots.origin(3).x, dy: 0) == floating)
+    _ = s.advance(1)
+}

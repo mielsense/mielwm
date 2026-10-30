@@ -28,16 +28,31 @@ public struct SlotGrid: Hashable, Codable, Sendable {
         self.step = step
     }
 
-    /// Slot 1 where the primary screen is, the rest to the right. The step is the whole desk plus a gap,
-    /// so whichever screen a workspace is shown on, its neighbours stay off every screen.
+    /// Slot 1 where the primary screen is, the rest to the right.
     init(screens: [ScreenInfo], camera: Camera) {
         let primary = primaryScreen(screens)?.frame ?? .zero
         let p = camera.toCanvas(primary.origin, deskCenter: deskCenter(screens))
         origin = CGPoint(x: p.x.rounded(), y: p.y.rounded())
-        step = (deskRect(screens).isNull ? primary.width : deskRect(screens).width).rounded() + 240
+        step = Self.step(for: screens)
+    }
+
+    /// Far enough apart that whichever screen a workspace is shown on, its
+    /// neighbours stay off every screen, plus a gap. The next one must clear
+    /// the whole desk; the one before, shown on the rightmost screen, must
+    /// clear the desk's left end, and it can be as wide as the widest screen.
+    static func step(for screens: [ScreenInfo]) -> CGFloat {
+        let desk = deskRect(screens)
+        guard !desk.isNull else { return 240 }
+        let reach = screens.map { $0.frame.minX - desk.minX }.max()! + screens.map(\.frame.width).max()!
+        return max(desk.width, reach).rounded() + 240
     }
 
     func origin(_ slot: Int) -> CGPoint { CGPoint(x: origin.x + CGFloat(slot - 1) * step, y: origin.y) }
+
+    /// How far canvas `x` moves to keep its place in its slot when the slots are `step` apart.
+    func shift(_ x: CGFloat, toStep step: CGFloat) -> CGFloat {
+        max(0, ((x - origin.x) / self.step).rounded(.down)) * (step - self.step)
+    }
 }
 
 /// The screen with the menu bar (global origin 0,0), else the first.
@@ -261,6 +276,32 @@ extension CanvasState {
 
     mutating func retileAll() {
         for ws in workspaces { retile(ws.slot) }
+    }
+
+    /// Screens wider than the slots were spaced for (a display came, or the
+    /// layout was saved with other ones): the slots move apart. Windows, the
+    /// saved layout and the cameras keep their place in their slot.
+    mutating func widenSlots() {
+        let step = SlotGrid.step(for: screens), old = slots
+        guard step > old.step else { return }
+        func moved(_ c: Camera) -> Camera {
+            let x = restingSlot(c).map { old.origin($0.slot).x } ?? c.center.x
+            return Camera(center: CGPoint(x: c.center.x + old.shift(x, toStep: step), y: c.center.y), zoom: c.zoom)
+        }
+        func moved(_ r: CGRect) -> CGRect { r.offsetBy(dx: old.shift(r.midX, toStep: step), dy: 0) }
+        deskCamera = moved(deskCamera)
+        returnCamera = returnCamera.map(moved)
+        let target = moved(animator.target)
+        animator.warp(to: moved(animator.camera), now: now)
+        animator.fly(to: target, now: now)
+        for i in windows.indices {
+            windows[i].frame = moved(windows[i].frame)
+            windows[i].floatingFrame = windows[i].floatingFrame.map(moved)
+        }
+        for k in saved?.windows.indices ?? 0 ..< 0 { saved!.windows[k].frame = moved(saved!.windows[k].frame) }
+        slots.step = step
+        layoutRevision += 1
+        retileAll()
     }
 
     // MARK: Cameras
