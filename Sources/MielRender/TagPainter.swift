@@ -31,19 +31,25 @@ final class TagPainter {
 
     // MARK: keycaps
 
-    private func keycapStyle(_ size: CGFloat) -> TextStyle { TextStyle(size: size, weight: .medium) }
-
-    private func keycapWidth(_ key: String, _ style: TextStyle) -> CGFloat {
-        max(measure(key, style) + style.size * 0.84, (style.size * 1.6).rounded())
+    /// Key caps after `KeyCapMetrics`, the recipe Settings and the HUD draw: `size` is the text's.
+    private func keycapStyle(_ size: CGFloat) -> TextStyle {
+        TextStyle(size: size, tracking: KeyCapMetrics.tracking * size / KeyCapMetrics.textSize)
     }
 
-    /// One key: a 5% fill with continuous corners of 6 at 13 pt, scaled to `style`. Returns its width.
+    private func keycapHeight(_ style: TextStyle) -> CGFloat { (KeyCapMetrics.minHeight * style.size / KeyCapMetrics.textSize).rounded() }
+
+    private func keycapWidth(_ key: String, _ style: TextStyle) -> CGFloat {
+        max(measure(key, style) + 2 * KeyCapMetrics.paddingAcross * style.size / KeyCapMetrics.textSize, keycapHeight(style))
+    }
+
+    /// One key on the panel's solid fill. Returns its width.
     @discardableResult
     private func keycap(_ b: Bitmap, _ key: String, _ style: TextStyle, x: CGFloat, cy: CGFloat, _ theme: Theme) -> CGFloat {
-        let w = keycapWidth(key, style), h = (style.size * 1.6).rounded()
+        let w = keycapWidth(key, style), h = keycapHeight(style), k = style.size / KeyCapMetrics.textSize
         let box = CGRect(x: x, y: (cy - h / 2).rounded(), width: w, height: h)
-        b.fill(b.roundedPath(box, 6 * style.size / 13), theme.look.dark ? rgba(1, 1, 1, 0.05) : rgba(0, 0, 0, 0.05))
-        text(b, key, style, theme.textDim, x: box.midX - measure(key, style) / 2, cy: cy)
+        let primary: CGFloat = theme.look.dark ? 1 : 0
+        b.fill(b.roundedPath(box, KeyCapMetrics.radius * k), rgba(primary, primary, primary, KeyCapMetrics.rest))
+        text(b, key, style, rgba(primary, primary, primary, KeyCapMetrics.textOpacity), x: box.midX - measure(key, style) / 2, cy: cy)
         return w
     }
 

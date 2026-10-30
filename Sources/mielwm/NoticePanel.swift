@@ -180,7 +180,8 @@ final class NoticeBoard {
         let key = NoticePanel.Drawn(content: wrap(notice.content), screenID: notice.screenID, accent: state.look.accent,
                                     increaseContrast: a.increaseContrast, material: Design.ChromeMaterial.current(state.look))
         if panel.drawn != key {
-            let drawing = noticeDrawing(key.content, accent: key.accent, increaseContrast: key.increaseContrast, maxWidth: screen.visibleFrame.width - 48)
+            let drawing = noticeDrawing(key.content, accent: key.accent, material: key.material, increaseContrast: key.increaseContrast,
+                                        maxWidth: screen.visibleFrame.width - 48)
             let p = position(notice.content, screen.frame, screen.visibleFrame, drawing.size)
             panel.show(drawing, center: p.x, top: p.top, material: key.material, increaseContrast: key.increaseContrast)
             panel.drawn = key

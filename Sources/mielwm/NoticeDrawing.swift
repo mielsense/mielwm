@@ -20,8 +20,9 @@ struct NoticeDrawing {
 }
 
 @MainActor
-func noticeDrawing(_ content: NoticeContent, accent: RGB, increaseContrast: Bool, maxWidth: CGFloat) -> NoticeDrawing {
-    let ink = NoticeInk(accent: accent, increaseContrast: increaseContrast)
+func noticeDrawing(_ content: NoticeContent, accent: RGB, material: Design.ChromeMaterial, increaseContrast: Bool,
+                   maxWidth: CGFloat) -> NoticeDrawing {
+    let ink = NoticeInk(accent: accent, material: material, increaseContrast: increaseContrast)
     switch content {
     case let .toast(text): return toastDrawing(text, ink)
     case let .workspace(n): return workspaceDrawing(n, ink)
@@ -32,6 +33,7 @@ func noticeDrawing(_ content: NoticeContent, accent: RGB, increaseContrast: Bool
 /// Colours, resolved when drawn so they follow the panel's appearance.
 private struct NoticeInk {
     var accent: RGB
+    var material: Design.ChromeMaterial
     var increaseContrast: Bool
 
     var primary: NSColor { .labelColor }
@@ -40,26 +42,28 @@ private struct NoticeInk {
     var onAccent: NSColor { accent.onAccent }
     /// The front window's capsule in the stack strip.
     var raised: NSColor { NSColor.labelColor.withAlphaComponent(increaseContrast ? 0.2 : 0.1) }
-    /// A key cap's fill, after `Design.KeyCap`.
-    var keyFill: NSColor { NSColor.labelColor.withAlphaComponent(Design.KeyCap.rest) }
+    /// A key cap's fill and text, after `Design.KeyCap`.
+    var keyFill: NSColor { NSColor.labelColor.withAlphaComponent(Design.KeyCap.fill(on: material)) }
+    var keyText: NSColor { NSColor.labelColor.withAlphaComponent(Design.KeyCap.text) }
 }
 
 // MARK: Text
 
 /// One line of text, set so its cap height centres on `midY`, as the eye reads it.
 @MainActor
-private func drawLine(_ text: String, font: NSFont, color: NSColor, x: CGFloat, midY: CGFloat, maxWidth: CGFloat = .greatestFiniteMagnitude) {
+private func drawLine(_ text: String, font: NSFont, color: NSColor, x: CGFloat, midY: CGFloat, maxWidth: CGFloat = .greatestFiniteMagnitude,
+                      tracking: CGFloat = 0) {
     let style = NSMutableParagraphStyle()
     style.lineBreakMode = .byTruncatingTail
-    let string = NSAttributedString(string: text, attributes: [.font: font, .foregroundColor: color, .paragraphStyle: style])
+    let string = NSAttributedString(string: text, attributes: [.font: font, .foregroundColor: color, .paragraphStyle: style, .kern: tracking])
     let baseline = (midY + font.capHeight / 2).rounded()
     let width = min(ceil(string.size().width), maxWidth)
     string.draw(with: NSRect(x: x, y: baseline - font.ascender, width: width, height: ceil(font.ascender - font.descender)),
                 options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine])
 }
 
-private func width(_ text: String, _ font: NSFont) -> CGFloat {
-    ceil(NSAttributedString(string: text, attributes: [.font: font]).size().width)
+private func width(_ text: String, _ font: NSFont, tracking: CGFloat = 0) -> CGFloat {
+    ceil(NSAttributedString(string: text, attributes: [.font: font, .kern: tracking]).size().width)
 }
 
 // MARK: Toast
@@ -71,9 +75,11 @@ private func toastDrawing(_ text: String, _ ink: NoticeInk) -> NoticeDrawing {
     // Key caps after `Design.KeyCap`, at the secondary size.
     let k = Design.secondarySize / Design.rowSize
     let height = Design.Pill.height, padX = Design.Space.m + Design.Space.xs
-    let keyHeight = (Design.KeyCap.minHeight * k).rounded(), keyPad = Design.KeyCap.padding.leading * k
+    let keyHeight = (Design.KeyCap.minHeight * k).rounded(), keyPad = Design.KeyCap.padding.leading * k, tracking = Design.KeyCap.tracking * k
     let runs = hintSegments(text).map { (text: $0.text, key: $0.isKey) }
-    let runWidth = { (r: (text: String, key: Bool)) in r.key ? max(width(r.text, keyFont) + keyPad * 2, keyHeight) : width(r.text, font) }
+    let runWidth = { (r: (text: String, key: Bool)) in
+        r.key ? max(width(r.text, keyFont, tracking: tracking) + keyPad * 2, keyHeight) : width(r.text, font)
+    }
     let total = runs.map(runWidth).reduce(0, +)
     return NoticeDrawing(size: NSSize(width: ceil(total + padX * 2), height: height), radius: height / 2) { bounds in
         var x = bounds.minX + padX
@@ -88,7 +94,8 @@ private func toastDrawing(_ text: String, _ ink: NoticeInk) -> NoticeDrawing {
                     NSColor.separatorColor.setStroke()
                     cap.stroke()
                 }
-                drawLine(r.text, font: keyFont, color: ink.primary.withAlphaComponent(0.85), x: box.minX + (w - width(r.text, keyFont)) / 2, midY: bounds.midY)
+                drawLine(r.text, font: keyFont, color: ink.keyText, x: box.minX + (w - width(r.text, keyFont, tracking: tracking)) / 2,
+                         midY: bounds.midY, tracking: tracking)
             } else {
                 drawLine(r.text, font: font, color: ink.primary, x: x, midY: bounds.midY)
             }

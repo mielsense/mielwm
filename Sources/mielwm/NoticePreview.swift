@@ -42,7 +42,7 @@ func noticePreview(_ args: [String]) -> Never {
             backdrop.orderFrontRegardless()
             for (name, material, contrast) in looks where !plain || material == .glass {
                 for ((content, x, top), panel) in zip(contents, panels) {
-                    let drawing = noticeDrawing(content, accent: accent, increaseContrast: contrast, maxWidth: rect.width - 48)
+                    let drawing = noticeDrawing(content, accent: accent, material: material, increaseContrast: contrast, maxWidth: rect.width - 48)
                     panel.show(drawing, center: rect.minX + rect.width * x, top: rect.maxY - top, material: material, increaseContrast: contrast)
                     panel.window.alphaValue = 1
                 }
@@ -56,7 +56,7 @@ func noticePreview(_ args: [String]) -> Never {
     NSApp.appearance = NSAppearance(named: .darkAqua)
     desk.plain = false
     let many = StackNotice(entries: entries + entries + entries, front: 4, area: .zero)
-    let drawing = noticeDrawing(.stack(many), accent: accent, increaseContrast: false, maxWidth: rect.width - 48)
+    let drawing = noticeDrawing(.stack(many), accent: accent, material: looks[0].1, increaseContrast: false, maxWidth: rect.width - 48)
     panels[0].show(drawing, center: rect.midX, top: rect.maxY - 20, material: looks[0].1, increaseContrast: false)
     panels.dropFirst().forEach { $0.hide() }
     pump(0.6)

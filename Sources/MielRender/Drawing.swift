@@ -188,6 +188,7 @@ enum FontWeight: Hashable { case regular, medium, semibold } // semibold: titles
 struct TextStyle {
     var size: CGFloat
     var weight: FontWeight = .regular
+    var tracking: CGFloat = 0 // extra space after each character, in pixels
 }
 
 /// SF Pro, the system UI font, with its tabular digits so numbers do not
@@ -214,6 +215,7 @@ final class Typesetter {
         CTLineCreateWithAttributedString(NSAttributedString(string: text, attributes: [
             NSAttributedString.Key(kCTFontAttributeName as String): font(style),
             NSAttributedString.Key(kCTForegroundColorAttributeName as String): color,
+            NSAttributedString.Key(kCTKernAttributeName as String): style.tracking,
         ]))
     }
 

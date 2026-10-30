@@ -172,7 +172,7 @@ private struct ResultRow: View {
             .lineLimit(1)
             Spacer(minLength: Design.Space.s * s)
             if !row.trailing.isEmpty {
-                KeyCap(row.trailing, size: look.detailSize * s, onAccent: selected ? onAccent : nil)
+                KeyCaps(text: row.trailing, size: look.detailSize * s, onAccent: selected ? onAccent : nil)
             }
         }
         .padding(.leading, Design.Space.s * s)
@@ -245,7 +245,7 @@ private struct Keys: View {
     var body: some View {
         HStack(spacing: Design.Space.xs) {
             ForEach(Array(HelpSection.keyTokens(keys).enumerated()), id: \.offset) { _, token in
-                if token.isKey { KeyCap(token.text, size: size) } else { Text(token.text).font(.system(size: size)).foregroundStyle(.secondary) }
+                if token.isKey { KeyCaps(text: token.text, size: size) } else { Text(token.text).font(.system(size: size)).foregroundStyle(.secondary) }
             }
         }
         .fixedSize()
@@ -272,7 +272,7 @@ private struct Pill: View {
                     Spacer().frame(width: (before ? Design.Space.xs : Design.Space.m) * s) // a key sits close to its label
                 }
                 if segment.isKey {
-                    KeyCap(segment.text, size: (toast ? Design.secondarySize : look.cornerSize - 1) * s)
+                    KeyCaps(text: segment.text, size: (toast ? Design.secondarySize : look.cornerSize - 1) * s)
                 } else {
                     Text(segment.text).font(.system(size: size)).foregroundStyle(toast ? .primary : .secondary)
                 }
@@ -343,35 +343,6 @@ private struct Chevron: View {
 }
 
 // MARK: - Shared pieces
-
-/// A key after the recipe in `Design.KeyCap`, at `size` points (13 is the recipe's own size).
-struct KeyCap: View {
-    @Environment(\.colorSchemeContrast) private var contrast
-    let key: String
-    let size: CGFloat
-    var onAccent: Color?
-
-    init(_ key: String, size: CGFloat, onAccent: Color? = nil) {
-        self.key = key
-        self.size = size
-        self.onAccent = onAccent
-    }
-
-    var body: some View {
-        let k = size / Design.rowSize, p = Design.KeyCap.padding
-        let cap = RoundedRectangle(cornerRadius: Design.KeyCap.radius * k, style: .continuous)
-        Text(key)
-            .font(.system(size: size))
-            .tracking(Design.KeyCap.tracking * k)
-            .foregroundStyle(onAccent.map(AnyShapeStyle.init) ?? AnyShapeStyle(.primary.opacity(0.85)))
-            .lineLimit(1)
-            .padding(EdgeInsets(top: p.top * k, leading: p.leading * k, bottom: p.bottom * k, trailing: p.trailing * k))
-            .frame(minHeight: Design.KeyCap.minHeight * k)
-            .background(cap.fill(onAccent != nil ? AnyShapeStyle(.white.opacity(0.22)) : AnyShapeStyle(.primary.opacity(Design.KeyCap.onGlass))))
-            .overlay(cap.strokeBorder(Design.edge(contrast), lineWidth: 1))
-            .fixedSize()
-    }
-}
 
 private struct AppIcon: View {
     let bundleID: String?
@@ -468,8 +439,9 @@ private struct ChromeSurface<S: InsettableShape>: ViewModifier {
     @Environment(\.chromeStill) private var still
 
     func body(content: Content) -> some View {
+        let material = still ? .solid : Design.ChromeMaterial.current(look) // glass and frosted draw only on screen
         Group {
-            switch still ? .solid : Design.ChromeMaterial.current(look) { // glass and frosted draw only on screen
+            switch material {
             case .solid:
                 content.background(shape.fill(Color(nsColor: .windowBackgroundColor)))
                     .shadow(color: .black.opacity(look.dark ? 0.4 : 0.2), radius: 14, y: 4)
@@ -481,6 +453,7 @@ private struct ChromeSurface<S: InsettableShape>: ViewModifier {
             }
         }
         .overlay { if look.increaseContrast { shape.strokeBorder(.primary.opacity(0.6), lineWidth: 1) } }
+        .environment(\.keyCapFill, Design.KeyCap.fill(on: material))
     }
 }
 

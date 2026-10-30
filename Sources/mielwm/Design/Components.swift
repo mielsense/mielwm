@@ -165,29 +165,60 @@ struct VisualPicker<Value: Hashable, Thumbnail: View>: View {
     }
 }
 
-/// Keys in a light capsule, after the recipe in `Design.KeyCap`.
+/// Keys in a light capsule, after the recipe in `Design.KeyCap`, at `size`
+/// points of text. The fill follows the surface: the overview's panels set
+/// `keyCapFill` for glass, and `onAccent` puts the cap on a selected row.
 struct KeyCaps: View {
     let text: String
+    var size = Design.KeyCap.textSize
+    var onAccent: Color?
     var dim = false
     var hovering = false
     var recording = false
+    @Environment(\.keyCapFill) private var fill
+    @Environment(\.colorSchemeContrast) private var contrast
 
     var body: some View {
-        let cap = RoundedRectangle(cornerRadius: Design.KeyCap.radius, style: .continuous)
+        let k = size / Design.KeyCap.textSize, p = Design.KeyCap.padding
+        let cap = RoundedRectangle(cornerRadius: Design.KeyCap.radius * k, style: .continuous)
         Text(text)
-            .font(Design.KeyCap.font)
-            .tracking(Design.KeyCap.tracking)
-            .foregroundStyle(dim ? AnyShapeStyle(.secondary) : AnyShapeStyle(.primary.opacity(0.85)))
+            .font(.system(size: size))
+            .tracking(Design.KeyCap.tracking * k)
+            .foregroundStyle(textStyle)
             .lineLimit(1)
-            .padding(Design.KeyCap.padding)
-            .frame(minHeight: Design.KeyCap.minHeight)
-            .background(cap.fill(.primary.opacity(recording ? 0 : hovering ? Design.KeyCap.hover : Design.KeyCap.rest)))
+            .padding(EdgeInsets(top: p.top * k, leading: p.leading * k, bottom: p.bottom * k, trailing: p.trailing * k))
+            .frame(minHeight: Design.KeyCap.minHeight * k)
+            .background(cap.fill(fillStyle))
             .overlay {
                 if recording {
                     cap.strokeBorder(Color.accentColor, lineWidth: 1.5)
-                    RoundedRectangle(cornerRadius: Design.KeyCap.radius + 3, style: .continuous).strokeBorder(Color.accentColor.opacity(0.25), lineWidth: 3).padding(-3)
+                    RoundedRectangle(cornerRadius: (Design.KeyCap.radius + 3) * k, style: .continuous)
+                        .strokeBorder(Color.accentColor.opacity(0.25), lineWidth: 3).padding(-3)
+                } else {
+                    cap.strokeBorder(Design.edge(contrast), lineWidth: 1)
                 }
             }
+            .fixedSize()
+    }
+
+    private var textStyle: AnyShapeStyle {
+        if let onAccent { return AnyShapeStyle(onAccent) }
+        return dim ? AnyShapeStyle(.secondary) : AnyShapeStyle(.primary.opacity(Design.KeyCap.text))
+    }
+
+    private var fillStyle: AnyShapeStyle {
+        if onAccent != nil { return AnyShapeStyle(.white.opacity(Design.KeyCap.onAccent)) }
+        return AnyShapeStyle(.primary.opacity(recording ? 0 : hovering ? Design.KeyCap.hover : fill))
+    }
+}
+
+private struct KeyCapFillKey: EnvironmentKey { static let defaultValue = Design.KeyCap.rest }
+
+extension EnvironmentValues {
+    /// The key cap fill at rest on the surface below: `Design.KeyCap.fill(on:)`.
+    var keyCapFill: Double {
+        get { self[KeyCapFillKey.self] }
+        set { self[KeyCapFillKey.self] = newValue }
     }
 }
 

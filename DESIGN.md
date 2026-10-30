@@ -73,12 +73,15 @@ Surfaces separate by fill, not by strokes. A grouped box, the header card and a 
 
 ## Key caps
 
-Shortcuts look the same everywhere they appear: the Keyboard pane, the menu's hints, onboarding, the notices and the overview's HUD. `Design.KeyCap` holds the recipe and `KeyCaps` draws it.
+Shortcuts look the same everywhere they appear: the Keyboard pane, the overview's HUD, the notices and the messages on the canvas. `KeyCapMetrics` in [Sources/MielCore/KeyCapMetrics.swift](Sources/MielCore/KeyCapMetrics.swift) holds the numbers, so the Metal canvas can use them too. `Design.KeyCap` reads them for the app, and the `KeyCaps` component draws them in SwiftUI. The notices and the canvas draw the same recipe by hand.
 
 - Glyphs are SF Pro 13 pt regular with 1 point of tracking. Modifiers come in the system's order, ⌃⌥⇧⌘, then the key.
 - Text is the primary colour at 85% at rest, and secondary when there's no shortcut ("None").
 - The cap is a continuous rectangle with radius 6, 8 points of padding across and 3 down, at least 22 points tall.
-- The fill is the primary colour at 5% at rest and 9% on hover, with no stroke. On glass the fill is 12%, because 5% disappears against the backdrop.
+- The fill is the primary colour at 5% at rest and 9% on hover, with no stroke. On Liquid glass and frosted panels the fill is 12%, because 5% disappears against the backdrop. `Design.KeyCap.fill(on:)` picks between them, and the overview's panels pass it down to every cap inside them.
+- On a selected search result, the cap is white at 22% under the accent's text colour.
+- With Increase Contrast on, the cap gets the separator edge, like other filled shapes.
+- Smaller text scales every length with it. A cap at 11 pt is 11/13 of each number.
 - While recording, the cap has no fill, a 1.5 point accent ring and a 3 point accent halo at 25%, with "Type shortcut" in secondary.
 
 ## Materials

@@ -65,26 +65,23 @@ enum Design {
 
     // MARK: Key caps
     //
-    // How shortcuts look wherever they appear: the Keyboard pane, the
-    // overview's chrome and the notices. Over glass the fill is `onGlass`.
-    // MielRender's empty-workspace message copies the radius and the fill.
-    // - Glyphs: SF Pro 13 pt regular, the modifiers in the system's order
-    //   ⌃⌥⇧⌘, then the key, 1 pt of tracking.
-    // - Text: primary at 85% opacity at rest, secondary when empty ("None").
-    // - Capsule: continuous radius 6, 8 pt across, 3 pt down, at least 22 pt
-    //   tall. Fill: primary at 5% at rest, 9% on hover, no stroke.
-    // - Recording: no fill, a 1.5 pt accent ring and a 3 pt accent halo at
-    //   25%, the text "Type shortcut" in secondary.
+    // How shortcuts look wherever they appear: the Keyboard pane, the menu's
+    // hints, onboarding, the overview's HUD, the notices and the canvas. The
+    // numbers are `KeyCapMetrics` in MielCore, so MielRender draws the same.
+    // `KeyCaps` draws them in SwiftUI; the notices and the canvas draw them
+    // by hand from the same values.
 
     enum KeyCap {
-        static let font = Font.system(size: 13)
-        static let tracking: CGFloat = 1
-        static let radius = Radius.control
-        static let padding = EdgeInsets(top: 3, leading: 8, bottom: 3, trailing: 8)
-        static let minHeight: CGFloat = 22
-        static let rest = 0.05, hover = 0.09
-        /// On glass the backdrop shows through, so 5% vanishes: the cap needs more to keep its shape.
-        static let onGlass = 0.12
+        typealias M = KeyCapMetrics
+        static let textSize = M.textSize, tracking = M.tracking
+        static let radius = M.radius
+        static let padding = EdgeInsets(top: M.paddingDown, leading: M.paddingAcross, bottom: M.paddingDown, trailing: M.paddingAcross)
+        static let minHeight = M.minHeight
+        static let text = M.textOpacity
+        static let rest = M.rest, hover = M.hover, onAccent = M.onAccent
+
+        /// The fill at rest on `material`: more on glass and frosted panels, which let the backdrop through.
+        static func fill(on material: ChromeMaterial) -> Double { material == .solid ? M.rest : M.onGlass }
     }
 
     /// A floating pill with one line in it: a toast in the overview or over the desktop.
