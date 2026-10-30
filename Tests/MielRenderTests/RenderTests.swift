@@ -232,6 +232,24 @@ private final class Bumped: WindowFrameSource, @unchecked Sendable {
     func generation(for id: WindowID) -> UInt64 { inner.generation(for: id) + bump }
 }
 
+/// The live overview hands its HUD to native views and draws the scene without
+/// it; the windows that match a search keep their outline all the same.
+@Test(metal) func theSearchOutlineStaysWhenTheHUDIsDrawnElsewhere() throws {
+    var look = Look()
+    look.lensEnabled = false
+    look.labels = false
+    look.minimapEnabled = false
+    let (hud, windows) = Fixture.searchHUD()
+    let full = Fixture.overview(Fixture.retina, look: look, hud: hud, windows: windows)
+    var taken = full
+    taken.hud = HUDModel() // what ChromeContent(taking:) does in the overlay
+    let a = try render(full, "search-outline-hud"), b = try render(taken, "search-outline-taken")
+    // Across the left edge of a matching window (Safari, "mielwm — GitHub"), clear of the palette.
+    let edge = Fixture.overviewCamera.toDesk(windows[0].canvasFrame, deskCenter: Fixture.desk.center)
+    let x = Int(edge.minX * 2), y = Int(edge.midY * 2)
+    for dx in -10 ... 4 { #expect(a.close(a[x + dx, y], b[x + dx, y], 2), "x \(x + dx): \(a[x + dx, y]) vs \(b[x + dx, y])") }
+}
+
 @Test(metal) func framesThatWouldLookTheSameAreSkipped() throws {
     let renderer = try Renderer()
     let layer = CAMetalLayer()

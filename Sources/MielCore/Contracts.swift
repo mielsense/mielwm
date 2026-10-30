@@ -498,6 +498,9 @@ public struct Scene: Equatable, Sendable {
     public var dropIndicator: CGRect? // canvas rect where a dragged window will land
     public var time: Double // seconds, for the caret blink and small animations
     public var workspaces: [SceneWorkspace] = [] // drawn behind the windows, with the transition
+    /// A search is on: windows that match get an outline. Its own field, so a
+    /// HUD drawn elsewhere (the overlay's native views) leaves it in place.
+    public var searching = false
 
     public init(screen: ScreenInfo, desk: CGRect, camera: Camera, transition: Double,
                 opacity: Double = 1, windows: [SceneWindow], look: Look,
