@@ -113,3 +113,12 @@ import Testing
     let found = (owner: "SketchyBar", frame: CGRect(x: 1512, y: 0, width: 1920, height: 30))
     #expect(topBar(among: [found], on: external, filledBy: [video], previous: barik)?.owner == "SketchyBar")
 }
+
+@Test func aFullScreenSpaceUnderTheNotchKeepsTheLastBar() {
+    // On a notched display a full screen window starts below the camera housing.
+    let barik = TopBar(owner: "Barik", height: 17)
+    let belowNotch = CGRect(x: 0, y: 38, width: 1512, height: 944)
+    #expect(topBar(among: [], on: builtIn, filledBy: [belowNotch], previous: barik) == barik)
+    // A tall window that stops short of the bottom is not full screen.
+    #expect(topBar(among: [], on: builtIn, filledBy: [CGRect(x: 0, y: 38, width: 1512, height: 874)], previous: barik) == nil)
+}

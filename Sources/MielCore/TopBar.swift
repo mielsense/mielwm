@@ -15,18 +15,24 @@ public struct TopBar: Hashable, Codable, Sendable {
 /// The bar among `windows` on `screen`: a window pinned to the top of the
 /// display or just under the menu bar, at least 80% as wide as the
 /// display and 20 to 80 pt tall. The tallest wins; nil when there is none.
-/// While one of `filledBy`, normal windows, fills the whole display, as in a
-/// macOS full screen Space, bars hide: the display keeps its `previous` one.
+/// While one of `filledBy`, normal windows, fills the whole display (below
+/// the notch, if it has one), as in a macOS full screen Space, bars hide:
+/// the display keeps its `previous` one.
+/// shortcut: an ⌥F-filled or borderless full-display window looks the same, so
+/// a bar that quits meanwhile keeps its room until the next check.
 public func topBar(among windows: [(owner: String, frame: CGRect)], on screen: ScreenInfo,
                    filledBy normal: [CGRect] = [], previous: TopBar? = nil) -> TopBar? {
     let display = screen.frame, top = screen.visibleFrame.minY
+    let belowNotch = CGRect(x: display.minX, y: display.minY + screen.safeAreaTop,
+                            width: display.width, height: display.height - screen.safeAreaTop)
+    let fullScreen = normal.contains { $0.contains(belowNotch) }
     let found = windows.compactMap { owner, f -> TopBar? in
         guard abs(f.minY - display.minY) <= 2 || abs(f.minY - top) <= 2,
               f.intersection(display).width >= display.width * 0.8, (20 ... 80).contains(f.height) else { return nil }
         let height = (f.maxY - top).rounded()
         return height > 0 ? TopBar(owner: owner, height: height) : nil // all under an always-shown menu bar
     }.max { $0.height < $1.height }
-    return found ?? (normal.contains(display) ? previous : nil)
+    return found ?? (fullScreen ? previous : nil)
 }
 
 /// The top gap: Automatic leaves room for a bar it finds, Same uses the
