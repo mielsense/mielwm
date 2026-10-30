@@ -107,7 +107,13 @@ extension CanvasState {
             sync(force: true)
         }
         if toast != nil, now >= toastUntil { toast = nil }
-        if let f = expectedFocus, now >= f.until { expectedFocus = nil }
+        if let f = expectedFocus, now >= f.until {
+            expectedFocus = nil
+            if let report = heldFocus { // focus changed again while ours landed: that is where it is now
+                heldFocus = nil
+                handle(report)
+            }
+        }
     }
 
     // MARK: System events
@@ -287,15 +293,17 @@ extension CanvasState {
     /// (d) Focus from outside (Cmd-Tab, the Dock, a click, an app raising
     /// itself). A window on screen stays where it is; one off camera or
     /// parked brings the camera to it. Our own windows don't count, nor do
-    /// stray reports while a focus we asked for lands.
+    /// stray reports while a focus we asked for lands: the last one waits,
+    /// and applies after, unless ours reports in later.
     mutating func focusedFromOutside(_ id: WindowID) {
         guard id.pid != ownPID else { return }
+        if let f = expectedFocus, f.id != id, now < f.until { heldFocus = .windowFocused(id); return }
+        heldFocus = nil // ours landed, or there was none
         guard let i = index(id), windows[i].isShown else { // a dialog or sheet, say, or a window about to show
             focusLeft(id.pid)
             if index(id) != nil { pendingFocus = id } // macOS can report focus before the unhide or unminimize
             return
         }
-        if let f = expectedFocus, f.id != id, now < f.until { return }
         pendingFocus = nil
         focused = id
         mru.note(id)
@@ -312,10 +320,11 @@ extension CanvasState {
     /// Focus went to something mielwm doesn't manage (no window, or one it
     /// leaves alone): no managed window has it, so
     /// window keys do nothing rather than act on the last one. mielwm's own
-    /// windows (the overview, Settings) and a focus we just asked for keep it.
+    /// windows (the overview, Settings) keep it; while a focus we asked for
+    /// lands, the report waits like any other.
     mutating func focusLeft(_ pid: Int32) {
         guard pid != ownPID, !isOverview, !overview.isOpen else { return }
-        if let f = expectedFocus, now < f.until { return }
+        if expectedFocus.map({ now < $0.until }) == true { heldFocus = .unmanagedFocus(pid: pid); return }
         focused = nil
         pendingFocus = nil
     }

@@ -133,6 +133,7 @@ extension CanvasState {
         focused = id
         mru.note(id)
         expectedFocus = (id, now + 0.6)
+        heldFocus = nil
         outbox.append(.focus(id))
     }
 

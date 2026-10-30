@@ -50,3 +50,20 @@ import Testing
     _ = s.send(.system(.windowMinimized(other, false)))
     #expect(s.focused == wid(1))
 }
+
+@Test func focusThatChangesWhileAFocusWeAskedForLandsIsAppliedAfterwards() {
+    var s = twoWindows()
+    _ = s.send(.action(.focus(.right))) // mielwm focuses window 2 and waits a moment for it to land
+    _ = s.send(.system(.unmanagedFocus(pid: 300))) // the user clicks the desktop right away
+    #expect(s.focused == wid(2))
+    _ = s.advance(1)
+    #expect(s.focused == nil)
+    #expect(s.send(.action(.close)).isEmpty)
+
+    s = twoWindows()
+    _ = s.send(.action(.focus(.right)))
+    _ = s.send(.system(.windowFocused(wid(1)))) // a stray report from before
+    _ = s.send(.system(.windowFocused(wid(2)))) // then the focus we asked for lands
+    _ = s.advance(1)
+    #expect(s.focused == wid(2))
+}
