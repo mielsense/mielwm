@@ -45,7 +45,8 @@ func doublingText(_ exponent: Double) -> String {
 }
 
 /// View state that changes as the pointer moves, kept out of SettingsModel so it redraws only
-/// the views that show it. (The Command Line Tools can't expand @State; @StateObject works.)
+/// the views that show it. This SDK declares @State as a macro and the Command Line Tools lack
+/// SwiftUI's macro plugin, so it won't compile there; @StateObject and @FocusState are plain property wrappers.
 final class Hover: ObservableObject {
     @Published var on = false
 }
