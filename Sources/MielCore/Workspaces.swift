@@ -158,7 +158,7 @@ extension CanvasState {
     /// The lowest slot without windows; `skippingRules` keeps the slots rules name for their apps.
     func freeSlot(skippingRules: Bool = false) -> Int {
         let taken = Set(workspaces.filter { !$0.members.isEmpty }.map(\.slot))
-            .union(skippingRules ? Set(settings.workspaceRuleTable.values) : [])
+            .union(skippingRules ? Array(settings.workspaceRuleTable.values) + settings.windowRules.values.compactMap(\.workspace) : [])
         return (1...).first { !taken.contains($0) }!
     }
 
@@ -306,11 +306,12 @@ extension CanvasState {
 
     // MARK: New windows
 
-    /// Where a new window goes, nil to float: rules, then (while starting up)
+    /// Where a new window goes, nil to float: rules (window rules first), then (while starting up)
     /// a workspace of its own, else the current workspace after the focused member.
     func placement(for s: WindowSnapshot) -> (slot: Int, position: Int?)? {
-        if !s.isResizable || settings.floats(s.bundleID) || settings.defaultLayout == .floating { return nil }
-        if let n = s.bundleID.flatMap({ settings.workspaceRuleTable[$0.lowercased()] }) { return (n, nil) }
+        let rule = settings.windowRule(for: s) // by name and title, so before the per-app lists
+        if !s.isResizable || rule?.floating == true || settings.floats(s.bundleID) || settings.defaultLayout == .floating { return nil }
+        if let n = rule?.workspace ?? s.bundleID.flatMap({ settings.workspaceRuleTable[$0.lowercased()] }) { return (n, nil) }
         // Startup (the restore window): whatever is already open gets its own workspace, so nothing starts as tiny tiles.
         if now < restoreUntil { return (freeSlot(skippingRules: true), nil) }
         guard let c = currentWorkspace, let k = workspaceIndex(c) else { return (freeSlot(), nil) }

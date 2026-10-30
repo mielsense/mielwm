@@ -15,6 +15,7 @@ A few things work differently or aren't there yet:
 - `⌥⇧Tab`, which moves a workspace to another monitor in AeroSpace, has no equivalent yet.
 - There are no binding modes like AeroSpace's service mode, and no nested containers. A workspace is tiles or a stack, one level deep, so `join-with` and `split` don't exist.
 - `resize` changes a tile only along its split, and only by an amount. `resize width 800`, which sets a size, isn't supported.
+- Window rules match the app's bundle id, its name or the window's title, and can float a window or send it to a workspace. The other `on-window-detected` conditions and commands aren't there.
 
 Quit AeroSpace before you start mielwm, because two window managers fight over the same windows. mielwm offers to do it and waits until AeroSpace is gone. Set `start-at-login = false` in your AeroSpace config so it stays gone.
 

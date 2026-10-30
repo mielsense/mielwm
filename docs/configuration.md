@@ -37,6 +37,31 @@ If the file isn't valid JSON, mielwm keeps its defaults and shows the error in t
 | `gaps:outer_top_external` | `54` | The top gap on other displays, with room for a status bar. |
 | `canvas:gap` | `12` | How far Fill (`⌥T`) stays from the screen edges. |
 
+## Window rules
+
+A window rule floats a window or sends it to a workspace by its app's name or its title, like AeroSpace's `on-window-detected`. Give each rule a name and the fields it needs:
+
+```json
+{
+  "rules": {
+    "firefox-pip": { "app_id": "org.mozilla.firefox", "title": "Picture-in-Picture", "floating": true },
+    "zoom": { "app": "^zoom", "workspace": 3 }
+  }
+}
+```
+
+| Field | What it does |
+| --- | --- |
+| `app` | A regular expression found anywhere in the app's name, ignoring case. |
+| `title` | The same for the window's title. |
+| `app_id` | The app's bundle id, exactly. |
+| `floating` | `true` makes the window float. |
+| `workspace` | `1` to `9`: the window opens on that workspace. |
+
+A window has to match every matcher a rule has, and a rule with no matcher does nothing. When several rules match, the first by name wins, with numbers in order, so `rule-2` comes before `rule-10`. Rules apply when a window first appears, so a title that changes later doesn't move it. They come before `layout:floating_apps` and `layout:workspace_rules`.
+
+Flat keys work too: `"rules:firefox-pip:title": "Picture-in-Picture"`. Settings doesn't edit window rules yet, so they live only in this file.
+
 ## Input
 
 | Key | Default | What it does |
