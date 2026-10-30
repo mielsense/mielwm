@@ -1,6 +1,6 @@
-name: Idea
+name: Feature request
 description: Something mielwm could do.
-labels: [idea]
+labels: [feature]
 body:
   - type: textarea
     id: idea
@@ -9,3 +9,8 @@ body:
       description: What you want to do, and how you do it today.
     validations:
       required: true
+  - type: textarea
+    id: elsewhere
+    attributes:
+      label: Elsewhere
+      description: If AeroSpace or another app already does this, which one and how.

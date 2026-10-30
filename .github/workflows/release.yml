@@ -24,6 +24,29 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           case "$version" in *-*) echo "prerelease=true" >> "$GITHUB_OUTPUT" ;; *) echo "prerelease=false" >> "$GITHUB_OUTPUT" ;; esac
 
+      # Before anything slow: a tag with no CHANGELOG section fails here, not after the build.
+      - name: Notes
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          PRERELEASE: ${{ steps.version.outputs.prerelease }}
+        run: |
+          base="${VERSION%%-*}"
+          # This version's section. A pre-release may use its base version's, or Unreleased for a dry run.
+          wanted=("$VERSION")
+          [ "$PRERELEASE" = true ] && wanted+=("$base" Unreleased)
+          for want in "${wanted[@]}"; do
+            awk -v want="$want" '/^## /{ if (found) exit; found = ($2 == want || $2 == "[" want "]") ; next } found' CHANGELOG.md > "$RUNNER_TEMP/notes.md"
+            [ -s "$RUNNER_TEMP/notes.md" ] && break
+          done
+          test -s "$RUNNER_TEMP/notes.md" || { echo "::error file=CHANGELOG.md::CHANGELOG.md has no '## $VERSION' section"; exit 1; }
+          # shellcheck disable=SC2016 # the backticks are Markdown
+          printf '\nDownload `mielwm.dmg`, open it and drag mielwm into Applications. It is signed but not notarized: open it once, then allow it in System Settings > Privacy & Security > Open Anyway.\n' >> "$RUNNER_TEMP/notes.md"
+
+      - name: On main
+        if: steps.version.outputs.prerelease == 'false'
+        run: |
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main || { echo "::error::$GITHUB_REF_NAME is not on main. Release from main, or use a pre-release tag like v1.2.0-rc.1."; exit 1; }
+
       - name: Test
         # One process per test target, as with the Command Line Tools: in a single
         # process the render tests starve the system tests' main and utility queues.
@@ -49,6 +72,7 @@ jobs:
           security import "$RUNNER_TEMP/identity.p12" -k "$KEYCHAIN" -P "$P12_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$password" "$KEYCHAIN" > /dev/null
           # codesign looks identities up through the search list, even with --keychain
+          # shellcheck disable=SC2046 # one word per keychain path
           security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
           security find-identity -p codesigning "$KEYCHAIN"
           rm "$RUNNER_TEMP/identity.p12"
@@ -80,18 +104,6 @@ jobs:
           ditto -c -k --keepParent mielwm.app "mielwm-$v.zip"
           shasum -a 256 "mielwm-$v.dmg" mielwm.dmg "mielwm-$v.zip" > SHA256SUMS
 
-      - name: Notes
-        run: |
-          v="${{ steps.version.outputs.version }}"
-          base="${v%%-*}"
-          # The CHANGELOG section for this version, or for its base version on a pre-release.
-          for want in "$v" "$base"; do
-            awk -v want="$want" '/^## /{ if (found) exit; found = ($2 == want || $2 == "[" want "]") ; next } found' CHANGELOG.md > notes.md
-            [ -s notes.md ] && break
-          done
-          test -s notes.md || { echo "CHANGELOG.md has no section for $v"; exit 1; }
-          printf '\nDownload `mielwm.dmg`, open it and drag mielwm into Applications. It is signed but not notarized: open it once, then allow it in System Settings > Privacy & Security > Open Anyway.\n' >> notes.md
-
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
@@ -99,7 +111,7 @@ jobs:
           v="${{ steps.version.outputs.version }}"
           flags=()
           [ "${{ steps.version.outputs.prerelease }}" = true ] && flags+=(--prerelease) || flags+=(--latest)
-          gh release create "$GITHUB_REF_NAME" --title "mielwm $v" --notes-file notes.md "${flags[@]}" \
+          gh release create "$GITHUB_REF_NAME" --title "mielwm $v" --notes-file "$RUNNER_TEMP/notes.md" "${flags[@]}" \
             "build/mielwm-$v.dmg" build/mielwm.dmg "build/mielwm-$v.zip" build/SHA256SUMS
 
       - name: Remove the keychain

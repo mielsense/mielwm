@@ -1,0 +1,36 @@
+# Labels for pull requests, set by the Labeler workflow. The type comes from
+# the branch prefix (CONTRIBUTING.md, under Branches), the areas from the
+# changed paths. Maintainers fix a wrong guess by hand.
+
+bug:
+  - head-branch: ['^fix/']
+feature:
+  - head-branch: ['^feat/']
+docs:
+  - head-branch: ['^docs/']
+perf:
+  - head-branch: ['^perf/']
+chore:
+  - head-branch: ['^(build|ci|chore|refactor|style|test)/']
+
+"area: core":
+  - changed-files:
+      - any-glob-to-any-file: ['Sources/MielCore/**', 'Tests/MielCoreTests/**']
+"area: render":
+  - changed-files:
+      - any-glob-to-any-file: ['Sources/MielRender/**', 'Tests/MielRenderTests/**']
+"area: system":
+  - changed-files:
+      - any-glob-to-any-file: ['Sources/MielSystem/**', 'Sources/MielTestWindows/**', 'Tests/MielSystemTests/**']
+"area: app":
+  - changed-files:
+      - any-glob-to-any-file: ['Sources/mielwm/**', 'Sources/MielIPC/**', 'Resources/**']
+"area: settings":
+  - changed-files:
+      - any-glob-to-any-file: ['Sources/mielwm/*Pane.swift', 'Sources/mielwm/Settings*.swift', 'Sources/mielwm/Onboarding.swift']
+"area: aerospace":
+  - changed-files:
+      - any-glob-to-any-file: ['Sources/MielAeroSpace/**', '**/*AeroSpace*', '**/*Barik*', 'scripts/barik*', 'scripts/barik/**']
+"area: website":
+  - changed-files:
+      - any-glob-to-any-file: ['website/**']
