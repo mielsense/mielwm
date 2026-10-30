@@ -1,4 +1,5 @@
 import AppKit
+import Carbon.HIToolbox
 import MielCore
 import MielSystem
 
@@ -36,6 +37,11 @@ extension AppDelegate {
         }
         let on = controller != nil
         add(statusLine.title, statusLine.symbol, nil, enabled: false)
+        // Keys reach the shortcuts through an event tap, and secure input hides them from it.
+        if on, IsSecureEventInputEnabled() {
+            add("Secure input is on, shortcuts may not work", "lock.shield", nil, enabled: false).toolTip =
+                "An app turned on secure input, often for a password field or Terminal's Secure Keyboard Entry."
+        }
         let workspaces = menuWorkspaces
         if !workspaces.isEmpty {
             menu.addItem(.separator())

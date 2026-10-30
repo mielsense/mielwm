@@ -68,4 +68,6 @@ While the configuration file has errors, a warning sign takes its place.
 
 The menu tells you what mielwm is doing: the current workspace and its layout, that it's paused, or what it's waiting for, such as a permission or AeroSpace quitting. Below that, each workspace with windows has a line with the icons of its apps, up to four, and a check on the current one. Click one to go there. From the menu you can also open the overview, tidy your windows, pause mielwm, open Settings or quit.
 
+When an app turns on secure input, the menu says "Secure input is on, shortcuts may not work". macOS hides your keys from other apps while it's on, and mielwm's shortcuts stop until it's off. Password fields turn it on for a moment, and Terminal's Secure Keyboard Entry keeps it on until you turn it off in the Terminal menu.
+
 Pausing puts every window back on a screen and leaves them alone until you resume. It's handy when an app misbehaves under tiling and you want normal macOS for a minute. Quitting puts the windows back too.
