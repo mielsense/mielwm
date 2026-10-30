@@ -49,6 +49,37 @@ public func hintSegments(_ text: String) -> [(text: String, isKey: Bool)] {
     return out
 }
 
+public extension HelpSection {
+    // The shortcuts sheet in points: the title band, a section header, a row, the gap after a section.
+    static let titleBand = 52.0, headerHeight = 28.0, lineHeight = 24.0, gap = 14.0
+
+    var height: Double { Self.headerHeight + Double(entries.count) * Self.lineHeight + Self.gap }
+
+    /// Sections split into `count` columns of about equal height, in order.
+    static func columns(_ sections: [HelpSection], count: Int) -> [[HelpSection]] {
+        let heights = sections.map(\.height)
+        let target = heights.reduce(0, +) / Double(max(count, 1))
+        var columns: [[HelpSection]] = [[]]
+        var acc = 0.0
+        for (section, h) in zip(sections, heights) {
+            if !columns[columns.count - 1].isEmpty, columns.count < count, acc + h / 2 > target * Double(columns.count) { columns.append([]) }
+            columns[columns.count - 1].append(section)
+            acc += h
+        }
+        return columns
+    }
+
+    /// A help entry's keys: space-separated keycaps; plain words (Click, drag) as text.
+    static func keyTokens(_ keys: String) -> [(text: String, isKey: Bool)] {
+        var out: [(text: String, isKey: Bool)] = []
+        for token in keys.split(separator: " ").map(String.init) {
+            let isKey = token.count == 1 || ["Space", "esc"].contains(token) || token.contains { !$0.isLetter }
+            if !isKey, let last = out.last, !last.isKey { out[out.count - 1].text += " " + token } else { out.append((token, isKey)) }
+        }
+        return out
+    }
+}
+
 public extension CanvasState {
     /// The HUD for one screen: only the active screen shows the palette.
     func hud(for screen: ScreenInfo) -> HUDModel {

@@ -154,20 +154,10 @@ final class HUDPainter {
         return cx - x
     }
 
-    /// Help sheet keys: space-separated keycaps; plain words (Click, drag) as text.
-    private func keyTokens(_ keys: String) -> [(text: String, isKey: Bool)] {
-        var out: [(text: String, isKey: Bool)] = []
-        for token in keys.split(separator: " ").map(String.init) {
-            let isKey = token.count == 1 || ["Space", "esc"].contains(token) || token.contains { !$0.isLetter }
-            if !isKey, let last = out.last, !last.isKey { out[out.count - 1].text += " " + token } else { out.append((token, isKey)) }
-        }
-        return out
-    }
-
     @discardableResult
     private func keys(_ b: Bitmap?, _ keys: String, _ style: TextStyle, right: CGFloat, cy: CGFloat, s: CGFloat, _ theme: Theme) -> CGFloat {
         let caps = keycapStyle(style.size)
-        let tokens = keyTokens(keys)
+        let tokens = HelpSection.keyTokens(keys)
         let widths = tokens.map { $0.isKey ? keycapWidth($0.text, caps) : measure($0.text, style) }
         let total = widths.reduce(0, +) + CGFloat(max(tokens.count - 1, 0)) * 4 * s
         guard let b else { return total }
@@ -210,7 +200,7 @@ final class HUDPainter {
         let rows = list ? max(1, count) : 0 // Core already sends only the visible rows
         let showFooter = list && !hud.footer.isEmpty
         let footHeight = PaletteMetrics.footerHeight * s
-        let sections = help ? helpColumns(hud.help, count: columns) : []
+        let sections = help ? HelpSection.columns(hud.help, count: columns) : []
         let helpHeight = help ? self.helpHeight(sections, s: s) : 0
         let fieldHeight = look.searchHeight * s
 
@@ -314,30 +304,9 @@ final class HUDPainter {
 
     // MARK: help
 
-    // Help sheet spacing in points: the title band, a section header, a row, the gap between sections.
-    private static let helpTitle = 52.0, helpHeader = 28.0, helpLine = 24.0, helpSectionGap = 14.0
-
-    private func sectionHeight(_ section: HelpSection) -> Double {
-        Self.helpHeader + Double(section.entries.count) * Self.helpLine + Self.helpSectionGap
-    }
-
-    /// Sections split into `count` columns of about equal height, in order.
-    private func helpColumns(_ sections: [HelpSection], count: Int) -> [[HelpSection]] {
-        let heights = sections.map(sectionHeight)
-        let target = heights.reduce(0, +) / Double(max(count, 1))
-        var columns: [[HelpSection]] = [[]]
-        var acc = 0.0
-        for (section, h) in zip(sections, heights) {
-            if !columns[columns.count - 1].isEmpty, columns.count < count, acc + h / 2 > target * Double(columns.count) { columns.append([]) }
-            columns[columns.count - 1].append(section)
-            acc += h
-        }
-        return columns
-    }
-
     private func helpHeight(_ columns: [[HelpSection]], s: CGFloat) -> CGFloat {
-        let tallest = columns.map { $0.map(sectionHeight).reduce(0, +) }.max() ?? 0
-        return (Self.helpTitle + tallest + 6) * s
+        let tallest = columns.map { $0.map(\.height).reduce(0, +) }.max() ?? 0
+        return (HelpSection.titleBand + tallest + 6) * s
     }
 
     /// A macOS keyboard-shortcuts sheet: a title, then columns of sections,
@@ -348,22 +317,22 @@ final class HUDPainter {
         let row = TextStyle(size: 13 * s)
         let keyStyle = TextStyle(size: 11 * s)
         let pad = 24 * s, columnGap = 28 * s
-        text(b, "Shortcuts", title, theme.text, x: r.minX + pad, cy: r.minY + Self.helpTitle / 2 * s + 2 * s)
+        text(b, "Shortcuts", title, theme.text, x: r.minX + pad, cy: r.minY + HelpSection.titleBand / 2 * s + 2 * s)
         let n = CGFloat(max(columns.count, 1))
         let columnWidth = (r.width - pad * 2 - columnGap * (n - 1)) / n
         for (i, sections) in columns.enumerated() {
             let x = r.minX + pad + CGFloat(i) * (columnWidth + columnGap)
-            var y = r.minY + Self.helpTitle * s
+            var y = r.minY + HelpSection.titleBand * s
             for section in sections {
-                text(b, section.title, header, theme.textDim, x: x, cy: y + Self.helpHeader / 2 * s, maxWidth: columnWidth)
-                y += Self.helpHeader * s
+                text(b, section.title, header, theme.textDim, x: x, cy: y + HelpSection.headerHeight / 2 * s, maxWidth: columnWidth)
+                y += HelpSection.headerHeight * s
                 for entry in section.entries {
-                    let cy = y + Self.helpLine / 2 * s
+                    let cy = y + HelpSection.lineHeight / 2 * s
                     let keysWidth = keys(b, entry.keys, keyStyle, right: x + columnWidth, cy: cy, s: s, theme)
                     text(b, entry.action, row, theme.text, x: x, cy: cy, maxWidth: columnWidth - keysWidth - 10 * s)
-                    y += Self.helpLine * s
+                    y += HelpSection.lineHeight * s
                 }
-                y += Self.helpSectionGap * s
+                y += HelpSection.gap * s
             }
         }
     }
