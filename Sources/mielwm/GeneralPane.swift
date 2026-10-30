@@ -12,7 +12,7 @@ struct GeneralPane: View {
         Form {
             Section { PaneHeader(pane: .general) }
             Section {
-                Toggle(isOn: Binding(get: { model.loginStatus == .enabled || model.loginStatus == .requiresApproval }, set: setLogin)) {
+                Toggle(isOn: Binding(get: { model.loginStatus == .enabled || model.loginStatus == .requiresApproval }, set: { setLogin($0) })) {
                     Text("Open at login")
                     if !bundled {
                         Text("Works when mielwm runs from mielwm.app.")
