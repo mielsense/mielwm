@@ -301,8 +301,9 @@ final class AppTracker {
             post(.windowClosed(id))
         case kAXMovedNotification, kAXResizedNotification:
             guard let id = ids[element], let frame = frame(of: element) else { return }
-            let on = element.value(kAXFullScreen) as? Bool == true
-            let changed = on != fullScreen.contains(id)
+            let was = fullScreen.contains(id)
+            let on = element.value(kAXFullScreen) as? Bool ?? was // a failed read changes nothing
+            let changed = on != was
             if changed, on { // before the screen-sized frame, so Core does not take it for a resize
                 fullScreen.insert(id)
                 post(.windowFullScreen(id, true))
@@ -355,7 +356,8 @@ final class AppTracker {
     private func run(_ command: WindowCommand) {
         switch command {
         case .setFrame(let id, let frame):
-            guard let window = element(id) else { return }
+            // Core may have sent it before hearing the window went full screen.
+            guard !fullScreen.contains(id), let window = element(id) else { return }
             // Size first so a move onto a smaller display is not clamped,
             // size again in case the old position limited the first one.
             window.set(kAXSizeAttribute, axValue(frame.size))

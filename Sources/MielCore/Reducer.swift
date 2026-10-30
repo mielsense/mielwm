@@ -140,7 +140,10 @@ extension CanvasState {
             windows[i].isFullScreen = on
             windows[i].expected = nil
             windows[i].pending = nil
-            if !on { sync([id]) } // back where it belongs, should its tile have changed meanwhile
+            guard !on else { return }
+            // A tiled one goes to its tile, should it have changed meanwhile. A floating one stays
+            // where macOS put it back: mielwm may never have known its size out of full screen.
+            if windows[i].workspace == nil { judge(i, windows[i].real, answering: false) } else { sync([id]) }
         case let .windowFocused(id): focusedFromOutside(id)
         case let .appHidden(pid, hidden):
             for i in windows.indices where windows[i].id.pid == pid { windows[i].isHidden = hidden }

@@ -144,6 +144,14 @@ extension CanvasState {
     #expect(moves(s.run(.system(.windowFrameChanged(wid(2), right)), .system(.windowFullScreen(wid(2), false)))) == [wid(2): area])
 }
 
+@Test func aFloatingWindowFirstSeenInFullScreenKeepsTheFrameItComesBackAt() {
+    var s = makeState([WindowSnapshot(id: wid(1), bundleID: nil, appName: "Safari", title: "Video", frame: builtIn.frame, isFullScreen: true)])
+    let restored = CGRect(x: 200, y: 150, width: 900, height: 600)
+    #expect(s.run(.system(.windowFrameChanged(wid(1), restored)), .system(.windowFullScreen(wid(1), false))).isEmpty)
+    #expect(s.advance(1).isEmpty)
+    #expect(s.deskFrame(s.window(wid(1))!) == restored)
+}
+
 // MARK: Landing
 
 @Test func landingOnATiledWindowBringsItsWorkspaceToTheActiveScreen() {
