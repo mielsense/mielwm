@@ -10,7 +10,7 @@ AeroSpace solved the same problem by moving hidden windows to a corner of a disp
 
 ## Decision
 
-A window that is off camera is parked. mielwm moves it to a bottom corner of a display's visible frame with 1 point still showing, the corner that doesn't touch another display. `parkCorner` and `parkSlot` in [Placement.swift](../Sources/MielCore/Placement.swift) pick the corner the way AeroSpace does. A window with 3 points or less showing on every screen counts as hidden, whether mielwm or AeroSpace put it there.
+A window that is off camera is parked. mielwm moves it to a bottom corner of a display's visible frame with 1 point still showing, preferring the corner that touches no other display. When both bottom corners touch one, it picks the one with less contact, so a sliver can rest against the neighbouring display. `parkCorner` and `parkSlot` in [Placement.swift](../Sources/MielCore/Placement.swift) pick the corner the way AeroSpace does. A window with 3 points or less showing on every screen counts as hidden, whether mielwm or AeroSpace put it there.
 
 ## Consequences
 

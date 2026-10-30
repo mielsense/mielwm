@@ -8,7 +8,7 @@ A window manager reacts to a stream of events it doesn't control. Accessibility 
 
 ## Decision
 
-All of mielwm's state lives in one value, `CanvasState`, in `MielCore`. One function, `reduce(_:_:)` in [Reducer.swift](../Sources/MielCore/Reducer.swift), takes that state and one input and returns the next state and the window moves to make. `MielCore` imports no AppKit and touches no windows, timers or clock. The app reads macOS, feeds inputs in, and carries the moves out. Time arrives as an input too, `.tick(seconds)`.
+All of mielwm's state lives in one value, `CanvasState`, in `MielCore`. One function, `CanvasState.send(_:)` in [Reducer.swift](../Sources/MielCore/Reducer.swift), takes one input, updates that state and returns the window moves to make. `reduce(_:_:)` is the same step written as a pure function. `MielCore` imports no AppKit and touches no windows, timers or clock. The app reads macOS, feeds inputs in, and carries the moves out. Time arrives as an input too, `.tick(seconds)`.
 
 ## Consequences
 

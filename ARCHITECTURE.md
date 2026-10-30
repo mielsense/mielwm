@@ -53,7 +53,7 @@ Tests mirror the libraries: `MielCoreTests`, `MielRenderTests` and `MielSystemTe
 
 ## How an event moves through
 
-Every change to mielwm's state goes through one function. `reduce(_:_:)` in [Reducer.swift](Sources/MielCore/Reducer.swift) takes the current `CanvasState` and one `CoreInput`, and returns the next state and a list of `WindowCommand`s. The app then carries those commands out and draws what changed.
+Every change to mielwm's state goes through one function. `CanvasState.send(_:)` in [Reducer.swift](Sources/MielCore/Reducer.swift) takes one `CoreInput`, updates the state and returns a list of `WindowCommand`s. The app calls it on its live state, then carries those commands out and draws what changed. `reduce(_:_:)` is the same step as a pure function, returning a new state instead of changing one, for tests and anywhere a copy is easier.
 
 ```mermaid
 flowchart LR

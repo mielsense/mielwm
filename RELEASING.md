@@ -16,10 +16,12 @@ How a version of mielwm gets from `main` to the download link. Only the maintain
    git push origin v0.2.0
    ```
 
-6. Watch the Release workflow. When it finishes, download `mielwm.dmg` from the release page, open the app, and check its signature:
+6. Watch the Release workflow. When it finishes, download `mielwm.dmg` from the release page and check the signature of the app inside it, not one you already have installed:
 
    ```sh
-   codesign -dr - /Applications/mielwm.app 2>&1 | grep a56a7b9ea12cb67bfe414d2bb467d5d4bd0de056
+   hdiutil attach -nobrowse -mountpoint /tmp/mielwm-release ~/Downloads/mielwm.dmg
+   codesign -dr - /tmp/mielwm-release/mielwm.app 2>&1 | grep a56a7b9ea12cb67bfe414d2bb467d5d4bd0de056
+   hdiutil detach /tmp/mielwm-release
    ```
 
 The release workflow finds the section by its heading, whose second word must be the version. Keep `## 0.2.0` exactly like that, with no "v" and nothing after it.
