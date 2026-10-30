@@ -157,6 +157,8 @@ final class NoticeBoard {
     private let toast = NoticePanel(), workspace = NoticePanel(), stack = NoticePanel()
     private var spokenWorkspace: Notice<WorkspaceNotice>?
     private var spokenSwitcher: String?
+    private var spokenOverview: String?
+    private var spokenToast: Notice<String>?
 
     func update(_ state: CanvasState) {
         defer { speak(state) }
@@ -199,10 +201,20 @@ final class NoticeBoard {
     }
 
     private func speak(_ state: CanvasState) {
-        guard state.notices.workspace != nil || state.overview.switcher, NSWorkspace.shared.isVoiceOverEnabled else { return }
+        guard state.notices.workspace != nil || state.notices.toast != nil || state.overview.switcher || state.isOverview || spokenOverview != nil,
+              NSWorkspace.shared.isVoiceOverEnabled else { return }
         if let w = state.notices.workspace, w != spokenWorkspace {
             spokenWorkspace = w
             announce(w.content.spoken)
+        }
+        if let t = state.notices.toast, t != spokenToast {
+            spokenToast = t
+            announce(hintSegments(t.content).map { $0.text.trimmingCharacters(in: .whitespaces) }.joined(separator: " ")) // "Tidied 4 windows ⌘Z Undo"
+        }
+        let overview = state.overviewSpeech
+        if overview != spokenOverview {
+            spokenOverview = overview
+            if let overview { announce(overview) }
         }
         let app = state.switcherSpeech, switcher = app.map { "\(state.overview.selected) \($0)" }
         if switcher != spokenSwitcher {

@@ -152,6 +152,16 @@ extension CanvasState {
         }
     }
 
+    /// What VoiceOver says as the overview's selection moves (its chrome is hidden from
+    /// VoiceOver): the window and its app, and while searching where it is among the results.
+    public var overviewSpeech: String? {
+        guard isOverview else { return nil }
+        if overview.queryActive, overview.results.isEmpty { return "No windows match \(overview.query)" }
+        guard let id = selection, let w = window(id) else { return nil }
+        let place = overview.queryActive ? overview.results.firstIndex { $0.id == id }.map { ", \($0 + 1) of \(overview.results.count)" } : nil
+        return "\(w.displayTitle), \(w.appName)" + (place ?? "")
+    }
+
     /// What VoiceOver says for the ⌥Tab strip once it shows: the selected window's app.
     public var switcherSpeech: String? {
         guard overview.switcherRevealed(now: now), !isOverview, let id = overview.selectedWindow else { return nil }

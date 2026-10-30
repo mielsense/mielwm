@@ -136,3 +136,15 @@ func stacked(settings: Settings = testSettings(layout: .tiles)) -> CanvasState {
     _ = s.advance(0.1)
     #expect(s.toast == nil && !s.needsTicks)
 }
+
+@Test func theOverviewSpeaksItsSelectionAndSearch() {
+    var s = makeState([snapshot(1, onBuiltIn), snapshot(2, onExternal)])
+    _ = s.send(.system(.windowFocused(wid(1))))
+    #expect(s.overviewSpeech == nil) // not open
+    _ = s.send(.action(.toggleOverview))
+    #expect(s.overviewSpeech == "Ghostty 1, Ghostty")
+    _ = s.send(.action(.search("2")))
+    #expect(s.overviewSpeech == "Ghostty 2, Ghostty, 1 of 1")
+    _ = s.send(.action(.search("zzz")))
+    #expect(s.overviewSpeech == "No windows match zzz")
+}

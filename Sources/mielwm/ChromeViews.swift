@@ -33,6 +33,7 @@ struct EasedChrome: View {
         }
         .frame(width: c.size.width, height: c.size.height, alignment: .top)
         .environment(\.colorScheme, c.look.dark ? .dark : .light)
+        .accessibilityHidden(true) // VoiceOver hears the selection and results as announcements (CanvasState.overviewSpeech)
     }
 }
 
@@ -55,6 +56,7 @@ struct SteadyChrome: View {
         }
         .frame(width: c.size.width, height: c.size.height)
         .environment(\.colorScheme, c.look.dark ? .dark : .light)
+        .accessibilityHidden(true) // the switcher's app and toasts are announced (switcherSpeech, NoticeBoard)
     }
 }
 
