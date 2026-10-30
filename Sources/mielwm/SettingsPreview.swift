@@ -92,6 +92,13 @@ func settingsPreview(_ args: [String]) -> Never {
                 pump(0.4)
                 savePNG(settings.window, to: out.appendingPathComponent(file + "-end.png"))
             }
+            // The glass style picker sits where the first view ends: a view of it on its own.
+            if pane == .appearance, let scroll = detailScrollView(in: settings.window.contentView), let doc = scroll.documentView {
+                let y = 420.0
+                doc.scroll(NSPoint(x: 0, y: doc.isFlipped ? y : doc.frame.height - y - scroll.contentView.bounds.height))
+                pump(0.4)
+                savePNG(settings.window, to: out.appendingPathComponent(file + "-glass.png"))
+            }
         }
         // The AeroSpace import, as the AeroSpace & Barik pane asks about it.
         if let toml = AeroSpaceImport.standardURL().flatMap({ try? String(contentsOf: $0, encoding: .utf8) }) {
