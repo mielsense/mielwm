@@ -306,35 +306,39 @@ struct WindowTests {
         })
     }
 
-    /// A close whose notification never arrives (the observer thread is blocked) is caught by a rescan.
+    /// A close whose notification never arrives is caught by a rescan.
     @Test func rescanClosesAWindowWhoseNotificationWasMissed() async throws {
         let s = try Session([CGRect(x: 280, y: 240, width: 400, height: 280), CGRect(x: 720, y: 240, width: 400, height: 280)],
                             options: ["--still"])
-        defer { // not s.end(): its registry never started
-            s.process.terminate()
-            s.process.waitUntilExit()
-        }
-        let thread = RunLoopThread(name: "test.blocked-observers")
-        thread.startAndWait()
-        let release = DispatchSemaphore(value: 0)
-        thread.perform { @Sendable in release.wait() } // not on the main actor: it runs on that thread
-        defer { release.signal(); thread.stop() }
-        let seen = Seen()
-        let tracker = AppTracker(pid: s.pid, bundleID: nil, appName: "", observerThread: thread) { @Sendable event in
-            DispatchQueue.main.async { seen.events.append(event) }
-        }
-        tracker.start()
-        defer { tracker.stop() }
-        let ids: () -> [WindowID] = { seen.events.compactMap { if case .windowAppeared(let w) = $0 { w.id } else { nil } } }
-        #expect(await s.until { ids().count == 2 })
-        let gone = try #require(ids().first { s.axWindow($0)?.value(kAXTitleAttribute) as? String == "PT-2" })
+        let (tracker, seen, end) = blindTracker(s)
+        defer { end() }
+        #expect(await s.until { seen.appeared.count == 2 })
+        let gone = try #require(seen.appeared.first { s.axWindow($0)?.value(kAXTitleAttribute) as? String == "PT-2" })
         let button = s.axWindow(gone)?.value(kAXCloseButtonAttribute)
         AXUIElementPerformAction(try #require(button as! AXUIElement?), kAXPressAction as CFString)
         await s.settle()
         #expect(!seen.events.contains(.windowClosed(gone)))
         tracker.rescan()
         #expect(await s.until { seen.events.contains(.windowClosed(gone)) })
-        #expect(seen.events.filter { if case .windowClosed = $0 { true } else { false } } == [.windowClosed(gone)])
+        #expect(seen.closed == [gone])
+    }
+
+    /// Ordering a window out, as apps that close to the menu bar do, destroys
+    /// its element: a rescan drops it like a closed one. (A window on another
+    /// Space keeps a live element and stays; no test can make one.)
+    @Test func rescanDropsAWindowTheAppOrderedOut() async throws {
+        let s = try Session([CGRect(x: 280, y: 240, width: 400, height: 280), CGRect(x: 720, y: 240, width: 400, height: 280)],
+                            options: ["--still"])
+        let (tracker, seen, end) = blindTracker(s)
+        defer { end() }
+        #expect(await s.until { seen.appeared.count == 2 })
+        let hidden = try #require(seen.appeared.first { s.axWindow($0)?.value(kAXTitleAttribute) as? String == "PT-1" })
+        let element = try #require(s.axWindow(hidden))
+        kill(s.pid, SIGINFO) // orders PT-1 out
+        #expect(await s.until { s.axWindow(hidden) == nil })
+        #expect(element.isGone)
+        tracker.rescan()
+        #expect(await s.until { seen.closed == [hidden] })
     }
 
     @Test func stillOfAParkedWindow() async throws {
@@ -409,6 +413,31 @@ struct WindowTests {
 /// Events from a tracker's queue, kept on the main queue.
 private final class Seen: @unchecked Sendable {
     var events: [SystemEvent] = []
+    var appeared: [WindowID] { events.compactMap { if case .windowAppeared(let w) = $0 { w.id } else { nil } } }
+    var closed: [WindowID] { events.compactMap { if case .windowClosed(let id) = $0 { id } else { nil } } }
+}
+
+/// A tracker of the session's helper whose notifications never arrive: its
+/// observer thread is blocked. `end` stops it and the helper (the session's
+/// registry never started, so not `s.end()`).
+@MainActor
+private func blindTracker(_ s: Session) -> (AppTracker, Seen, () -> Void) {
+    let thread = RunLoopThread(name: "test.blocked-observers")
+    thread.startAndWait()
+    let release = DispatchSemaphore(value: 0)
+    thread.perform { @Sendable in release.wait() } // not on the main actor: it runs on that thread
+    let seen = Seen()
+    let tracker = AppTracker(pid: s.pid, bundleID: nil, appName: "", observerThread: thread) { @Sendable event in
+        DispatchQueue.main.async { seen.events.append(event) }
+    }
+    tracker.start()
+    return (tracker, seen, {
+        tracker.stop()
+        release.signal()
+        thread.stop()
+        s.process.terminate()
+        s.process.waitUntilExit()
+    })
 }
 
 /// The bottom-right corner of `screen` with 1 pt showing, as AeroSpace parks.

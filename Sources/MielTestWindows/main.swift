@@ -5,7 +5,8 @@
 //
 // They repaint 60 times a second (like a video), unless --still. --hidden
 // hides the app once it runs. --untitled opens PT-1 without a title bar, so
-// it is not a standard window until SIGUSR2 gives it one.
+// it is not a standard window until SIGUSR2 gives it one. SIGINFO orders PT-1
+// out: hidden, not closed, as apps that close to the menu bar do.
 //
 // Frames are global points, y-down from the primary display's top-left, like
 // everything in mielwm. Windows are titled PT-1 ... PT-N. Prints its pid,
@@ -74,6 +75,10 @@ signal(SIGUSR2, SIG_IGN)
 let styleSignal = DispatchSource.makeSignalSource(signal: SIGUSR2, queue: .main)
 styleSignal.setEventHandler { windows.first?.styleMask = standardStyle }
 styleSignal.resume()
+signal(SIGINFO, SIG_IGN)
+let orderOutSignal = DispatchSource.makeSignalSource(signal: SIGINFO, queue: .main)
+orderOutSignal.setEventHandler { windows.first?.orderOut(nil) }
+orderOutSignal.resume()
 if CommandLine.arguments.contains("--hidden") { DispatchQueue.main.async { app.hide(nil) } }
 
 print(ProcessInfo.processInfo.processIdentifier)
