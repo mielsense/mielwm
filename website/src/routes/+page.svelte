@@ -3,6 +3,7 @@
 	import { Button } from '@mielui/svelte/components/button';
 	import { CodeBlock } from '@mielui/svelte/components/code-block';
 	import Icon from '@/components/Icon.svelte';
+	import LensShot from '@/components/LensShot.svelte';
 	import Shot from '@/components/Shot.svelte';
 	import Sticker from '@/components/Sticker.svelte';
 	import { ArrowUpRightIcon, BookIcon, ChartIcon, ChevronLeftIcon, ChevronRightIcon, CommandIcon, DownloadIcon, GithubIcon, LayersIcon, SearchIcon, SparkleIcon, TerminalIcon, WrenchIcon, type IconData } from '@/icons';
@@ -100,13 +101,9 @@ scripts/build-app.sh --install`;
 			</div>
 			<p class="text-sm text-default">Free and open source. macOS 15 or later, Apple silicon.</p>
 		</div>
-		<!-- the lavender mesh drifts slowly behind the overview -->
-		<div class="wrap">
-			<div class="grain dusk rounded-[24px] p-3 sm:p-8 lg:p-12" data-rise>
-				<div class="overflow-hidden rounded-[12px] shadow-[0_0_0_1px_rgb(0_0_0/0.14),0_30px_70px_-20px_rgb(20_10_80/0.55)]">
-					<Shot name="overview" widths={[2200, 1200]} {...wide} priority sizes="(min-width: 88rem) 77rem, (min-width: 64rem) calc(100vw - 11rem), (min-width: 40rem) calc(100vw - 8rem), calc(100vw - 4rem)" alt="The overview: windows from every workspace laid out on the canvas, the focused one outlined, the capsule search field on top." />
-				</div>
-			</div>
+		<!-- the overview through mielwm's own lens, flattening as the page scrolls -->
+		<div class="wrap" data-rise>
+			<LensShot name="overview" widths={[2200, 1200]} {...wide} priority sizes="(min-width: 88rem) 83rem, (min-width: 64rem) calc(100vw - 5rem), (min-width: 40rem) calc(100vw - 4rem), calc(100vw - 2.5rem)" alt="The overview: windows from every workspace laid out on the canvas, the focused one outlined, the capsule search field on top." />
 		</div>
 	</section>
 
@@ -230,30 +227,32 @@ scripts/build-app.sh --install`;
 		</section>
 	</div>
 
-	<!-- keyboard -->
-	<section class="group/section wrap grid grid-cols-[minmax(0,1fr)] items-center gap-10 py-16 sm:py-24 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16" aria-labelledby="keys">
-		<div class="flex flex-col gap-4">
-			{@render label('Keyboard first', CommandIcon, mesh.lime)}
-			<h2 id="keys" class={title}>Your hands stay on the keys</h2>
-			<p class="text-base leading-relaxed">Everything has a shortcut, and every shortcut can be changed in Settings. These are the ones you'll use most.</p>
-			<ul class="tile flex flex-col divide-y divide-border overflow-hidden rounded-[16px]">
-				{#each keys as row (row.does)}
-					<li class="flex items-center gap-4 px-4 py-3">
-						<span class="flex w-28 shrink-0 items-center gap-1.5 text-subtle">
-							<kbd class="key text-base">{row.keys[0]}</kbd>
-							{#if row.keys[1]}<span aria-label="to">…</span><kbd class="key text-base">{row.keys[1]}</kbd>{/if}
-						</span>
-						<span class="text-base text-strong">{row.does}</span>
-					</li>
-				{/each}
-			</ul>
-			{@render more('/docs/keyboard', 'Every key')}
-		</div>
-		<div class="flex flex-col gap-3">
-			<Shot stage={mesh.lime} name="switcher" widths={[1600, 900]} {...wide} sizes="(min-width: 88rem) 42rem, (min-width: 64rem) 48vw, calc(100vw - 4rem)" alt="The window switcher over two tiled windows: a row of app icons with Terminal selected and its window's title below." />
-			<p class="text-sm text-subtle">Hold <kbd class="key">⌥</kbd> and tap <kbd class="key">Tab</kbd> for the switcher. Let go to switch.</p>
-		</div>
-	</section>
+	<!-- keyboard: one wide card, the keys beside the switcher -->
+	<div class="wrap py-16 sm:py-24">
+		<section class="tile group/section grid grid-cols-[minmax(0,1fr)] gap-2 p-2 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]" aria-labelledby="keys">
+			<div class="{copy} justify-center lg:p-8">
+				{@render label('Keyboard first', CommandIcon, mesh.lime)}
+				<h2 id="keys" class={title}>Your hands stay on the keys</h2>
+				<p class="text-base leading-relaxed">Everything has a shortcut, and every shortcut can be changed in Settings. These are the ones you'll use most.</p>
+				<ul class="flex flex-col divide-y divide-border">
+					{#each keys as row (row.does)}
+						<li class="flex items-center gap-4 py-2.5">
+							<span class="flex w-28 shrink-0 items-center gap-1.5 text-subtle">
+								<kbd class="key text-base">{row.keys[0]}</kbd>
+								{#if row.keys[1]}<span aria-label="to">…</span><kbd class="key text-base">{row.keys[1]}</kbd>{/if}
+							</span>
+							<span class="text-base text-strong">{row.does}</span>
+						</li>
+					{/each}
+				</ul>
+				{@render more('/docs/keyboard', 'Every key')}
+			</div>
+			<div class="flex flex-col gap-3">
+				<Shot stage={mesh.lime} class="flex-1" name="switcher" widths={[1600, 900]} {...wide} sizes="(min-width: 88rem) 48rem, (min-width: 64rem) 55vw, calc(100vw - 5rem)" alt="The window switcher over two tiled windows: a row of app icons with Terminal selected and its window's title below." />
+				<p class="px-4 pb-3 text-sm text-subtle">Hold <kbd class="key">⌥</kbd> and tap <kbd class="key">Tab</kbd> for the switcher. Let go to switch.</p>
+			</div>
+		</section>
+	</div>
 
 	<!-- performance -->
 	<section class="group/section wrap flex flex-col gap-8 pb-16 sm:pb-24" aria-labelledby="performance">
