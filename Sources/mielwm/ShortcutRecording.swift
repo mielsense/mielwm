@@ -111,6 +111,6 @@ extension NSEvent.ModifierFlags {
 }
 
 extension ShortcutFamily {
-    /// "1–9" or "←→↑↓": the keys after the modifiers.
-    var keysSymbol: String { usesDigits ? "1–9" : "←→↑↓" }
+    /// "1-9" or "←→↑↓": the keys after the modifiers.
+    var keysSymbol: String { usesDigits ? "1-9" : "←→↑↓" }
 }

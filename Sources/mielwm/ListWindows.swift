@@ -59,7 +59,7 @@ func listWindows(json: Bool, fps: Bool, pid: Int32?) {
         if w.isMinimized { flags.append("minimized") }
         if onScreen[w.id.number] == false { flags.append("sck-offscreen") }
         if let r = rates[w.id] { flags.append(String(format: "%.0ffps", r)) }
-        let title = w.title.isEmpty ? "" : " “\(w.title)”"
+        let title = w.title.isEmpty ? "" : " \"\(w.title)\""
         print("\(w.id)\t\(w.appName)\(title)\t\(fmt(w.frame))\t\(flags.joined(separator: " "))")
     }
 }

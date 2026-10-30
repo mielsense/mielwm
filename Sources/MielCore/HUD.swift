@@ -179,7 +179,7 @@ public extension CanvasState {
         return [
             HelpSection(title: "Search", entries: [
                 ("Type", "Search windows"), ("↑ ↓ ⇥ ⇧⇥", "Next, previous result"), ("↩", "Go to the window"), ("⇧↩", "Bring it here"),
-                ("⌘1–9", "Go to that result"), ("esc", "Clear, then go back"),
+                ("⌘1-9", "Go to that result"), ("esc", "Clear, then go back"),
             ]),
             HelpSection(title: "Mouse and trackpad", entries: mouse),
             HelpSection(title: "Canvas", entries: [
@@ -233,7 +233,7 @@ public extension CanvasState {
             }
             for (mods, keys) in runs.sorted(by: { $0.key.rawValue < $1.key.rawValue }) {
                 let prefix = String(KeyChord(modifiers: mods, key: "a").symbol.dropLast())
-                if Set(keys) == arrows { plain.append(prefix + "←→↑↓") } else if Set(keys) == digits { plain.append(prefix + "1–9") } else {
+                if Set(keys) == arrows { plain.append(prefix + "←→↑↓") } else if Set(keys) == digits { plain.append(prefix + "1-9") } else {
                     plain.append(keys.map { KeyChord(modifiers: mods, key: $0).symbol }.joined(separator: " "))
                 }
             }

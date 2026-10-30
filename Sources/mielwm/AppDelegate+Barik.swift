@@ -47,14 +47,14 @@ extension AppDelegate {
                 next to it. Then it starts a hidden helper called AeroSpace and relaunches Barik, so Barik \
                 shows mielwm's workspaces.
                 """ + (icon ? " mielwm's own menu bar item changes to its icon, so the workspaces don't show twice." : "")
-            alert.addButton(withTitle: "Turn On")
+            alert.addButton(withTitle: "Turn on")
         } else {
             alert.messageText = "Stop working with Barik?"
             alert.informativeText = """
                 mielwm will put Barik's old aerospace.path back in \(file), quit its AeroSpace helper and \
                 relaunch Barik.
                 """
-            alert.addButton(withTitle: "Turn Off")
+            alert.addButton(withTitle: "Turn off")
         }
         alert.addButton(withTitle: "Cancel")
         return alert

@@ -193,6 +193,8 @@ func threeWindows() -> CanvasState {
         .flatMap { $0.split { !$0.isLetter } }.filter { $0.count > 1 }
     #expect(!words.isEmpty)
     #expect(words.allSatisfy { $0 != $0.uppercased() }, "no word in all caps")
+    let keys = hud.help.flatMap { $0.entries.map(\.keys) }
+    #expect(!keys.joined().contains { "“”‘’–—".contains($0) }, "straight quotes and hyphens only")
 }
 
 @Test func helpListsEveryKeyIncludingRemaps() {
@@ -204,9 +206,9 @@ func threeWindows() -> CanvasState {
     let help = s.helpSections
     #expect(help.map(\.title) == ["Search", "Mouse and trackpad", "Canvas", "Anywhere", "Workspaces"])
     let keys = Set(help.flatMap { $0.entries.map(\.keys) })
-    for key in ["⌘1–9", "⇧↩", "esc", "↑ ↓ ⇥ ⇧⇥", "⌘0", "⌘F", "⌘A", "⌘Z ⌘⇧Z", "⌘,", "⌃⌥ drag", "⇧⌘Space", "⌥←→↑↓",
+    for key in ["⌘1-9", "⇧↩", "esc", "↑ ↓ ⇥ ⇧⇥", "⌘0", "⌘F", "⌘A", "⌘Z ⌘⇧Z", "⌘,", "⌃⌥ drag", "⇧⌘Space", "⌥←→↑↓",
                 "⌥⇧←→↑↓", "⌥⇥ ⌥⇧⇥", "⌥T", "⌥F", "⌥O", "⌥= ⌥-",
-                "⌥/", "⌥,", "⌥.", "⌥1–9", "⌥⇧1–9", "⌃← ⌃→", "Menu bar"] {
+                "⌥/", "⌥,", "⌥.", "⌥1-9", "⌥⇧1-9", "⌃← ⌃→", "Menu bar"] {
         #expect(keys.contains(key), "missing \(key)")
     }
     #expect(!keys.contains("⌃⌥G"))
