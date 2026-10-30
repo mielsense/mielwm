@@ -36,8 +36,8 @@ private struct NoticeInk {
 
     var primary: NSColor { .labelColor }
     var secondary: NSColor { increaseContrast ? .labelColor : .secondaryLabelColor }
-    var accentFill: NSColor { NSColor(srgbRed: accent.r, green: accent.g, blue: accent.b, alpha: 1) }
-    var onAccent: NSColor { accent.wantsDarkText ? NSColor(white: 0, alpha: 0.85) : .white }
+    var accentFill: NSColor { NSColor(accent) }
+    var onAccent: NSColor { accent.onAccent }
     /// The front window's capsule in the stack strip, and keycaps.
     var raised: NSColor { NSColor.labelColor.withAlphaComponent(increaseContrast ? 0.2 : 0.1) }
 }
@@ -142,7 +142,7 @@ private func stackDrawing(_ n: StackNotice, _ ink: NoticeInk, maxWidth: CGFloat)
                 ink.raised.setFill()
                 NSBezierPath(roundedRect: r, xRadius: chip / 2, yRadius: chip / 2).fill()
             }
-            let image = e.bundleID.map { AppInfo(bundleID: $0).icon } ?? NSWorkspace.shared.icon(for: .applicationBundle)
+            let image = AppInfo.icon(for: e.bundleID)
             image.draw(in: NSRect(x: r.minX + iconInset, y: r.minY + iconInset, width: icon, height: icon), from: .zero, operation: .sourceOver,
                        fraction: front ? 1 : 0.7, respectFlipped: true, hints: [.interpolation: NSImageInterpolation.high.rawValue])
             if w > chip {

@@ -1,5 +1,7 @@
 // The HUD, rasterized with Core Text into textures that are composited after
-// the lens, so text is never bent. It looks like macOS's own overlays
+// the lens, so text is never bent. The live overview draws its HUD natively
+// (Sources/mielwm/ChromeViews.swift); this copy draws `mielwm snapshot` and
+// the render tests, frosted, so a change to one belongs in the other. It looks like macOS's own overlays
 // (Spotlight, the app switcher, the volume HUD): SF Pro at 12-24 pt, panels
 // over a blur, keycaps for keys. Every length is in device pixels (`s` =
 // backing scale × hud scale); the palette's metrics are Core's PaletteMetrics.
@@ -207,7 +209,7 @@ final class HUDPainter {
 
         let top = PaletteMetrics.top(look, screenHeight: view.size.height / view.scale, topInset: view.topInset / view.scale) * view.scale
         return layer(b, key: key, at: CGPoint(x: ((view.size.width - CGFloat(b.width)) / 2).rounded(), y: (top - m).rounded()),
-                     caret: caret, panels: cardHeight > 0 ? [(field, fieldHeight / 2), (card, cardRadius)] : [(field, fieldHeight / 2)])
+                     caret: caret, panels: [(field, fieldHeight / 2)] + (cardHeight > 0 ? [(card, cardRadius)] : []))
     }
 
     /// Spotlight's field: a magnifying glass and the query in the biggest
@@ -311,11 +313,9 @@ final class HUDPainter {
         let s = view.scale * look.hudScale
         let pad = 12 * s, tileGap = 4 * s, tile = 104 * s, icon = 80 * s
         let m = theme.shadowMargin(s)
-        let maxTiles = max(1, Int((view.size.width * 0.9 - pad * 2 + tileGap) / (tile + tileGap)))
         let count = hud.rows.count
-        let shown = min(count, maxTiles)
-        let selected = min(max(hud.selectedRow ?? 0, 0), count - 1)
-        let first = max(0, min(selected - shown / 2, count - shown))
+        let (first, shown, selected) = PaletteMetrics.switcherWindow(count: count, selected: hud.selectedRow,
+                                                                     maxTiles: Int((view.size.width * 0.9 - pad * 2 + tileGap) / (tile + tileGap)))
         let titleStyle = TextStyle(size: look.titleSize * s)
         let titleBand = 44 * s // the title, then as much room below it as above the icons
         let width = CGFloat(shown) * tile + CGFloat(shown - 1) * tileGap + pad * 2

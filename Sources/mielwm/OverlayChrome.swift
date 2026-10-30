@@ -13,6 +13,15 @@ struct ChromeContent: Equatable {
     var worldShown = true // the canvas is drawn behind; false: the live desktop (⌥Tab on its own)
 }
 
+extension ChromeContent {
+    /// The chrome for `scene`'s display, taking its HUD: Metal then draws the canvas without it.
+    init(taking scene: inout MielCore.Scene, worldShown: Bool = true) {
+        let s = scene.screen
+        self.init(hud: scene.hud, look: scene.look, size: s.frame.size, topInset: s.topInset, bottomInset: s.bottomInset, worldShown: worldShown)
+        scene.hud = HUDModel()
+    }
+}
+
 @MainActor
 final class ChromeModel: ObservableObject {
     @Published var content = ChromeContent()
@@ -23,14 +32,15 @@ final class ChromeModel: ObservableObject {
 /// It takes no clicks, keys or scrolls: the canvas view below it handles
 /// input exactly as before.
 final class OverlayChrome: NSView {
-    private let model = ChromeModel()
     /// The palette and the pills fade in with the zoom; the switcher and toasts show at once.
+    /// Each has its own model, so a toast or a new selection in the switcher leaves the palette alone.
+    private let easedModel = ChromeModel(), steadyModel = ChromeModel()
     private let eased: NSHostingView<EasedChrome>
     private let steady: NSHostingView<SteadyChrome>
 
     init() {
-        eased = NSHostingView(rootView: EasedChrome(model: model))
-        steady = NSHostingView(rootView: SteadyChrome(model: model))
+        eased = NSHostingView(rootView: EasedChrome(model: easedModel))
+        steady = NSHostingView(rootView: SteadyChrome(model: steadyModel))
         super.init(frame: .zero)
         wantsLayer = true
         for host in [eased, steady] as [NSView] {
@@ -47,7 +57,14 @@ final class OverlayChrome: NSView {
 
     /// One frame of the overlay: the HUD for this display, faded with the camera's `transition` and the overlay's `opacity`.
     func show(_ content: ChromeContent, transition: Double, opacity: Double) {
-        if model.content != content { model.content = content }
+        var palette = content, rest = content
+        palette.hud.toast = nil
+        if content.hud.mode == .switcher { palette.hud.rows = [] }
+        rest.hud = HUDModel()
+        rest.hud.toast = content.hud.toast
+        if content.hud.mode == .switcher { (rest.hud.mode, rest.hud.rows, rest.hud.selectedRow) = (.switcher, content.hud.rows, content.hud.selectedRow) }
+        if easedModel.content != palette { easedModel.content = palette }
+        if steadyModel.content != rest { steadyModel.content = rest }
         let t = min(max(transition, 0), 1), ease = t * t * (3 - 2 * t) // smoothstep, as the Metal HUD faded
         set(eased, ease * opacity)
         set(steady, opacity)
@@ -55,7 +72,7 @@ final class OverlayChrome: NSView {
 
     /// Hidden: nothing stale shows for a frame when the overlay comes back.
     func clear() {
-        if model.content.hud != HUDModel() { model.content.hud = HUDModel() }
+        for m in [easedModel, steadyModel] where m.content.hud != HUDModel() { m.content.hud = HUDModel() }
     }
 
     private func set(_ view: NSView, _ alpha: Double) {

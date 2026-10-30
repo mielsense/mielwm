@@ -81,11 +81,7 @@ final class AppearancePreview: ObservableObject {
             _ = state.send(.tick(t))
         }
         var scene = state.scene(for: screen, time: t)
-        let s = screen
-        chrome.content = ChromeContent(hud: scene.hud, look: scene.look, size: s.frame.size,
-                                       topInset: max(s.safeAreaTop, s.visibleFrame.minY - s.frame.minY),
-                                       bottomInset: max(0, s.frame.maxY - s.visibleFrame.maxY))
-        scene.hud = HUDModel()
+        chrome.content = ChromeContent(taking: &scene)
         frames.update(scene.windows)
         let width = 960.0 // px: the pane shows it at about half that, on a Retina display
         image = renderer.renderImage(scene, frames: frames, pixelSize: CGSize(width: width, height: (width * screen.frame.height / screen.frame.width).rounded()))

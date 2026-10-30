@@ -151,7 +151,7 @@ private struct ResultRow: View {
 
     var body: some View {
         let s = look.hudScale, icon = (look.rowHeight * 0.66).rounded() * s
-        let onAccent: Color = look.accent.wantsDarkText ? .black.opacity(0.85) : .white
+        let onAccent = Color(nsColor: look.accent.onAccent)
         HStack(spacing: 10 * s) {
             AppIcon(bundleID: row.bundleID).frame(width: icon, height: icon)
             VStack(alignment: .leading, spacing: 1 * s) {
@@ -183,11 +183,11 @@ private struct ResultRow: View {
 
     /// The title with the letters the search matched in semibold.
     private func highlighted(_ title: String, _ ranges: [Range<Int>]) -> AttributedString {
-        var out = AttributedString()
-        for (i, ch) in title.enumerated() {
-            var piece = AttributedString(String(ch))
-            if ranges.contains(where: { $0.contains(i) }) { piece.font = .system(size: look.titleSize * look.hudScale, weight: .semibold) }
-            out += piece
+        var out = AttributedString(title)
+        let chars = Array(out.characters.indices)
+        for r in ranges where r.lowerBound >= 0 && r.upperBound <= chars.count && !r.isEmpty {
+            let end = r.upperBound < chars.count ? chars[r.upperBound] : out.endIndex
+            out[chars[r.lowerBound] ..< end].font = .system(size: look.titleSize * look.hudScale, weight: .semibold)
         }
         return out
     }
@@ -291,9 +291,8 @@ private struct Switcher: View {
         let hud = content.hud, look = content.look, s = look.hudScale
         let pad = 12 * s, gap = 4 * s, tile = 104 * s, icon = 80 * s, radius = 22 * s
         let count = hud.rows.count
-        let shown = min(count, max(1, Int((content.size.width * 0.9 - pad * 2 + gap) / (tile + gap))))
-        let selected = min(max(hud.selectedRow ?? 0, 0), count - 1)
-        let first = max(0, min(selected - shown / 2, count - shown))
+        let (first, shown, selected) = PaletteMetrics.switcherWindow(count: count, selected: hud.selectedRow,
+                                                                     maxTiles: Int((content.size.width * 0.9 - pad * 2 + gap) / (tile + gap)))
         let row = hud.rows[selected]
         VStack(spacing: 0) {
             HStack(spacing: gap) {
@@ -368,7 +367,7 @@ private struct AppIcon: View {
     let bundleID: String?
 
     var body: some View {
-        Image(nsImage: bundleID.map { AppInfo(bundleID: $0).icon } ?? NSWorkspace.shared.icon(for: .applicationBundle))
+        Image(nsImage: AppInfo.icon(for: bundleID))
             .resizable()
             .interpolation(.high)
     }
@@ -432,12 +431,13 @@ private struct ChromeMaterial<S: InsettableShape>: ViewModifier {
 
     func body(content: Content) -> some View {
         Group {
-            if look.reduceTransparency {
+            switch NoticeMaterial.current(look) {
+            case .solid:
                 content.background(shape.fill(Color(nsColor: .windowBackgroundColor)))
                     .shadow(color: .black.opacity(look.dark ? 0.4 : 0.2), radius: 14, y: 4)
-            } else if look.liquid, #available(macOS 26, *) {
-                content.glassEffect(.regular, in: shape)
-            } else {
+            case .glass:
+                if #available(macOS 26, *) { content.glassEffect(.regular, in: shape) }
+            case .hud:
                 content.background(Frosted(behindWindow: behindWindow).clipShape(shape))
                     .shadow(color: .black.opacity(look.dark ? 0.4 : 0.2), radius: 14, y: 4)
             }
@@ -468,6 +468,18 @@ extension Color {
 
 extension NSColor {
     convenience init(_ c: RGB) { self.init(srgbRed: c.r, green: c.g, blue: c.b, alpha: 1) }
+}
+
+extension RGB {
+    /// Text on the accent: dark on a light one, white on the rest.
+    var onAccent: NSColor { wantsDarkText ? NSColor(white: 0, alpha: 0.85) : .white }
+}
+
+extension AppInfo {
+    /// The app's icon, or the generic one without a bundle id.
+    @MainActor static func icon(for bundleID: String?) -> NSImage {
+        bundleID.map { AppInfo(bundleID: $0).icon } ?? NSWorkspace.shared.icon(for: .applicationBundle)
+    }
 }
 
 extension Array {

@@ -6,8 +6,7 @@ extension Renderer {
         let model = scene.hud
         let screen = scene.screen
         let view = HUDView(size: pxSize, scale: scale,
-                           topInset: max(screen.safeAreaTop, screen.visibleFrame.minY - screen.frame.minY) * scale,
-                           bottomInset: max(0, screen.frame.maxY - screen.visibleFrame.maxY) * scale,
+                           topInset: screen.topInset * scale, bottomInset: screen.bottomInset * scale,
                            minimapTop: minimapTop)
         var base = Hasher()
         base.combine(lookRevision)

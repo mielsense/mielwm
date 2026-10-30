@@ -239,11 +239,9 @@ public struct CanvasState: Sendable {
         var top = m, bottom = size.height - m
         if hudShown, screen.id == activeScreen.id {
             let l = look
-            let topInset = max(screen.safeAreaTop, screen.visibleFrame.minY - screen.frame.minY)
-            let bottomInset = max(0, screen.frame.maxY - screen.visibleFrame.maxY)
-            top = PaletteMetrics.top(l, screenHeight: size.height, topInset: topInset)
+            top = PaletteMetrics.top(l, screenHeight: size.height, topInset: screen.topInset)
                 + PaletteMetrics.height(l, rows: paletteRowsShown, footer: paletteFooterShown) * l.hudScale + m
-            bottom = size.height - PaletteMetrics.hintsMargin(l, bottomInset: bottomInset) - PaletteMetrics.hintsHeight(l) - m
+            bottom = size.height - PaletteMetrics.hintsMargin(l, bottomInset: screen.bottomInset) - PaletteMetrics.hintsHeight(l) - m
         }
         return CGRect(x: m, y: top, width: max(1, size.width - m * 2), height: max(1, bottom - top))
     }

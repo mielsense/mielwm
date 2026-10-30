@@ -43,6 +43,10 @@ public struct ScreenInfo: Hashable, Codable, Sendable {
         self.safeAreaTop = safeAreaTop
         self.isBuiltIn = isBuiltIn
     }
+
+    /// Room the notch or the menu bar takes at the top, and the Dock at the bottom, in points.
+    public var topInset: CGFloat { max(safeAreaTop, visibleFrame.minY - frame.minY) }
+    public var bottomInset: CGFloat { max(0, frame.maxY - visibleFrame.maxY) }
 }
 
 public struct WindowSnapshot: Hashable, Codable, Sendable {
@@ -427,8 +431,7 @@ public struct HelpSection: Hashable, Sendable {
     }
 
     public static func == (a: HelpSection, b: HelpSection) -> Bool {
-        a.title == b.title && a.entries.map(\.keys) == b.entries.map(\.keys)
-            && a.entries.map(\.action) == b.entries.map(\.action)
+        a.title == b.title && a.entries.elementsEqual(b.entries) { $0.keys == $1.keys && $0.action == $1.action }
     }
 
     public func hash(into h: inout Hasher) {

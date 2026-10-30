@@ -21,6 +21,13 @@ public enum PaletteMetrics {
         return look.searchHeight + cardGap + listInset * 2 + Double(rows) * look.rowHeight + (footer ? footerHeight : 0)
     }
 
+    /// The ⌥Tab switcher's icons that fit `maxTiles` across: the selected one
+    /// (clamped), and the first shown, keeping the selection near the middle.
+    public static func switcherWindow(count: Int, selected: Int?, maxTiles: Int) -> (first: Int, shown: Int, selected: Int) {
+        let shown = min(count, max(1, maxTiles)), selected = min(max(selected ?? 0, 0), count - 1)
+        return (max(0, min(selected - shown / 2, count - shown)), shown, selected)
+    }
+
     /// The palette's top edge, in points from the screen's top; `topInset` is the notch or menu bar.
     public static func top(_ look: Look, screenHeight: Double, topInset: Double) -> Double {
         max(screenHeight * look.paletteTop, topInset + 12 * look.hudScale)

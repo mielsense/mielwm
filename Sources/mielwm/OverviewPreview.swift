@@ -16,7 +16,7 @@ func overviewPreview(_ args: [String]) -> Never {
     guard let screen = Displays.screens().first, let ns = NSScreen.screens.first, let renderer = try? Renderer() else { fail("no display or Metal") }
     var wallpaper: CGImage?, loaded = false
     MielSystem.Wallpaper.image(for: screen) { wallpaper = $0; loaded = true }
-    while !loaded { pump(0.05) }
+    spin(5) { loaded }
     renderer.setWallpaper(wallpaper, screenID: screen.id)
 
     // The overlay as the app makes it: the canvas, the chrome above it. A second window
@@ -74,15 +74,11 @@ func overviewPreview(_ args: [String]) -> Never {
                 if name == "toast" { _ = state.send(.action(.arrange)) } // toasts last 1.8 s: raised once the overview has settled
                 var scene = state.scene(for: screen, time: 4.2)
                 let worldShown = state.isOverview
-                let hud = scene.hud
-                scene.hud = HUDModel()
+                let content = ChromeContent(taking: &scene, worldShown: worldShown)
                 let picture = render(worldShown ? scene : desk, renderer, screen, scale: ns.backingScaleFactor)
                 canvas.layer?.contents = worldShown ? picture : nil
                 desktop.contentView?.layer?.contents = worldShown ? nil : picture
-                chrome.show(ChromeContent(hud: hud, look: scene.look, size: screen.frame.size,
-                                          topInset: max(screen.safeAreaTop, screen.visibleFrame.minY - screen.frame.minY),
-                                          bottomInset: max(0, screen.frame.maxY - screen.visibleFrame.maxY), worldShown: worldShown),
-                            transition: 1, opacity: 1)
+                chrome.show(content, transition: 1, opacity: 1)
                 desktop.orderFrontRegardless()
                 overlay.orderFrontRegardless()
                 pump(1.2) // past the caret's off phase
