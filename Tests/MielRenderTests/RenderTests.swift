@@ -147,6 +147,27 @@ private func render(_ scene: Scene, _ state: String, frames: SyntheticFrames? = 
         #expect(pixels.looksDrawn)
     }
 
+    // At rest the wallpaper is kept once, as its texture, not also as the decoded image.
+    // A new blur strength is still drawn from the texture.
+    @Test(metal) func aPreparedWallpaperLetsGoOfItsImageAndDrawsTheSame() throws {
+        var look = Look()
+        look.blur = true
+        let scene = Fixture.overview(Fixture.retina, look: look)
+        look.blurStrength = 0.2
+        let blurrier = Fixture.overview(Fixture.retina, look: look)
+        let frames = SyntheticFrames(windows: scene.windows, scale: 2)
+        func image(prepared: Bool) throws -> Pixels {
+            let renderer = try Renderer()
+            renderer.setWallpaper(Fixture.wallpaper, screenID: scene.screen.id)
+            if prepared {
+                renderer.prepare(scene)
+                #expect(renderer.screens[scene.screen.id]?.wallpaperImage == nil)
+            }
+            return Pixels(try #require(renderer.renderImage(blurrier, frames: frames)))
+        }
+        #expect(try image(prepared: true).bytes == image(prepared: false).bytes)
+    }
+
     @Test(metal) func lensStrengthBendsTheEdgesButNotTheCenter() throws {
         let screen = Fixture.retina
         var look = Look()

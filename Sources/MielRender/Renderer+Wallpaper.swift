@@ -4,8 +4,8 @@ import MielCore
 
 extension Renderer {
     func prepareWallpaper(_ s: ScreenState, look: Look, width: Int, height: Int, scale: CGFloat, commandBuffer cb: MTLCommandBuffer) {
-        guard look.wallpaperEnabled, let image = s.wallpaperImage else { return }
-        if s.wallpaper?.width != width || s.wallpaper?.height != height {
+        guard look.wallpaperEnabled else { return }
+        if let image = s.wallpaperImage, s.wallpaper?.width != width || s.wallpaper?.height != height {
             s.wallpaper = aspectFill(image, width: width, height: height)
             s.blurred = nil
         }

@@ -55,7 +55,6 @@ public final class Renderer {
     /// plain dark backdrop.
     public func setWallpaper(_ image: CGImage?, screenID: UInt32) {
         let s = state(screenID)
-        guard s.wallpaperImage !== image else { return }
         s.wallpaperImage = image
         s.wallpaper = nil
         s.blurred = nil
@@ -78,13 +77,16 @@ public final class Renderer {
     }
 
     /// Prepares `scene`'s wallpaper (scaled, blurred) without drawing, so
-    /// the first frame of the overview does not pay for it.
+    /// the first frame of the overview does not pay for it. The texture then
+    /// holds the picture and the image goes, which would double its memory:
+    /// call `setWallpaper` again when the display's size changes.
     public func prepare(_ scene: Scene) {
         guard let cb = queue.makeCommandBuffer() else { return }
-        let scale = scene.screen.scale
-        prepareWallpaper(state(scene.screen.id), look: scene.look, width: Int(scene.screen.frame.width * scale),
+        let s = state(scene.screen.id), scale = scene.screen.scale
+        prepareWallpaper(s, look: scene.look, width: Int(scene.screen.frame.width * scale),
                          height: Int(scene.screen.frame.height * scale), scale: scale, commandBuffer: cb)
         cb.commit()
+        if s.wallpaper != nil { s.wallpaperImage = nil }
     }
 
     /// Lets go of what only an open overlay needs: window pictures (made
