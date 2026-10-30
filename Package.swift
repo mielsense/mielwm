@@ -37,8 +37,10 @@ let package = Package(
                           dependencies: ["MielCore", "MielIPC", "MielRender", "MielSystem"],
                           swiftSettings: [.swiftLanguageMode(.v5)]),
         // Barik's `aerospace` command and the hidden AeroSpace helper app, one small binary
-        // (docs/aerospace.md). Barik runs it every few seconds, so it links no AppKit.
-        .executableTarget(name: "mielwm-aerospace", dependencies: ["MielIPC"], path: "Sources/MielAeroSpace"),
+        // (docs/aerospace.md). Barik runs it up to 40 times a second, so it links no Foundation.
+        // `os` and `Dispatch` autolink Combine, which loads Foundation: drop what goes unused.
+        .executableTarget(name: "mielwm-aerospace", path: "Sources/MielAeroSpace",
+                          linkerSettings: [.unsafeFlags(["-Xlinker", "-dead_strip_dylibs"])]),
         // Throwaway windows for system tests, so tests never move real ones.
         .executableTarget(name: "mielwm-testwindows", path: "Sources/MielTestWindows",
                           swiftSettings: [.swiftLanguageMode(.v5)]),

@@ -412,6 +412,43 @@ private func socketPath(_ name: String) -> String { "/tmp/mielwm-\(getpid())-\(n
     #expect(throws: IPCError.notRunning) { try IPCClient.send(["state"], path: path) }
 }
 
+/// Runs the built `aerospace` command against `path` and returns what it printed.
+private func aerospace(_ args: [String], socket path: String) async throws -> String {
+    let process = Process()
+    process.executableURL = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
+        .deletingLastPathComponent().appendingPathComponent(".build/debug/mielwm-aerospace")
+    process.arguments = args
+    process.environment = ["MIELWM_SOCKET": path]
+    let out = Pipe()
+    process.standardOutput = out
+    try process.run()
+    return try await Task.detached {
+        let data = try out.fileHandleForReading.readToEnd() ?? Data()
+        process.waitUntilExit()
+        return String(decoding: data, as: UTF8.self)
+    }.value
+}
+
+// The command speaks the socket protocol without Foundation, so check it against the real server.
+@Test(.disabled(if: ProcessInfo.processInfo.environment["CI"] != nil, "the command waits 0.3 s, and CI runners keep the main queue busy"))
+@MainActor func aerospaceCommandTalksToTheServer() async throws {
+    let path = socketPath("aero")
+    let odd = "quote \" backslash \\ tab \t newline \n é 🙂"
+    let server = try IPCServer(path: path) { args, reply in
+        switch args.dropFirst().first {
+        case "echo": reply(try! JSONEncoder().encode(Array(args.dropFirst(2))))
+        case "list-nothing": reply(Data(#"{"error":"unknown command"}"#.utf8))
+        default: reply(Data())
+        }
+    }
+    #expect(try await aerospace(["echo", odd, ""], socket: path) == #"["quote \" backslash \\ tab \t newline \n é 🙂",""]"# + "\n")
+    #expect(try await aerospace(["focus", "left"], socket: path) == "") // an action prints nothing
+    #expect(try await aerospace(["list-nothing"], socket: path) == "[]\n") // a command mielwm doesn't know
+    server.stop()
+    #expect(try await aerospace(["list-workspaces", "--all"], socket: path) == "[]\n") // no mielwm
+    #expect(try await aerospace(["workspace", "2"], socket: path) == "")
+}
+
 @Test func threeFingersSidewaysMakeOneStepPerSwipe() {
     var r = SwipeRecognizer()
     func fingers(_ x: Double, _ y: Double = 0.5) -> [CGPoint] { [-0.1, 0, 0.1].map { CGPoint(x: x + $0, y: y) } }
