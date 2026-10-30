@@ -110,7 +110,6 @@ final class Controller {
         // MIELWM_TEST_OVERLAY: manage-only draws the overlay too (it still never takes focus).
         if mode == .normal || ProcessInfo.processInfo.environment["MIELWM_TEST_OVERLAY"] != nil {
             do { renderer = try Renderer() } catch { log("no Metal renderer: \(error)") }
-            renderer?.drawsCaret = false // the overlays blink it in a layer
             rebuildOverlays()
             capture.onFirstFrame = { [weak self] id in MainActor.assumeIsolated { self?.firstFrame(id) } }
         }
