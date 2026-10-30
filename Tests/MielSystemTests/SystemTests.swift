@@ -443,3 +443,8 @@ private func socketPath(_ name: String) -> String { "/tmp/mielwm-\(getpid())-\(n
     registry.report(a)
     #expect(seen == [a, b, b, a])
 }
+
+// A registry that never started stops its observer thread, whose run loop doesn't exist yet.
+@Test func aThreadThatNeverStartedStopsQuietly() {
+    RunLoopThread(name: "mielwm.test").stop()
+}
