@@ -20,7 +20,10 @@ final class Controller {
     let mode: Mode
     let paths = ConfigPaths.standard()
     let layoutURL: URL
-    var state: CanvasState
+    var state: CanvasState {
+        didSet { if framesPaused { wakeFrames() } } // inputs and the appearance alike: the paused overview draws again
+    }
+    var framesPaused = false // some overlay's display link waits for `wakeFrames`
     var configErrors: [String]
     /// The menu refreshes on this.
     var onChange: (() -> Void)?

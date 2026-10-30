@@ -43,6 +43,7 @@ extension Controller {
         guard let renderer else { return }
         renderer.setWallpaper(image, screenID: screen.id)
         renderer.prepare(state.scene(for: screen))
+        wakeFrames()
     }
 
     /// Once the overlay has been hidden a while: its GPU memory goes, made
@@ -121,6 +122,20 @@ extension Controller {
         }
         scene.opacity = opacity
         overlay.draw(scene, renderer: renderer, frames: capture)
+        // Settled with nothing new to draw on any display: no frames (nor ticks, which would
+        // wake them) until an input, a state change or a new picture.
+        if overlay.idleFrames > Overlay.idleAfter, !state.needsTicks, restingSince == nil, fadeStart == nil,
+           overlays.values.allSatisfy({ $0.idleFrames > Overlay.idleAfter }) {
+            for o in overlays.values { o.view.link?.isPaused = true }
+            framesPaused = true
+            capture.wakeOnNextPicture { [weak self] in MainActor.assumeIsolated { self?.wakeFrames() } }
+        }
+    }
+
+    func wakeFrames() {
+        framesPaused = false
+        guard overlayShown else { return }
+        for o in overlays.values { o.wake() }
     }
 
     /// Ticks without an overlay (moves awaiting confirmation, the switcher's delay).
