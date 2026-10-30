@@ -77,7 +77,9 @@ func settingsPreview(_ args: [String]) -> Never {
     if args.contains("--selftest") {
         settingsSelfTest(model, settings, paths)
     }
-    let note = AeroSpaceImport.standardURL().flatMap { try? String(contentsOf: $0, encoding: .utf8) }.map {
+    // --aerospace reads a made-up config instead of yours, so the pictures show no real apps
+    let aeroSpaceURL = value("--aerospace", in: args).map { URL(fileURLWithPath: $0) } ?? AeroSpaceImport.standardURL()
+    let note = aeroSpaceURL.flatMap { try? String(contentsOf: $0, encoding: .utf8) }.map {
         var found = AeroSpaceImport(toml: $0)
         found.bindings = [:]
         return aeroSpaceImportNote(found)
@@ -113,7 +115,7 @@ func settingsPreview(_ args: [String]) -> Never {
             }
         }
         // The AeroSpace import, as the AeroSpace & Barik pane asks about it.
-        if let toml = AeroSpaceImport.standardURL().flatMap({ try? String(contentsOf: $0, encoding: .utf8) }) {
+        if let toml = aeroSpaceURL.flatMap({ try? String(contentsOf: $0, encoding: .utf8) }) {
             settings.show(.integrations)
             pump(0.5)
             model.aeroSpaceFound = AeroSpaceImport(toml: toml)
@@ -205,8 +207,9 @@ func settingsPreview(_ args: [String]) -> Never {
 @MainActor
 private func saveMenuPreview(to url: URL) {
     let controller = Controller(mode: .manageOnly(0))
-    // A window from each of the first open apps, spread over workspaces 1 to 3, so the menu lists them.
-    let apps = NSWorkspace.shared.runningApplications.filter { $0.activationPolicy == .regular && $0.bundleIdentifier != nil }.prefix(6)
+    // A window from each of the first open Apple apps, spread over workspaces 1 to 3, so the menu lists them
+    // without showing which other apps this Mac runs.
+    let apps = NSWorkspace.shared.runningApplications.filter { $0.activationPolicy == .regular && $0.bundleIdentifier?.hasPrefix("com.apple.") == true }.prefix(6)
     let screen = controller.state.screens.first?.visibleFrame ?? .zero
     controller.state.settings.defaultLayout = .tiles
     controller.state.settings.workspaceRules = apps.enumerated().map { "\($1.bundleIdentifier!)=\([1, 1, 1, 2, 3, 3][$0])" }.joined(separator: ",")

@@ -28,11 +28,12 @@ let usage = """
       mielwm --list-windows [--json] [--fps] [--pid <pid>]
                                   the windows Accessibility and ScreenCaptureKit see (regular
                                   apps, or any app with --pid); moves nothing
-      mielwm --settings-preview [--out <dir>] [--menu] [--selftest] [--live <pane>]
+      mielwm --settings-preview [--out <dir>] [--menu] [--selftest] [--live <pane>] [--aerospace <toml>]
                                   save the Settings panes, the onboarding, About and the menu
                                   bar indicator as PNGs, light and dark; --menu also the open
                                   menu; --selftest drives the window's controls instead; --live
-                                  keeps the window open 10 s. No canvas, moves nothing
+                                  keeps the window open 10 s; --aerospace reads that AeroSpace
+                                  config instead of yours. No canvas, moves nothing
                                   (development; the README has the rest)
       mielwm --overview-preview [--out <dir>] [--accessibility]
                                   save the overview's search, results, shortcuts, toast and
