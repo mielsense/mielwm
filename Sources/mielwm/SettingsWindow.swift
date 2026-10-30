@@ -62,6 +62,7 @@ final class SettingsWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
         NSApp.mainMenu = SettingsWindow.mainMenu // ⌘W, ⌘Q and editing keys while it is open
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
+        model.readScreen(window.screen)
     }
 
     // The title sits over the detail pane, after the sidebar's edge.
@@ -69,7 +70,12 @@ final class SettingsWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
     func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] { [.sidebarTrackingSeparator] }
     func toolbar(_ toolbar: NSToolbar, itemForItemIdentifier id: NSToolbarItem.Identifier, willBeInsertedIntoToolbar flag: Bool) -> NSToolbarItem? { nil }
 
-    func windowDidBecomeKey(_ notification: Notification) { model.reload() }
+    func windowDidBecomeKey(_ notification: Notification) {
+        model.reload()
+        model.readScreen(window.screen) // a status bar may have come or gone meanwhile
+    }
+
+    func windowDidChangeScreen(_ notification: Notification) { model.readScreen(window.screen) }
     func windowDidResignKey(_ notification: Notification) { model.recording = nil }
 
     func windowWillClose(_ notification: Notification) {

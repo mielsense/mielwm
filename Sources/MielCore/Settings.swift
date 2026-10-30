@@ -38,7 +38,8 @@ public struct Settings: Hashable, Codable, Sendable {
     public var gapOuterRight = 12.0
     public var gapOuterBottom = 12.0
     public var gapOuterTop = 12.0 // the built-in display
-    var gapOuterTopExternal = 54.0 // other displays (room for a status bar)
+    public var gapOuterTopExternal = 54.0 // other displays, in Custom
+    public var topGapMode = TopGapMode.auto // gaps:outer_top_external: "auto", "same" or a number (Custom)
     /// Bundle ids that always float, comma separated.
     public var floatingApps = "com.apple.systempreferences,com.apple.ActivityMonitor,com.apple.calculator,com.apple.archiveutility"
     /// "bundle.id=N" pairs, comma separated: windows of that app open on workspace N.

@@ -32,6 +32,7 @@ final class SettingsModel: ObservableObject {
     @Published var expanded: Set<ShortcutFamily> = [] // custom families showing their keys
     @Published var scrolled = false // the pane is scrolled: a line under the title bar
     @Published var cliStatus = CLITool.status()
+    @Published var screen: ScreenInfo? // the display the window is on, with its status bar
     /// The Appearance pane's canvas, made on the first visit; its GPU textures go when the window closes.
     var preview: AppearancePreview {
         if let madePreview { return madePreview }
@@ -121,6 +122,12 @@ final class SettingsModel: ObservableObject {
         }
         reload()
         onWrite()
+    }
+
+    func readScreen(_ screen: NSScreen?) {
+        let id = screen?.displayID
+        let info = Displays.screens().first { $0.id == id }
+        if info != self.screen { self.screen = info }
     }
 
     // MARK: Bindings for controls

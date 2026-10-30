@@ -59,7 +59,7 @@ extension CanvasState {
 @Test func tileAreaKeepsTheOuterGapsPerScreen() {
     let s = Settings()
     #expect(s.tileArea(on: builtIn) == area) // top gap 12 under the menu bar
-    #expect(s.tileArea(on: external) == CGRect(x: 1524, y: 54, width: 1896, height: 1014)) // 54 for a status bar
+    #expect(s.tileArea(on: external) == CGRect(x: 1524, y: 12, width: 1896, height: 1056)) // no status bar found
 }
 
 // MARK: New windows
@@ -163,9 +163,9 @@ extension CanvasState {
     let commands = s.send(.landOn(wid(2)))
     #expect(s.deskCamera.toDesk(s.slots.origin(2), deskCenter: s.deskCenter) == external.frame.origin)
     #expect(s.currentWorkspace == 2)
-    let tile = CGRect(x: 3684, y: 54, width: 1896, height: 1014) // laid out for the external display now
+    let tile = CGRect(x: 3684, y: 12, width: 1896, height: 1056) // laid out for the external display now
     #expect(s.canvasFrame(2) == tile)
-    #expect(moves(commands)[wid(2)] == CGRect(x: 1524, y: 54, width: 1896, height: 1014))
+    #expect(moves(commands)[wid(2)] == CGRect(x: 1524, y: 12, width: 1896, height: 1056))
     #expect(s.window(wid(1))?.parked == true)
     #expect(focuses(commands) == [wid(2)])
 }

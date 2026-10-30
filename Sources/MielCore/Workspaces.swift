@@ -82,7 +82,7 @@ func tileFrames(in area: CGRect, weights: [Double], horizontal: Bool, gap: Doubl
 extension Settings {
     /// What a workspace's tiles fill on `screen`: its visible frame inside the outer gaps.
     func tileArea(on screen: ScreenInfo) -> CGRect {
-        let v = screen.visibleFrame, top = screen.isBuiltIn ? gapOuterTop : gapOuterTopExternal
+        let v = screen.visibleFrame, top = topGap(on: screen)
         return CGRect(x: v.minX + gapOuterLeft, y: v.minY + top, width: max(1, v.width - gapOuterLeft - gapOuterRight),
                       height: max(1, v.height - top - gapOuterBottom)).roundedFrame
     }

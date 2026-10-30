@@ -305,7 +305,7 @@ extension CanvasState {
     /// (h) Screens came or went: keep canvas frames and the camera's offset
     /// from the desk, ignore reports for a moment, lay everything out again.
     mutating func screensChanged(_ new: [ScreenInfo]) {
-        let old = deskCenter
+        let old = deskCenter, oldScreens = screens
         screens = new
         let shift = CGVector(dx: deskCenter.x - old.x, dy: deskCenter.y - old.y)
         func moved(_ c: Camera) -> Camera { Camera(center: CGPoint(x: c.center.x + shift.dx, y: c.center.y + shift.dy), zoom: c.zoom) }
@@ -318,6 +318,10 @@ extension CanvasState {
         for k in workspaces.indices where !new.contains(where: { $0.id == workspaces[k].screenID }) {
             workspaces[k].screenID = nil // its screen left: it lays out for the primary one
             retile(workspaces[k].slot)
+        }
+        for ws in workspaces { // a status bar came or went: the Automatic top gap follows
+            let screen = layoutScreen(ws)
+            if let before = oldScreens.first(where: { $0.id == screen.id }), before.topBar != screen.topBar { retile(ws.slot) }
         }
         graceUntil = now + Self.screenGracePeriod
         sync()

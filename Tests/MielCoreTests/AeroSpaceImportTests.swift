@@ -33,7 +33,7 @@ import Testing
     var found = AeroSpaceImport(toml: realAeroSpaceConfig)
     found.floatingApps = ["com.apple.calculator", "com.new.app"]
     let changes = found.changes(onto: s, keys: false)
-    #expect(changes["gaps:outer_top_external"] == .some(nil)) // 54 is already the default
+    #expect(changes["gaps:outer_top_external"] == .some(.number(54))) // a number is Custom
     #expect(changes["gaps:inner_horizontal"] == .some(nil))
     #expect(changes["layout:floating_apps"] == .some(.text("com.apple.calculator,com.new.app")))
     let rules = changes["layout:workspace_rules"].flatMap { $0 }

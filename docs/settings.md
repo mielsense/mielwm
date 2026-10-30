@@ -18,7 +18,8 @@ Open Settings from the menu bar item, with `⌘,` in the overview, or with `miel
 ## Layout & workspaces
 
 - The layout new windows get, tiles, stack or floating, and which way tiles split.
-- The gaps between windows and around the screen edge, with a small diagram that updates as you type.
+- The gaps between windows and around the screen edge, with a small diagram that updates as you type. It shows the top gap on the display the Settings window is on.
+- The top edge: Automatic, Same as other edges, or Custom. [Workspaces and layouts](workspaces.md#a-status-bar-at-the-top) explains each.
 - Three-finger swipes between workspaces, with a warning when macOS's own swipe gets in the way.
 - Workspace rules, which send an app's windows to a fixed workspace.
 - Apps whose windows always float.

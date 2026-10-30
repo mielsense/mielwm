@@ -85,7 +85,6 @@ let settingPaths: [String: SettingPath] = [
     "gaps:outer_right": .number(\.gapOuterRight, 0 ... 400),
     "gaps:outer_bottom": .number(\.gapOuterBottom, 0 ... 400),
     "gaps:outer_top": .number(\.gapOuterTop, 0 ... 400),
-    "gaps:outer_top_external": .number(\.gapOuterTopExternal, 0 ... 400),
     "layout:floating_apps": .text(\.floatingApps),
     "layout:workspace_rules": .text(\.workspaceRules),
     "animation:enabled": .flag(\.animationEnabled),
@@ -125,7 +124,7 @@ public extension Settings {
     /// Every setting name config.json accepts, besides `keys:<chord>`.
     static var keys: [String] {
         (Array(settingPaths.keys) + ["canvas:grid_style", "animation:curve", "navigator:search_border_color",
-                                     "layout:default", "layout:orientation"]).sorted()
+                                     "layout:default", "layout:orientation", "gaps:outer_top_external"]).sorted()
     }
 
     /// What config.json holds for `key` to give `value`: nil (no entry) when it is the default.
@@ -142,6 +141,7 @@ public extension Settings {
         case "layout:default": return .text(defaultLayout.rawValue)
         case "layout:orientation": return .text(orientation.rawValue)
         case "navigator:search_border_color": return .text(look.searchBorderColor.map(hexString) ?? "accent")
+        case "gaps:outer_top_external": return topGapMode == .custom ? .number(gapOuterTopExternal) : .text(topGapMode.rawValue)
         default: break
         }
         switch settingPaths[key] {
@@ -189,6 +189,16 @@ public extension Settings {
             if s.lowercased() == "accent" { look.searchBorderColor = nil; return nil }
             guard let c = accentColor(s) else { return "'\(key)' takes \"accent\", a preset or #rrggbb" }
             look.searchBorderColor = c
+            return nil
+        case "gaps:outer_top_external": // a number is Custom, as it was before the modes
+            if case let .text(t) = value, let mode = TopGapMode(rawValue: t.lowercased()), mode != .custom {
+                topGapMode = mode
+            } else if case let .number(n) = value, n.isFinite {
+                topGapMode = .custom
+                gapOuterTopExternal = min(max(n, 0), 400)
+            } else {
+                return "'\(key)' takes \"auto\", \"same\" or a number"
+            }
             return nil
         default: break
         }

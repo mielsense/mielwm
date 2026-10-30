@@ -69,6 +69,17 @@ public enum BarikConfig {
         [home.appendingPathComponent(".barik-config.toml"), home.appendingPathComponent(".config/barik/config.toml")]
     }
 
+    /// How tall Barik draws its bar, from experimental.foreground.height: a
+    /// number, "menu-bar" (`menuBar`), or Barik's default of 55. Barik's
+    /// window covers the whole display, so its size does not say.
+    public static func barHeight(_ text: String, menuBar: Double) -> Double {
+        for entry in parseTOML(text) where (entry.section.isEmpty ? entry.key : entry.section + "." + entry.key) == "experimental.foreground.height" {
+            if case let .number(n) = entry.value { return n }
+            if case .string("menu-bar") = entry.value { return menuBar }
+        }
+        return 55
+    }
+
     /// `text` with aerospace.path set to `path`, and the value it had, as
     /// written in the file (nil: it had none, or it was mielwm's command,
     /// then `wasMielwm`). nil when aerospace is set in a form this does not

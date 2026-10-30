@@ -31,8 +31,8 @@ If the file isn't valid JSON, mielwm keeps its defaults and shows the error in t
 | `gaps:inner_horizontal` | `8` | Points between tiles side by side. |
 | `gaps:inner_vertical` | `8` | Points between tiles above each other. |
 | `gaps:outer_left`, `gaps:outer_right`, `gaps:outer_bottom` | `12` | Points between the tiles and the screen edge. |
-| `gaps:outer_top` | `12` | The top gap on the built-in display. |
-| `gaps:outer_top_external` | `54` | The top gap on other displays, with room for a status bar. |
+| `gaps:outer_top` | `12` | The top gap. In Custom, only on the built-in display. |
+| `gaps:outer_top_external` | `"auto"` | The top edge. `"auto"` adds the height of a status bar found along the top, `"same"` uses only `gaps:outer_top`, and a number is Custom: the top gap on every display but the built-in one. |
 | `canvas:gap` | `12` | How far Fill (`⌥T`) stays from the screen edges. |
 
 ## Input

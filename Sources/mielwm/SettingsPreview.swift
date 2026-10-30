@@ -125,6 +125,11 @@ func settingsPreview(_ args: [String]) -> Never {
         model.recording = nil
         model.conflict = nil
         model.expanded = []
+        // The Layout pane with a status bar found on this display.
+        settings.show(.layout)
+        model.screen?.topBar = TopBar(owner: "Barik", height: 40)
+        pump(0.8)
+        savePNG(settings.window, to: out.appendingPathComponent("settings-layout-bar-\(name).png"))
         if let saved { try? saved.write(to: paths.config) } else { try? fm.removeItem(at: paths.config) }
         model.reload()
         settings.window.orderOut(nil)

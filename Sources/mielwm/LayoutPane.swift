@@ -27,14 +27,22 @@ struct LayoutPane: View {
                 Text("Automatic puts tiles side by side on a wide display and above each other on a tall one.").settingsFooter()
             }
             Section("Gaps") {
-                GapDiagram(settings: s).frame(height: 132).frame(maxWidth: .infinity).padding(.vertical, 4)
+                GapDiagram(settings: s, screen: model.screen).frame(height: 132).frame(maxWidth: .infinity).padding(.vertical, 4)
                 GapField(title: "Between windows, side by side", key: "gaps:inner_horizontal")
                 GapField(title: "Between windows, above each other", key: "gaps:inner_vertical")
                 GapField(title: "Left edge", key: "gaps:outer_left")
                 GapField(title: "Right edge", key: "gaps:outer_right")
                 GapField(title: "Bottom edge", key: "gaps:outer_bottom")
-                GapField(title: "Top edge, built-in display", key: "gaps:outer_top")
-                GapField(title: "Top edge, other displays", key: "gaps:outer_top_external")
+                Picker(selection: Binding(get: { s.topGapMode }, set: setTopGapMode)) {
+                    Text("Automatic").tag(TopGapMode.auto)
+                    Text("Same as other edges").tag(TopGapMode.same)
+                    Text("Custom").tag(TopGapMode.custom)
+                } label: {
+                    Text("Top edge")
+                    Text(topEdgeNote).monospacedDigit()
+                }
+                GapField(title: s.topGapMode == .custom ? "Top gap, built-in display" : "Top gap", key: "gaps:outer_top")
+                if s.topGapMode == .custom { GapField(title: "Top gap, other displays", key: "gaps:outer_top_external") }
             }
             Section {
                 Toggle(isOn: model.flag("input:swipe_workspaces")) {
@@ -108,6 +116,22 @@ struct LayoutPane: View {
         }
     }
 
+    /// What the top edge gets: in Automatic, the bar found on the display the window is on.
+    private var topEdgeNote: String {
+        switch model.settings.topGapMode {
+        case .auto: model.screen?.topBar.map { "\($0.owner), \(Int($0.height)) pt. Its height is added to the top gap." }
+            ?? "No bar found on this display."
+        case .same: "The top gap only, on every display."
+        case .custom: "Your own top gap on displays other than the built-in one."
+        }
+    }
+
+    private func setTopGapMode(_ mode: TopGapMode) {
+        // Custom starts from what the display has now, so nothing jumps.
+        let custom = model.screen.map { model.settings.topGap(on: $0) } ?? model.settings.gapOuterTopExternal
+        model.set("gaps:outer_top_external", mode == .custom ? .number(custom) : .text(mode.rawValue))
+    }
+
     private func readAeroSpace() {
         guard let url = aeroSpaceURL else { return }
         do { model.aeroSpaceFound = AeroSpaceImport(toml: try String(contentsOf: url, encoding: .utf8)) } catch {
@@ -158,6 +182,9 @@ struct GapField: View {
 /// A display with two tiles, drawn with the gaps as they are set.
 struct GapDiagram: View {
     let settings: MielCore.Settings
+    let screen: ScreenInfo? // the top gap and status bar on this display
+
+    private var topGap: Double { screen.map(settings.topGap) ?? settings.gapOuterTop }
 
     var body: some View {
         Canvas { context, size in
@@ -166,10 +193,14 @@ struct GapDiagram: View {
             let k = 0.5 // half size, so the gaps read at a glance
             context.fill(Path(roundedRect: screen, cornerRadius: 7), with: .color(.secondary.opacity(0.1)))
             context.stroke(Path(roundedRect: screen.insetBy(dx: 0.5, dy: 0.5), cornerRadius: 7), with: .color(.secondary.opacity(0.35)), lineWidth: 1)
-            let s = settings
-            let area = CGRect(x: screen.minX + s.gapOuterLeft * k, y: screen.minY + s.gapOuterTop * k,
+            let s = settings, top = topGap
+            if s.topGapMode == .auto, let bar = self.screen?.topBar { // the status bar the gap makes room for
+                let band = CGRect(x: screen.minX, y: screen.minY, width: screen.width, height: bar.height * k)
+                context.fill(Path(roundedRect: band, cornerRadii: RectangleCornerRadii(topLeading: 7, topTrailing: 7)), with: .color(.secondary.opacity(0.25)))
+            }
+            let area = CGRect(x: screen.minX + s.gapOuterLeft * k, y: screen.minY + top * k,
                               width: screen.width - (s.gapOuterLeft + s.gapOuterRight) * k,
-                              height: screen.height - (s.gapOuterTop + s.gapOuterBottom) * k)
+                              height: screen.height - (top + s.gapOuterBottom) * k)
             guard area.width > 8, area.height > 8 else { return }
             let tileWidth = max(1, (area.width - s.gapInnerHorizontal * k) / 2)
             let rightHeight = max(1, (area.height - s.gapInnerVertical * k) / 2)
@@ -181,7 +212,7 @@ struct GapDiagram: View {
                 context.stroke(Path(roundedRect: tile.insetBy(dx: 0.5, dy: 0.5), cornerRadius: 4), with: .color(.accentColor.opacity(0.75)), lineWidth: 1)
             }
         }
-        .accessibilityLabel("A display with three windows and the gaps around them")
+        .accessibilityLabel("A display with three windows and the gaps around them, \(Int(topGap)) pt at the top")
     }
 }
 

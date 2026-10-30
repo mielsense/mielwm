@@ -24,6 +24,7 @@ public final class WindowRegistry {
     private var activePid: pid_t?
     private var lastFocused: WindowID?
     private var screens: [ScreenInfo] = []
+    private var screenCheck: DispatchWorkItem?
 
     public init(pidFilter: Int32? = nil, onEvent: @escaping (SystemEvent) -> Void) {
         self.pidFilter = pidFilter
@@ -40,9 +41,13 @@ public final class WindowRegistry {
         screens = Displays.screens()
 
         let workspace = NSWorkspace.shared.notificationCenter
-        observe(workspace, NSWorkspace.didLaunchApplicationNotification) { [weak self] app in self?.track(app) }
+        observe(workspace, NSWorkspace.didLaunchApplicationNotification) { [weak self] app in
+            self?.track(app)
+            self?.checkScreensSoon()
+        }
         observe(workspace, NSWorkspace.didTerminateApplicationNotification) { [weak self] app in
             self?.untrack(app.processIdentifier)
+            self?.checkScreensSoon()
         }
         observe(workspace, NSWorkspace.didHideApplicationNotification) { [weak self] app in
             self?.deliver(.appHidden(pid: app.processIdentifier, true))
@@ -56,11 +61,8 @@ public final class WindowRegistry {
         let token = NotificationCenter.default.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main
         ) { [weak self] _ in
-            guard let self else { return }
-            let now = Displays.screens()
-            guard now != self.screens else { return }
-            self.screens = now
-            self.onEvent(.screensChanged(now))
+            self?.checkScreens()
+            self?.checkScreensSoon() // a status bar moves its window after the change
         }
         tokens.append((NotificationCenter.default, token))
 
@@ -72,7 +74,23 @@ public final class WindowRegistry {
         if let pid = NSWorkspace.shared.frontmostApplication?.processIdentifier { activated(pid) }
     }
 
+    private func checkScreens() {
+        let now = Displays.screens()
+        guard now != screens else { return }
+        screens = now
+        onEvent(.screensChanged(now))
+    }
+
+    /// Once things settle: a status bar app shows its window a moment after it starts.
+    private func checkScreensSoon() {
+        screenCheck?.cancel()
+        let work = DispatchWorkItem { [weak self] in self?.checkScreens() }
+        screenCheck = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: work)
+    }
+
     public func stop() {
+        screenCheck?.cancel()
         for (center, token) in tokens { center.removeObserver(token) }
         tokens = []
         let group = DispatchGroup()
