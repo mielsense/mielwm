@@ -41,20 +41,25 @@ enum SettingsPane: String, CaseIterable {
     /// The sidebar's groups, spaced apart like System Settings'.
     static let groups: [[SettingsPane]] = [[.general], [.layout, .windows, .overview], [.keyboard, .trackpad], [.appearance, .menubar], [.integrations, .advanced, .about]]
 
-    /// What search finds the pane by, besides its name: the settings in it.
+    /// What search finds the pane by, besides its name: every row title in it, then other words for them.
+    /// Keep these in step with the pane's rows.
     var keywords: [String] {
         switch self {
-        case .general: ["Open at login", "Remember where windows are", "Animation", "Animate the camera", "Speed"]
-        case .layout: ["Tiles", "Stack", "Floating", "Orientation", "Gaps", "Top edge", "Status bar", "Inner gap", "Outer gap"]
-        case .windows: ["Floating apps", "Workspace rules", "Apps"]
-        case .overview: ["Zoomed-out level", "Zoom", "Lens", "Bend the edges", "Strength", "Magnification", "Window names", "Minimap"]
-        case .keyboard: ["Shortcuts", "Keys", "Hotkeys", "Restore defaults"]
-        case .trackpad: ["Swipe between workspaces", "Three fingers", "Use the pointer", "Mouse", "Drag", "Move windows", "Modifier", "Scroll", "Pan"]
-        case .appearance: ["Accent color", "Desktop picture", "Wallpaper", "Dim", "Blur", "Grid", "Dots", "Lines", "Corner rounding", "Shadows"]
-        case .menubar: ["All workspaces", "Current only", "Icon", "Workspace numbers"]
-        case .integrations: ["Barik", "AeroSpace", "Import"]
+        case .general: ["Open at login", "Remember where windows are", "Animation", "Animate the camera", "Speed", "Startup", "Restart"]
+        case .layout: ["Layout", "Tiles", "Stack", "Floating", "Orientation", "Automatic", "Side by side", "Above each other", "Gaps",
+                       "Between windows, side by side", "Between windows, above each other", "Left edge", "Right edge", "Bottom edge",
+                       "Top edge", "Top gap", "Status bar", "New windows"]
+        case .windows: ["Floating apps", "Workspace rules", "Add app", "Apps"]
+        case .overview: ["Zoomed-out level", "Show window names", "Show the minimap", "Lens", "Bend the edges", "Strength", "Magnification", "Zoom"]
+        case .keyboard: ["Shortcuts", "Keys", "Hotkeys", "Restore all shortcuts", "In the overview"]
+        case .trackpad: ["Swipe between workspaces", "Three fingers", "Move and resize windows", "Use the pointer in the overview",
+                         "Panning speed", "Zoom speed", "Pointer and scrolling", "Mouse", "Drag", "Modifier", "Scroll wheel", "Middle button"]
+        case .appearance: ["Accent color", "Show the desktop picture", "Wallpaper", "Dim", "Blur", "Blur amount", "Show the grid", "Grid style",
+                           "Dots", "Lines", "Opacity", "Corner rounding", "Shadows", "Preview"]
+        case .menubar: ["Menu bar item", "All workspaces", "Current only", "Icon", "Workspace numbers"]
+        case .integrations: ["Work with Barik", "Import from AeroSpace", "Barik", "AeroSpace"]
         case .advanced: ["Config file", "config.json", "Command-line tool", "Terminal", "Reset all settings"]
-        case .about: ["Version", "Website", "Documentation", "Changelog", "GitHub", "License"]
+        case .about: ["Version", "Website", "Documentation", "Changelog", "Source code", "GitHub", "License"]
         }
     }
 
