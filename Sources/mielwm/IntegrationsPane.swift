@@ -10,17 +10,17 @@ struct IntegrationsPane: View {
         Form {
             Section { PaneHeader(pane: .integrations) }
             Section {
-                SettingsRow("Work with Barik",
-                            subtitle: model.barikAvailable ? "Barik's menu bar shows mielwm's workspaces and windows. mielwm asks before it edits Barik's config and relaunches Barik."
+                SettingsRow("Work with AeroSpace-compatible apps",
+                            subtitle: model.barikAvailable ? "Runs a small helper named AeroSpace and the aerospace command, so menu bars and tools made for AeroSpace, like Barik, show mielwm's workspaces. mielwm asks before it edits an app's config."
                                 : "Works when mielwm runs from mielwm.app.",
                             icon: IconTile("menubar.dock.rectangle", tint: Design.Tint.graphite)) {
-                    Toggle("Work with Barik", isOn: Binding(get: { model.settings.barik }, set: { model.onBarik($0) }))
+                    Toggle("Work with AeroSpace-compatible apps", isOn: Binding(get: { model.settings.barik }, set: { model.onBarik($0) }))
                         .labelsHidden()
                         .toggleStyle(.switch)
                         .disabled(!model.barikAvailable)
                 }
             } header: {
-                Text("Barik")
+                Text("Menu bars and tools")
             }
             Section {
                 SettingsRow("Import from AeroSpace",
