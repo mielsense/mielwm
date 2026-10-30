@@ -12,6 +12,7 @@ public enum PaletteMetrics {
     public static let listInset = 8.0 // above and below the rows, and beside them
     public static let footerHeight = 28.0
     public static let cardGap = 8.0 // between the field and the card of results below it
+    public static let helpWidth = 1040.0 // the shortcuts sheet is wider than the field, for three columns
     public static let cardRadius = 20.0 // the card's corners; its rows' are this minus listInset, so they share a centre
 
     /// Height of the field (a capsule) and, with `rows` result rows, the card below it.

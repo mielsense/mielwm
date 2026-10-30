@@ -11,6 +11,7 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 - Stacks can show the edges of the windows behind the front one. Set Peek edges in Layout & workspaces settings.
 - A glass style in Appearance settings. Liquid glass, the default on macOS 26, is clear and bends the edges of what is behind every panel, from the search panel to the notices. Frosted keeps the blur of earlier versions.
 - VoiceOver says the workspace you switch to and the app selected in the `⌥Tab` switcher.
+- The overview's search field, results, shortcuts sheet, key hints, toasts and the `⌥Tab` switcher are drawn by macOS itself, so Liquid glass is Apple's own and bends the canvas behind it.
 - The overview's search field is a capsule, like Spotlight, with the results in their own card just below it.
 - The overview's panels have the continuous corners of macOS, keys show as light capsules, and the shortcuts sheet has semibold headings.
 - The `⌥Tab` switcher's highlight follows the panel's rounded corners, and its arrows to more windows are drawn chevrons.

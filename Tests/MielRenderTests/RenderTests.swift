@@ -77,7 +77,7 @@ private func render(_ scene: Scene, _ state: String, frames: SyntheticFrames? = 
         #expect(MemoryLayout<SolidUniforms>.stride == 64)
         #expect(MemoryLayout<TexturedUniforms>.stride == 16)
         #expect(MemoryLayout<LensUniforms>.stride == 224)
-        #expect(MemoryLayout<MaterialUniforms>.stride == 80)
+        #expect(MemoryLayout<MaterialUniforms>.stride == 64)
     }
 
     @Test func hintsSplitIntoKeysAndLabels() {

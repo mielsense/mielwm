@@ -17,6 +17,7 @@ final class Overlay {
     let screenID: UInt32
     let window: OverlayWindow
     let view: OverlayView
+    let chrome = OverlayChrome() // the HUD as native views above the canvas
 
     init(screenID: UInt32, controller: Controller, device: MTLDevice) {
         self.screenID = screenID
@@ -31,7 +32,13 @@ final class Overlay {
         window.isReleasedWhenClosed = false
         window.acceptsMouseMovedEvents = true
         window.animationBehavior = .none
-        window.contentView = view
+        let container = NSView()
+        container.wantsLayer = true
+        for v in [view, chrome] as [NSView] {
+            v.autoresizingMask = [.width, .height]
+            container.addSubview(v)
+        }
+        window.contentView = container
     }
 
     func place(on screen: ScreenInfo) {
@@ -52,6 +59,7 @@ final class Overlay {
     }
 
     func hide() {
+        chrome.clear()
         view.link?.isPaused = true
         view.showCaret(nil)
         window.orderOut(nil)

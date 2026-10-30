@@ -33,6 +33,10 @@ let usage = """
                                   menu; --selftest drives the window's controls instead; --live
                                   keeps the window open 10 s. No canvas, moves nothing
                                   (development; the README has the rest)
+      mielwm --overview-preview [--out <dir>] [--accessibility]
+                                  save the overview's search, results, shortcuts, toast and
+                                  switcher in each glass style, light and dark, as PNGs of the
+                                  main display; covers the screen for a moment (development)
       mielwm --notice-preview [--out <dir>]
                                   save the on-screen notices (toast, workspace, stack) in each
                                   material, light and dark, as PNGs; shows them for a moment
@@ -70,6 +74,8 @@ MainActor.assumeIsolated {
         listWindows(json: args.contains("--json"), fps: args.contains("--fps"), pid: value("--pid", in: args).flatMap { Int32($0) })
     case "--settings-preview":
         settingsPreview(args)
+    case "--overview-preview":
+        overviewPreview(args)
     case "--notice-preview":
         noticePreview(args)
     case "--unpark":

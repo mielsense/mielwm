@@ -9,6 +9,8 @@ import SwiftUI
 @MainActor
 final class AppearancePreview: ObservableObject {
     @Published private(set) var image: CGImage?
+    /// The search field and pills, drawn natively over the image as the overview draws them, so the glass is real.
+    let chrome = ChromeModel()
     let screen: ScreenInfo
     private var state: CanvasState
     private var renderer: Renderer? // made on the first draw, dropped by `release`
@@ -78,7 +80,12 @@ final class AppearancePreview: ObservableObject {
             t += 1.0 / 60
             _ = state.send(.tick(t))
         }
-        let scene = state.scene(for: screen, time: t)
+        var scene = state.scene(for: screen, time: t)
+        let s = screen
+        chrome.content = ChromeContent(hud: scene.hud, look: scene.look, size: s.frame.size,
+                                       topInset: max(s.safeAreaTop, s.visibleFrame.minY - s.frame.minY),
+                                       bottomInset: max(0, s.frame.maxY - s.visibleFrame.maxY))
+        scene.hud = HUDModel()
         frames.update(scene.windows)
         let width = 960.0 // px: the pane shows it at about half that, on a Retina display
         image = renderer.renderImage(scene, frames: frames, pixelSize: CGSize(width: width, height: (width * screen.frame.height / screen.frame.width).rounded()))
@@ -96,6 +103,12 @@ struct AppearancePreviewView: View {
             RoundedRectangle(cornerRadius: 8, style: .continuous).fill(.black.opacity(0.85))
             if let image = preview.image {
                 Image(decorative: image, scale: 2).resizable().interpolation(.high)
+                GeometryReader { g in
+                    EasedChrome(model: preview.chrome)
+                        .scaleEffect(g.size.width / max(preview.screen.frame.width, 1), anchor: .topLeading)
+                        .frame(width: g.size.width, height: g.size.height, alignment: .topLeading)
+                }
+                .allowsHitTesting(false)
             }
         }
         .aspectRatio(aspect, contentMode: .fit)

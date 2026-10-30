@@ -120,6 +120,12 @@ extension Controller {
             scene.dropIndicator = nil
         }
         scene.opacity = opacity
+        // The HUD shows in native views over the canvas; Metal draws the canvas, the tags and the minimap.
+        overlay.chrome.show(ChromeContent(hud: scene.hud, look: scene.look, size: screen.frame.size,
+                                          topInset: max(screen.safeAreaTop, screen.visibleFrame.minY - screen.frame.minY),
+                                          bottomInset: max(0, screen.frame.maxY - screen.visibleFrame.maxY), worldShown: worldShown),
+                            transition: scene.transition, opacity: opacity)
+        scene.hud = HUDModel()
         overlay.draw(scene, renderer: renderer, frames: capture)
     }
 

@@ -103,11 +103,7 @@ struct MaterialUniforms {
     var contrast: Float = 1
     var alpha: Float = 1
     var blur: Float = 0
-    var liquid: Float = 0 // 1: Liquid glass
-    var scale: Float = 1
-    var dark: Float = 1
-    var pad1: Float = 0
-    var pad2: Float = 0
+    var pad: Float = 0
 }
 
 extension SIMD4 where Scalar == Float {

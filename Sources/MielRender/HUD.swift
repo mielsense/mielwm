@@ -73,37 +73,7 @@ final class HUDPainter {
         let path = b.roundedPath(r, radius)
         b.outerShadow(path, blur: theme.shadowBlur * s, dy: theme.shadowDrop * s, color: theme.shadow)
         b.fill(path, opaque ? theme.panel.withAlphaComponent(1) : theme.panel)
-        if theme.look.liquid { glassLight(b, r, radius, s, theme, sheen: opaque) }
         b.stroke(b.roundedPath(r.insetBy(dx: 0.5, dy: 0.5), radius - 0.5), theme.edge, width: 1)
-    }
-
-    /// Liquid glass's light: a rim lit from above, brightest along the top and
-    /// a little again at the bottom, where light leaves the glass. `sheen`
-    /// adds a soft glow inside the top, for panels with nothing behind them to bend.
-    func glassLight(_ b: Bitmap, _ r: CGRect, _ radius: CGFloat, _ s: CGFloat, _ theme: Theme, sheen: Bool = false) {
-        let dark = theme.look.dark
-        let ctx = b.ctx
-        func gradient(_ stops: [(CGFloat, CGFloat)]) -> CGGradient? {
-            CGGradient(colorsSpace: sRGB, colors: stops.map { rgba(1, 1, 1, $0.1) } as CFArray, locations: stops.map(\.0))
-        }
-        ctx.saveGState()
-        let ring = CGMutablePath()
-        ring.addPath(b.roundedPath(r, radius))
-        ring.addPath(b.roundedPath(r.insetBy(dx: 1.5 * s, dy: 1.5 * s), max(0, radius - 1.5 * s)))
-        ctx.addPath(ring)
-        ctx.clip(using: .evenOdd)
-        if let g = gradient(dark ? [(0, 0.5), (0.35, 0.1), (0.8, 0.06), (1, 0.22)] : [(0, 1), (0.35, 0.5), (0.8, 0.35), (1, 0.8)]) {
-            ctx.drawLinearGradient(g, start: CGPoint(x: 0, y: r.minY), end: CGPoint(x: 0, y: r.maxY), options: [])
-        }
-        ctx.restoreGState()
-        guard sheen else { return }
-        ctx.saveGState()
-        ctx.addPath(b.roundedPath(r, radius))
-        ctx.clip()
-        if let g = gradient([(0, dark ? 0.08 : 0.5), (1, 0)]) {
-            ctx.drawLinearGradient(g, start: CGPoint(x: 0, y: r.minY), end: CGPoint(x: 0, y: r.minY + min(r.height * 0.5, 60 * s)), options: [])
-        }
-        ctx.restoreGState()
     }
 
     private func hairline(_ b: Bitmap, x: CGFloat, y: CGFloat, width: CGFloat, _ theme: Theme) {
@@ -190,7 +160,7 @@ final class HUDPainter {
         let help = hud.mode == .help
         let list = hud.mode == .search && (!hud.rows.isEmpty || !hud.query.isEmpty)
         let columns = help ? 3 : 1
-        let width = min((help ? max(look.paletteWidth, 960) : look.paletteWidth) * s, view.size.width * 0.94)
+        let width = min((help ? max(look.paletteWidth, PaletteMetrics.helpWidth) : look.paletteWidth) * s, view.size.width * 0.94)
         let inset = PaletteMetrics.listInset * s
         let count = min(hud.rows.count, max(1, look.paletteRows))
         let rowHeight = look.rowHeight * s
@@ -453,7 +423,6 @@ final class HUDPainter {
         guard let b = Bitmap(width: Int(width), height: Int(height)) else { return nil }
         let path = b.roundedPath(CGRect(x: 0.5, y: 0.5, width: width - 1, height: height - 1), height / 2)
         b.fill(path, theme.panel.withAlphaComponent(look.reduceTransparency ? 1 : 0.94))
-        if look.liquid { glassLight(b, CGRect(x: 0, y: 0, width: width, height: height), height / 2, s, theme) }
         b.stroke(path, theme.edge, width: 1)
         if let image { b.draw(image, in: CGRect(x: 6 * u * s, y: ((height - icon) / 2).rounded(), width: icon, height: icon)) }
         text(b, title, style, theme.text, x: textX, cy: height / 2, maxWidth: width - textX - padRight)
@@ -472,7 +441,6 @@ final class HUDPainter {
         guard let b = Bitmap(width: Int(width), height: Int(height)) else { return nil }
         let path = b.roundedPath(CGRect(x: 0.5, y: 0.5, width: width - 1, height: height - 1), height / 2)
         b.fill(path, current ? theme.accent : theme.panel.withAlphaComponent(theme.look.reduceTransparency ? 1 : 0.85))
-        if theme.look.liquid { glassLight(b, CGRect(x: 0, y: 0, width: width, height: height), height / 2, s, theme) }
         if !current { b.stroke(path, theme.edge, width: 1) }
         let x = 11 * s + text(b, numberText, numberStyle, current ? theme.onAccent : theme.text, x: 11 * s, cy: height / 2) + gap
         text(b, modeName, modeStyle, current ? theme.onAccent.withAlphaComponent(0.85) : theme.textDim, x: x, cy: height / 2)
@@ -487,7 +455,6 @@ final class HUDPainter {
         guard let b = Bitmap(width: Int(width), height: Int(height)) else { return nil }
         let path = b.roundedPath(CGRect(x: 0.5, y: 0.5, width: width - 1, height: height - 1), height / 2)
         b.fill(path, theme.panel.withAlphaComponent(theme.look.reduceTransparency ? 1 : 0.94))
-        if theme.look.liquid { glassLight(b, CGRect(x: 0, y: 0, width: width, height: height), height / 2, s, theme) }
         b.stroke(path, theme.edge, width: 1)
         hints(b, message, style, x: padX, cy: height / 2, s: s, theme, color: theme.text)
         return b.texture(device: device)

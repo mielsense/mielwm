@@ -306,8 +306,9 @@ float3 frosted(texture2d<float> tex, float2 point, float2 size, float distort, f
     return sum / float(MATERIAL_TAPS);
 }
 
-// What is behind a Liquid glass panel: a light blur, bent inward near the
-// rim as by the curved edge of a lens, and a little brighter there.
+// What is behind the minimap with Liquid glass (the overview's other panels are
+// native glass): a light blur, bent inward near the rim as by the curved edge
+// of a lens, and a little brighter there.
 constant int LIQUID_TAPS = 16;
 
 float3 liquid(texture2d<float> tex, float2 point, float4 rect, float radius, float2 size, float distort, float contrast,
@@ -462,11 +463,7 @@ struct Material {
     float contrast;
     float alpha;
     float blur;    // px
-    float liquid;  // 1: Liquid glass, 0: frosted
-    float scale;   // px per point
-    float dark;    // 1: dark glass dims what is behind it, 0: light glass lifts it
-    float pad1;
-    float pad2;
+    float pad;
 };
 
 fragment float4 material_fragment(VOut in [[stage_in]], constant Material& m [[buffer(0)]], texture2d<float> tex [[texture(0)]]) {
@@ -474,13 +471,6 @@ fragment float4 material_fragment(VOut in [[stage_in]], constant Material& m [[b
     float mask = rounded_mask(p, m.rect, m.radius) * m.alpha;
     if (mask <= 0.0)
         return float4(0.0);
-    if (m.liquid > 0.5) {
-        float3 c = liquid(tex, p, m.rect, m.radius, m.size, m.distort, m.contrast, m.blur, m.scale, m.map);
-        // Squeeze what is behind toward the panel's own shade, so text on the tint keeps its contrast
-        // over a white window or a dark photo while the shapes behind still show.
-        c = m.dark > 0.5 ? c * 0.55 : mix(c, float3(1.0), 0.35);
-        return float4(c, 1.0) * mask;
-    }
     return float4(frosted(tex, p, m.size, m.distort, m.contrast, m.blur, m.map), 1.0) * mask;
 }
 """#
