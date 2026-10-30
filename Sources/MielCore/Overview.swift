@@ -54,7 +54,7 @@ public struct OverviewMachine: Hashable, Sendable {
 
     public init() {}
 
-    // MARK: Session
+    // MARK: - Session
 
     /// Freezes the recency order for the session, so the list does not
     /// reshuffle while browsing; the window it starts from comes first.
@@ -86,7 +86,7 @@ public struct OverviewMachine: Hashable, Sendable {
         switcher && (switcherRevealAt.map { now >= $0 } ?? true)
     }
 
-    // MARK: Results
+    // MARK: - Results
 
     var queryActive: Bool { isOpen && matchSet != nil }
     var listVisible: Bool { isOpen && (queryActive || listRevealed) }
@@ -136,7 +136,7 @@ public struct OverviewMachine: Hashable, Sendable {
         return edited(true, ctx)
     }
 
-    // MARK: Keys
+    // MARK: - Keys
 
     public mutating func handle(_ input: OverviewInput, _ ctx: OverviewContext) -> [OverviewEffect] {
         guard isOpen else { return [] }

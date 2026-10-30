@@ -1,6 +1,3 @@
-// Pure parts of System. These always run and never open windows, post
-// events or install taps.
-
 import Carbon.HIToolbox
 import CoreVideo
 import Foundation
@@ -10,6 +7,9 @@ import MielCore
 @testable import MielIPC
 @testable import MielSystem
 import Testing
+
+// Pure parts of System. These always run and never open windows, post
+// events or install taps.
 
 /// A new folder for one test, inside this run's own, which goes when the run ends.
 func scratchDir(_ name: String) throws -> URL {

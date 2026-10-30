@@ -1,10 +1,10 @@
-// Lens uniforms and minimap pixels for the shader. The geometry itself is
-// Core's (lensProgress, lensSourcePoint, minimapLayout), so what is drawn and
-// what the app hit-tests come from one place.
-
 import CoreGraphics
 import Foundation
 import MielCore
+
+// Lens uniforms and minimap pixels for the shader. The geometry itself is
+// Core's (lensProgress, lensSourcePoint, minimapLayout), so what is drawn and
+// what the app hit-tests come from one place.
 
 /// The lens uniforms for one frame: with `progress` from Core's
 /// `lensProgress`, distort = strength * progress and contrast =

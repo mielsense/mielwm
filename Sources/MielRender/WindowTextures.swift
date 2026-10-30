@@ -1,10 +1,10 @@
-// Window images as Metal textures. Live ScreenCaptureKit frames are wrapped
-// without a copy through CVMetalTextureCache; stills are uploaded once per
-// generation.
-
 import CoreVideo
 import Metal
 import MielCore
+
+// Window images as Metal textures. Live ScreenCaptureKit frames are wrapped
+// without a copy through CVMetalTextureCache; stills are uploaded once per
+// generation.
 
 final class WindowTextures {
     private struct Entry {

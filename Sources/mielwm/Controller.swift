@@ -202,7 +202,7 @@ final class Controller {
         }
     }
 
-    // MARK: Input
+    // MARK: - Input
 
     /// Every input goes through here. One that would bring the overlay up
     /// while captures are cold waits (with what follows) until the focused

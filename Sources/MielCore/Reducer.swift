@@ -115,7 +115,7 @@ public extension CanvasState {
 }
 
 extension CanvasState {
-    // MARK: Time
+    // MARK: - Time
 
     mutating func tick(_ time: Double) {
         now = max(now, time)
@@ -152,7 +152,7 @@ extension CanvasState {
         }
     }
 
-    // MARK: System events
+    // MARK: - System events
 
     mutating func handle(_ event: SystemEvent) {
         defer {
@@ -430,7 +430,7 @@ extension CanvasState {
         }
     }
 
-    // MARK: Camera moves
+    // MARK: - Camera moves
 
     /// Every camera, at rest or flying, through `moved`.
     mutating func moveCameras(_ moved: (Camera) -> Camera) {
@@ -467,7 +467,7 @@ extension CanvasState {
         sync()
     }
 
-    // MARK: Gestures
+    // MARK: - Gestures
 
     mutating func handle(_ g: PointerGesture) {
         switch g {
@@ -545,7 +545,7 @@ extension CanvasState {
         }
     }
 
-    // MARK: Undo
+    // MARK: - Undo
 
     mutating func checkpoint(_ kind: String, window: WindowID? = nil) {
         // A held nudge key is one step to undo.

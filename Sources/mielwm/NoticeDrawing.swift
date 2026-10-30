@@ -47,7 +47,7 @@ private struct NoticeInk {
     var keyText: NSColor { NSColor.labelColor.withAlphaComponent(Design.KeyCap.text) }
 }
 
-// MARK: Text
+// MARK: - Text
 
 /// One line of text, set so its cap height centres on `midY`, as the eye reads it.
 @MainActor
@@ -66,7 +66,7 @@ private func width(_ text: String, _ font: NSFont, tracking: CGFloat = 0) -> CGF
     ceil(NSAttributedString(string: text, attributes: [.font: font, .kern: tracking]).size().width)
 }
 
-// MARK: Toast
+// MARK: - Toast
 
 /// "Tidied 4 windows  {⌘Z} Undo": text, with `{...}` as keycaps.
 @MainActor
@@ -104,7 +104,7 @@ private func toastDrawing(_ text: String, _ ink: NoticeInk) -> NoticeDrawing {
     }
 }
 
-// MARK: Workspace pill
+// MARK: - Workspace pill
 
 /// The numbers of the workspaces with windows, the current one on an accent circle.
 @MainActor
@@ -128,7 +128,7 @@ private func workspaceDrawing(_ n: WorkspaceNotice, _ ink: NoticeInk) -> NoticeD
     }
 }
 
-// MARK: Stack strip
+// MARK: - Stack strip
 
 /// The stacked windows in their order, icon and short title, the front one
 /// raised, then "2 of 4". Titles go when they don't fit: the others' first, then the front one's.

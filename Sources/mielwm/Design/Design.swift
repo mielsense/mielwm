@@ -5,7 +5,8 @@ import SwiftUI
 /// mielwm's design language for its native windows: Settings, onboarding,
 /// About, sheets and alerts. The values follow System Settings on macOS 26.
 enum Design {
-    // MARK: Type. SF Pro only, regular or semibold, never all caps.
+    // MARK: - Type
+    // SF Pro only, never all caps. DESIGN.md lists where each weight goes.
 
     /// The pane's name in its header card.
     static let headerTitle = Font.system(size: 22, weight: .semibold)
@@ -16,13 +17,15 @@ enum Design {
     /// Their sizes, for what AppKit draws and what scales (the overview's chrome, the notices).
     static let rowSize: CGFloat = 13, secondarySize: CGFloat = 11
 
-    // MARK: Spacing, on a 4 pt grid.
+    // MARK: - Spacing
+    // On a 4 pt grid.
 
     enum Space {
         static let xs: CGFloat = 4, s: CGFloat = 8, m: CGFloat = 12, xl: CGFloat = 20, xxl: CGFloat = 24
     }
 
-    // MARK: Radii, all continuous.
+    // MARK: - Radii
+    // All continuous.
 
     enum Radius {
         /// A grouped box of rows outside a Form (onboarding's steps).
@@ -35,14 +38,15 @@ enum Design {
         static func tile(_ size: CGFloat) -> CGFloat { (size * 0.225).rounded() }
     }
 
-    // MARK: Fills. Surfaces separate by fill, not by strokes.
+    // MARK: - Fills
+    // Surfaces separate by fill, not by strokes.
 
     /// A grouped box of rows outside a Form.
     static let groupFill = Color(nsColor: .quaternarySystemFill)
     /// Increase Contrast draws an edge around filled shapes.
     static func edge(_ contrast: ColorSchemeContrast) -> Color { contrast == .increased ? Color(nsColor: .separatorColor) : .clear }
 
-    // MARK: Icon tiles
+    // MARK: - Icon tiles
 
     /// Apple's tile colors, the same in light and dark.
     enum Tint {
@@ -63,7 +67,7 @@ enum Design {
         static let glyph: CGFloat = 0.62
     }
 
-    // MARK: Key caps
+    // MARK: - Key caps
     //
     // How shortcuts look wherever they appear: the Keyboard pane, the menu's
     // hints, onboarding, the overview's HUD, the notices and the canvas. The
@@ -89,14 +93,14 @@ enum Design {
         static let height: CGFloat = 36
     }
 
-    // MARK: Motion
+    // MARK: - Motion
 
     /// Changing pane: a short cross-fade. Controls change instantly.
     static func paneChange(reduceMotion: Bool) -> Animation { .easeOut(duration: reduceMotion ? 0.1 : 0.15) }
     /// A drawing that follows a value, like the gaps diagram. Nothing moves with Reduce Motion.
     static func follow(reduceMotion: Bool) -> Animation? { reduceMotion ? nil : .spring(duration: 0.3, bounce: 0) }
 
-    // MARK: Materials
+    // MARK: - Materials
 
     /// What the overview's chrome and the notices are made of: Liquid glass
     /// (macOS 26 and later), the frosted HUD material, or a solid fill with

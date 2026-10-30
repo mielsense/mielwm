@@ -147,7 +147,7 @@ extension Controller {
         exp(state.settings.zoomStep * lines * state.settings.scrollFactor)
     }
 
-    // MARK: Geometry helpers
+    // MARK: - Geometry helpers
 
     func screen(id: UInt32) -> ScreenInfo? {
         state.screens.first { $0.id == id }

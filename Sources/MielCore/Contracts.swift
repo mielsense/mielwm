@@ -1,13 +1,13 @@
+import CoreGraphics
+import CoreVideo
+import Foundation
+
 // Shared types. Core, Render, System and the app all code against these, so
 // change them only together with every user.
 //
 // Geometry convention everywhere: points, y grows downward, origin at the
 // top-left of the primary display (the Quartz / Accessibility convention).
 // The canvas uses the same units and orientation and has no bounds.
-
-import CoreGraphics
-import CoreVideo
-import Foundation
 
 // MARK: - Identity and the system's view of windows
 

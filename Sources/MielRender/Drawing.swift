@@ -1,10 +1,10 @@
-// CPU drawing for the tags and synthetic windows: a y-down bitmap context,
-// the theme (macOS's dark and light materials), SF Pro and app icons.
-
 import AppKit
 import CoreText
 import Metal
 import MielCore
+
+// CPU drawing for the tags and synthetic windows: a y-down bitmap context,
+// the theme (macOS's dark and light materials), SF Pro and app icons.
 
 let sRGB = CGColorSpace(name: CGColorSpace.sRGB)!
 
@@ -77,7 +77,7 @@ final class Bitmap {
         return texture
     }
 
-    // MARK: shapes
+    // MARK: - Shapes
 
     func roundedPath(_ r: CGRect, _ radius: CGFloat) -> CGPath {
         continuousRoundedPath(r, radius)
@@ -116,7 +116,7 @@ final class Bitmap {
         ctx.restoreGState()
     }
 
-    // MARK: text
+    // MARK: - Text
 
     /// Draws a line with its cap height centered on `cy`. Returns its width.
     @discardableResult

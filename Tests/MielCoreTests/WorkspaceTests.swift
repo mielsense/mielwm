@@ -32,7 +32,7 @@ extension CanvasState {
     func mode(_ slot: Int) -> LayoutMode? { workspaces.first { $0.slot == slot }?.mode }
 }
 
-// MARK: Tile math
+// MARK: - Tile math
 
 @Test func tilesSplitEvenlyWithWholeEdgesAndExactGaps() {
     #expect(tileFrames(in: area, weights: [1, 1], horizontal: true, gap: 8) == [left, right])
@@ -63,7 +63,7 @@ extension CanvasState {
     #expect(s.tileArea(on: external) == CGRect(x: 1524, y: 12, width: 1896, height: 1056)) // no status bar found
 }
 
-// MARK: New windows
+// MARK: - New windows
 
 @Test func newWindowsTileTheCurrentWorkspaceAfterTheFocusedOne() {
     var s = tilingState([snapshot(1, onBuiltIn)])
@@ -153,7 +153,7 @@ extension CanvasState {
     #expect(s.deskFrame(s.window(wid(1))!) == restored)
 }
 
-// MARK: Landing
+// MARK: - Landing
 
 @Test func landingOnATiledWindowBringsItsWorkspaceToTheActiveScreen() {
     var settings = testSettings(layout: .tiles)
@@ -171,7 +171,7 @@ extension CanvasState {
     #expect(focuses(commands) == [wid(2)])
 }
 
-// MARK: Stacks
+// MARK: - Stacks
 
 @Test func stackArrowsCycleThenFallThrough() {
     var s = tilingState([snapshot(1, onBuiltIn), snapshot(2, onBuiltIn), snapshot(3, onBuiltIn),
@@ -203,7 +203,7 @@ extension CanvasState {
     #expect(s.focused == wid(3))
 }
 
-// MARK: Layout keys
+// MARK: - Layout keys
 
 @Test func layoutKeysFlipTilesAndSwapStacks() {
     var s = twoTiles()
@@ -248,7 +248,7 @@ extension CanvasState {
     #expect(s.members(1) == [1] && s.mode(1) == .stack)
 }
 
-// MARK: Workspace keys
+// MARK: - Workspace keys
 
 @Test func workspaceKeysSettleOnTheirSlots() {
     var s = tilingState([snapshot(1, onBuiltIn)], settings: testSettings(animated: true, layout: .tiles))
@@ -306,7 +306,7 @@ extension CanvasState {
     #expect(s.currentWorkspace == 1)
 }
 
-// MARK: Window keys on tiles
+// MARK: - Window keys on tiles
 
 @Test func nudgeSwapsTilesThenCrossesToTheNextWorkspace() {
     var s = twoTiles()
@@ -367,7 +367,7 @@ extension CanvasState {
     #expect(!s.isOverview && s.currentWorkspace == 1)
 }
 
-// MARK: The user resizes a tile
+// MARK: - The user resizes a tile
 
 @Test func userResizeAlongTheSplitMovesTheNeighbour() {
     var s = twoTiles()
@@ -399,7 +399,7 @@ extension CanvasState {
     #expect(s.canvasFrame(1)?.size == refused.size)
 }
 
-// MARK: Dragging in the overview
+// MARK: - Dragging in the overview
 
 @Test func overviewDropMovesATileToAnotherWorkspace() {
     var settings = testSettings(layout: .tiles)
@@ -432,7 +432,7 @@ extension CanvasState {
     #expect(s.canvasFrame(2) == area)
 }
 
-// MARK: Undo
+// MARK: - Undo
 
 @Test func undoPutsTheLayoutBack() {
     var s = twoTiles()
@@ -451,7 +451,7 @@ extension CanvasState {
     #expect(s.canvasFrame(1) == left)
 }
 
-// MARK: Scene
+// MARK: - Scene
 
 @Test func sceneShowsWorkspacesAndFansStacks() {
     var s = twoTiles()
@@ -481,7 +481,7 @@ extension CanvasState {
     #expect(empty.scene(for: builtIn).workspaces.first?.emptyMessage == "Workspace 4 is empty  {⌥⇧4} Move a window here")
 }
 
-// MARK: Persistence
+// MARK: - Persistence
 
 @Test func layoutRoundTripsWithWorkspaces() throws {
     var s = twoTiles()

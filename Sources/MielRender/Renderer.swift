@@ -1,3 +1,9 @@
+import AppKit
+import CoreVideo
+import Metal
+import MielCore
+import QuartzCore
+
 // Draws one Scene for one display: the world (backdrop, windows) into an
 // offscreen texture, then the lens into the target with the minimap composed
 // after it, then the tags (window names, workspace pills) on top. The
@@ -5,12 +11,6 @@
 // so the Scene's HUD is never drawn here. One Renderer can serve every
 // display; per-display state is keyed by ScreenInfo.id. Use it from one
 // thread (the main thread).
-
-import AppKit
-import CoreVideo
-import Metal
-import MielCore
-import QuartzCore
 
 public enum RenderError: Error {
     case noDevice

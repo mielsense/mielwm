@@ -143,7 +143,7 @@ final class SettingsModel: ObservableObject {
         if info != screen { screen = info }
     }
 
-    // MARK: Bindings for controls
+    // MARK: - Bindings for controls
 
     func flag(_ key: String) -> Binding<Bool> {
         Binding(get: { if case let .flag(b)? = self.settings.value(forKey: key) { b } else { false } },

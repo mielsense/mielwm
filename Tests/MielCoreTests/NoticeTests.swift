@@ -108,7 +108,7 @@ func stacked(settings: Settings = testSettings(layout: .tiles)) -> CanvasState {
     #expect(!s.workspaceNotice)
 }
 
-// MARK: Ticks: the overlay's frames and the tick timer may rest only when nothing on screen changes
+// MARK: - Ticks: the overlay's frames and the tick timer may rest only when nothing on screen changes
 
 @Test func aNoticeWaitsForItsFadeThenTicksEveryFrameUntilGone() throws {
     var s = stacked()

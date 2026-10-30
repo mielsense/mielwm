@@ -1,11 +1,11 @@
-// Window names, workspace pills and empty workspaces' messages, rasterized
-// with Core Text into textures that are composited after the lens, so text
-// is never bent. Every length is in device pixels (`s` = backing scale).
-
 import AppKit
 import CoreText
 import Metal
 import MielCore
+
+// Window names, workspace pills and empty workspaces' messages, rasterized
+// with Core Text into textures that are composited after the lens, so text
+// is never bent. Every length is in device pixels (`s` = backing scale).
 
 final class TagPainter {
     let device: MTLDevice
@@ -29,7 +29,7 @@ final class TagPainter {
         lineWidth(type.line(string, style, rgba(1, 1, 1)))
     }
 
-    // MARK: keycaps
+    // MARK: - Keycaps
 
     /// Key caps after `KeyCapMetrics`, the recipe Settings and the HUD draw: `size` is the text's.
     private func keycapStyle(_ size: CGFloat) -> TextStyle {

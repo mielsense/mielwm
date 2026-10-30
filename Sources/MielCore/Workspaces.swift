@@ -127,7 +127,7 @@ extension Settings {
 }
 
 extension CanvasState {
-    // MARK: Reading
+    // MARK: - Reading
 
     func workspaceIndex(_ slot: Int?) -> Int? { slot.flatMap { s in workspaces.firstIndex { $0.slot == s } } }
 
@@ -199,7 +199,7 @@ extension CanvasState {
         return nil
     }
 
-    // MARK: Membership
+    // MARK: - Membership
 
     /// The workspace for `slot`, made if needed (with the mode it had last run while restoring).
     @discardableResult
@@ -321,7 +321,7 @@ extension CanvasState {
         retileAll()
     }
 
-    // MARK: Cameras
+    // MARK: - Cameras
 
     /// The camera that shows workspace `slot` on the active screen at 100%;
     /// its tiles now fit that screen.
@@ -358,7 +358,7 @@ extension CanvasState {
         return camera
     }
 
-    // MARK: New windows
+    // MARK: - New windows
 
     /// Where a new window goes, nil to float: rules (window rules first), then (while starting up)
     /// a workspace of its own, else the current workspace after the focused member.
@@ -374,7 +374,7 @@ extension CanvasState {
         return (c, focused.flatMap { workspaces[k].members.firstIndex(of: $0) }.map { $0 + 1 })
     }
 
-    // MARK: The user moved or resized a tiled window
+    // MARK: - The user moved or resized a tiled window
 
     /// A resize along the split axis by the user (`resizing`) moves the edge
     /// it shares with the neighbour that way; anything else snaps back to the
@@ -433,7 +433,7 @@ extension CanvasState {
         retile(ws.slot)
     }
 
-    // MARK: Dragging a tiled window
+    // MARK: - Dragging a tiled window
 
     /// Where a dragged tiled window would land: the workspace under its
     /// center, its position there and the tile it would get.

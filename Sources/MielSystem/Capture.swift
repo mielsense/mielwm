@@ -46,7 +46,7 @@ public final class CaptureManager: NSObject, WindowFrameSource, @unchecked Senda
 
     override public init() {}
 
-    // MARK: WindowFrameSource
+    // MARK: - WindowFrameSource
 
     public func latestFrame(for id: WindowID) -> WindowFrame? {
         lock.withLock { slots[id]?.frame }
@@ -70,7 +70,7 @@ public final class CaptureManager: NSObject, WindowFrameSource, @unchecked Senda
         if missed { DispatchQueue.main.async(execute: body) }
     }
 
-    // MARK: Streams
+    // MARK: - Streams
 
     /// Starts a stream for each window that has none, scaled to fit
     /// `maxPixelSize`, at the current rate.
@@ -178,7 +178,7 @@ public final class CaptureManager: NSObject, WindowFrameSource, @unchecked Senda
         return ctx.makeImage()
     }
 
-    // MARK: Stills
+    // MARK: - Stills
 
     /// Stills of `ids` at `scale` of their full pixel size (take them at the
     /// size they are drawn: a full 2x still costs ~220 ms), in parallel.
@@ -211,7 +211,7 @@ public final class CaptureManager: NSObject, WindowFrameSource, @unchecked Senda
         }
     }
 
-    // MARK: Private
+    // MARK: - Private
 
     func store(_ frame: WindowFrame, for id: WindowID) {
         var woken: (@MainActor @Sendable () -> Void)?

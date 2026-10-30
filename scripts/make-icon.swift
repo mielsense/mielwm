@@ -14,7 +14,7 @@ func rgb(_ hex: UInt32, _ alpha: CGFloat = 1) -> CGColor {
                                            CGFloat(hex & 255) / 255, alpha])!
 }
 
-// MARK: Geometry (y down)
+// MARK: - Geometry (y down)
 
 /// Rounded rect with continuous ("squircle") corners, the curve Apple uses for icons.
 func squircle(_ r: CGRect, _ radius: CGFloat) -> CGPath {
@@ -82,7 +82,7 @@ func panes(_ hex: [CGPoint], cx: CGFloat, cy: CGFloat, gap: CGFloat) -> [[CGPoin
     return [left, clip(right, CGVector(dx: 0, dy: 1), cy - gap / 2), clip(right, CGVector(dx: 0, dy: -1), -(cy + gap / 2))]
 }
 
-// MARK: Drawing
+// MARK: - Drawing
 
 func bitmap(_ px: Int) -> CGContext {
     let c = CGContext(data: nil, width: px, height: px, bitsPerComponent: 8, bytesPerRow: 0, space: sRGB,
@@ -192,7 +192,7 @@ func menuBarIcon(scale: Int) -> CGImage {
     return c.makeImage()!
 }
 
-// MARK: Output
+// MARK: - Output
 
 let fm = FileManager.default
 try fm.createDirectory(at: resources, withIntermediateDirectories: true)

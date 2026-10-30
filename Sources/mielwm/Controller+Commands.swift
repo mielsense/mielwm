@@ -30,7 +30,7 @@ extension Controller {
         if settings != state.settings { input(.setSettings(settings)) }
     }
 
-    // MARK: Socket commands
+    // MARK: - Socket commands
 
     func command(_ args: [String], _ reply: @escaping (Data) -> Void) {
         if args.first == "aerospace" { // Barik, through the `aerospace` command: read from the canvas, no Accessibility

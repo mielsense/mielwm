@@ -64,7 +64,7 @@ extension CanvasState {
         return .workspace(p)
     }
 
-    // MARK: Overview
+    // MARK: - Overview
 
     mutating func openOverview(zoom: CGFloat? = nil, at point: CGPoint? = nil) {
         guard !isOverview else { return }
@@ -279,7 +279,7 @@ extension CanvasState {
         if let w = window(id), w.pinned == nil, !isFullyVisible(w) { cut(to: landingCamera(id)) }
     }
 
-    // MARK: Window keys
+    // MARK: - Window keys
 
     /// Fill (⌥T): the screen it is on minus menu bar and Dock, with the gap;
     /// again puts it back (see restoredFrame). From the overview it lands first.
@@ -400,7 +400,7 @@ extension CanvasState {
         if !isOverview { sync() }
     }
 
-    // MARK: Layouts and workspaces
+    // MARK: - Layouts and workspaces
 
     /// ⌥/ and ⌥, (AeroSpace's layout tiles and accordion). A floating window
     /// joins the workspace under it, else the current one (⌥, makes that a
@@ -510,7 +510,7 @@ extension CanvasState {
         moveToWorkspace(ws.slot + d.sign, at: d == .right ? 0 : nil)
     }
 
-    // MARK: Switcher (⌥Tab)
+    // MARK: - Switcher (⌥Tab)
 
     mutating func switchWindow(forward: Bool) {
         // In a stack, ⌥Tab steps through its windows (wrapping) instead of the recent-windows picker; ⌘Tab does apps.
@@ -543,7 +543,7 @@ extension CanvasState {
         if isOverview { back() } else { overview.end() }
     }
 
-    // MARK: Overview keys
+    // MARK: - Overview keys
 
     mutating func overviewInput(_ input: OverviewInput) {
         guard overview.isOpen else { return }

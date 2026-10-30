@@ -2,7 +2,7 @@ import CoreGraphics
 @testable import MielCore
 import Testing
 
-// MARK: Search matcher
+// MARK: - Search matcher
 
 func candidate(_ n: UInt32, _ title: String, app: String = "Ghostty", bundle: String? = "com.mitchellh.ghostty") -> SearchCandidate {
     SearchCandidate(id: wid(n), title: title, appName: app, bundleID: bundle)
@@ -55,7 +55,7 @@ func ids(_ results: [SearchResult]) -> [WindowID] { results.map(\.id) }
     #expect(ids(searchWindows("zsh", candidates: c, returnWindow: wid(1))) == [wid(2), wid(1)])
 }
 
-// MARK: Overview keys
+// MARK: - Overview keys
 
 let notesFrame = CGRect(x: 1600, y: 700, width: 600, height: 300)
 
@@ -240,7 +240,7 @@ func threeWindows() -> CanvasState {
     #expect(!s.isOverview && s.appearanceRequests == 2)
 }
 
-// MARK: Switcher (⌥Tab)
+// MARK: - Switcher (⌥Tab)
 
 @Test func switcherShowsAfterADelayAndCommitsOnOptionRelease() {
     var s = threeWindows()

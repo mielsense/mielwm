@@ -1,3 +1,5 @@
+import AppKit
+
 // mielwm-testwindows: opens throwaway windows for system tests, so tests
 // never touch real ones.
 //
@@ -13,8 +15,6 @@
 // then stays until killed. SIGUSR1 moves PT-1 right 100 and down 60 points,
 // as an app moving its own window would. An accessory app, so window managers that only
 // manage regular apps (AeroSpace) leave its windows alone.
-
-import AppKit
 
 /// Repaints with a moving hue, so window captures always have new frames.
 final class PulseView: NSView {

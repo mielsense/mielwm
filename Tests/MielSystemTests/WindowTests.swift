@@ -1,14 +1,14 @@
-// Real macOS: opens throwaway windows (mielwm-testwindows) and drives them
-// through WindowRegistry, CaptureManager and EventTap. Off by default; run
-//   swift build && MIELWM_SYSTEM_TESTS=1 swift test --filter WindowTests
-// Only ever touches windows of the helper process it launched.
-
 import ApplicationServices
 import CoreVideo
 import Foundation
 import MielCore
 @testable import MielSystem
 import Testing
+
+// Real macOS: opens throwaway windows (mielwm-testwindows) and drives them
+// through WindowRegistry, CaptureManager and EventTap. Off by default; run
+//   swift build && MIELWM_SYSTEM_TESTS=1 swift test --filter WindowTests
+// Only ever touches windows of the helper process it launched.
 
 private let enabled = ProcessInfo.processInfo.environment["MIELWM_SYSTEM_TESTS"] == "1"
 private let packageDir = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()

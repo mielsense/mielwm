@@ -18,7 +18,7 @@ func oneEachOnTwoWorkspaces() -> CanvasState {
     return s
 }
 
-// MARK: Focus after the focused window goes
+// MARK: - Focus after the focused window goes
 
 @Test(arguments: ["close", "minimize", "hide"])
 func losingTheFocusedWindowKeepsTheWorkspace(_ how: String) {
@@ -52,7 +52,7 @@ func losingTheFocusedWindowKeepsTheWorkspace(_ how: String) {
     #expect(s.currentWorkspace == 1)
 }
 
-// MARK: Reports nobody dragged
+// MARK: - Reports nobody dragged
 
 @Test func aResizeReportedJustAfterReleaseMovesTheSplit() {
     var s = twoTiles()
@@ -74,7 +74,7 @@ func losingTheFocusedWindowKeepsTheWorkspace(_ how: String) {
     #expect(s.canvasFrame(1) == left && s.canvasFrame(2) == right)
 }
 
-// MARK: Slots on displays of different widths
+// MARK: - Slots on displays of different widths
 
 let studio = ScreenInfo(id: 3, name: "Studio Display", frame: CGRect(x: 0, y: 0, width: 2560, height: 1440),
                         visibleFrame: CGRect(x: 0, y: 25, width: 2560, height: 1415), scale: 2)
@@ -141,7 +141,7 @@ func whatComesBackAfterAWiderDisplayKeepsItsPlaceInItsSlot(_ back: Action) throw
     #expect(s.canvasFrame(2)?.offsetBy(dx: -s.slots.origin(3).x, dy: 0) == floating)
 }
 
-// MARK: Windows that fight back
+// MARK: - Windows that fight back
 
 /// Drags tile 1 by its title bar: a report every frame for half a second, then the button comes up.
 func dragByTitleBar(_ s: inout CanvasState, by dx: CGFloat) -> [WindowCommand] {
@@ -176,7 +176,7 @@ func dragByTitleBar(_ s: inout CanvasState, by dx: CGFloat) -> [WindowCommand] {
     #expect(moves(s.send(.system(.windowFrameChanged(wid(1), moved.offsetBy(dx: 10, dy: 0))))) == [wid(1): left])
 }
 
-// MARK: Late reports
+// MARK: - Late reports
 
 @Test func aLateReportOfAnEarlierMoveIsNotAdopted() throws {
     var s = focusedState()
@@ -241,7 +241,7 @@ func dragByTitleBar(_ s: inout CanvasState, by dx: CGFloat) -> [WindowCommand] {
     #expect(s.advance(1.5).isEmpty) // only once
 }
 
-// MARK: Restoring the layout
+// MARK: - Restoring the layout
 
 @Test func restoreFindsAWindowByItsIdWhenItsTitleChanged() {
     let far = CGRect(x: 6000, y: 300, width: 700, height: 500), other = CGRect(x: 6800, y: 300, width: 700, height: 500)

@@ -153,7 +153,7 @@ final class OverlayView: NSView, @preconcurrency NSTextInputClient {
         controller?.frame(screenID: screenID)
     }
 
-    // MARK: Keys
+    // MARK: - Keys
 
     override func keyDown(with event: NSEvent) {
         guard let controller else { return }
@@ -198,7 +198,7 @@ final class OverlayView: NSView, @preconcurrency NSTextInputClient {
         return window.convertToScreen(convert(field, to: nil))
     }
 
-    // MARK: Mouse
+    // MARK: - Mouse
 
     private func local(_ event: NSEvent) -> CGPoint { convert(event.locationInWindow, from: nil) }
 

@@ -12,7 +12,7 @@ func twoWindows() -> CanvasState {
 
 let filled = CGRect(x: 12, y: 50, width: 1488, height: 850) // built-in visible frame minus the 12 gap
 
-// MARK: Fill and fullscreen
+// MARK: - Fill and fullscreen
 
 @Test func fillAndBackWhenUntouched() {
     var s = focusedState()
@@ -82,7 +82,7 @@ let filled = CGRect(x: 12, y: 50, width: 1488, height: 850) // built-in visible 
     #expect(s.focused == wid(2))
 }
 
-// MARK: Pin, grow, shrink, nudge
+// MARK: - Pin, grow, shrink, nudge
 
 @Test func pinnedWindowStaysPutWhileTheCanvasMoves() throws {
     var s = focusedState()
@@ -105,7 +105,7 @@ let filled = CGRect(x: 12, y: 50, width: 1488, height: 850) // built-in visible 
     #expect(moves(s.send(.action(.nudge(.down))))[wid(1)] == onBuiltIn.offsetBy(dx: 0, dy: 80))
 }
 
-// MARK: Undo, redo
+// MARK: - Undo, redo
 
 @Test func undoRedoNudge() {
     var s = focusedState()
@@ -147,7 +147,7 @@ let filled = CGRect(x: 12, y: 50, width: 1488, height: 850) // built-in visible 
     #expect(t.toast == "Tidied 1 window  {⌃⌥Z} Undo")
 }
 
-// MARK: Summon, navigation, MRU
+// MARK: - Summon, navigation, MRU
 
 @Test func summonBringsTheSelectionToWhereTheSessionStarted() {
     var s = twoWindows()
@@ -192,7 +192,7 @@ let filled = CGRect(x: 12, y: 50, width: 1488, height: 850) // built-in visible 
     #expect(m.order == [wid(1), wid(2)])
 }
 
-// MARK: Camera gestures
+// MARK: - Camera gestures
 
 @Test func zoomAtPointKeepsThatPointAndClamps() {
     var s = twoWindows()
@@ -251,7 +251,7 @@ let filled = CGRect(x: 12, y: 50, width: 1488, height: 850) // built-in visible 
     #expect(abs(center.x - 5000) < 1e-6 && abs(center.y - 5000) < 1e-6)
 }
 
-// MARK: Placement and tidy-up
+// MARK: - Placement and tidy-up
 
 @Test func parkCornerAvoidsTheAdjacentDisplay() {
     #expect(parkCorner(for: builtIn, among: [builtIn, external]) == .bottomLeft)
