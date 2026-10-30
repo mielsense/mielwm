@@ -18,7 +18,7 @@ Quit AeroSpace before you start mielwm, because two window managers fight over t
 
 ## Import your AeroSpace config
 
-Settings > Layout & workspaces > Import from AeroSpace reads `~/.config/aerospace/aerospace.toml`, or `~/.aerospace.toml`, shows what it found, and applies it when you confirm. It understands:
+Settings > AeroSpace & Barik > Import from AeroSpace reads `~/.config/aerospace/aerospace.toml`, or `~/.aerospace.toml`, shows what it found, and applies it when you confirm. It understands:
 
 - `[gaps]`, including the per-monitor form. `monitor."built-in"` becomes the built-in display's top gap, and the plain value the other displays'.
 - `default-root-container-layout`, with `accordion` becoming a stack, and `default-root-container-orientation`.
@@ -35,7 +35,7 @@ The very first time mielwm starts, before any config exists, it imports the gaps
 
 1. Open Barik at least once, so it writes its config file.
 2. Make sure mielwm runs from your Applications folder. From the disk image or straight from Downloads, the switch asks you to move it first, because that copy disappears when mielwm quits.
-3. Turn on Settings > Layout & workspaces > Work with Barik, and confirm.
+3. Turn on Settings > AeroSpace & Barik > Work with Barik, and confirm.
 
 Barik relaunches, and a few seconds later it shows mielwm's workspaces and the windows on each. Clicking a workspace or a window switches to it.
 

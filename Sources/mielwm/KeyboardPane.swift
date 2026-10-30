@@ -16,41 +16,55 @@ struct KeyboardPane: View {
         })
         let others = Set(model.settings.chords.values).subtracting(listed).subtracting([.noop])
             .sorted { actionName($0).localizedStandardCompare(actionName($1)) == .orderedAscending }
+        let groups = shortcutGroups.map { group in (title: group.title, items: group.items.filter { shown($0.name, $0.detail) }) }.filter { !$0.items.isEmpty }
+        let extra = others.filter { shown(actionName($0), nil) }
+        let overview = overviewKeys.filter { shown($0.name, nil) }
         Form {
-            ForEach(Array(shortcutGroups.enumerated()), id: \.offset) { index, group in
-                Section {
+            Section {
+                PaneHeader(pane: .keyboard) {
+                    SearchField(text: $model.keyQuery, prompt: "Search shortcuts")
+                        .accessibilityLabel("Search shortcuts")
+                        .frame(width: 260)
+                }
+            }
+            ForEach(groups, id: \.title) { group in
+                Section(group.title) {
                     ForEach(group.items, id: \.name) { item in
                         switch item.target {
                         case let .action(action): ShortcutRow(action: action, name: item.name, detail: item.detail)
                         case let .family(family): FamilyRow(family: family, name: item.name, detail: item.detail)
                         }
                     }
-                } header: {
-                    VStack(alignment: .leading, spacing: 14) {
-                        // Said once, above the first shortcut it applies to.
-                        if index == 0 { Text("Click a shortcut, then press the new keys. Esc cancels, Delete clears it.").font(.callout).foregroundStyle(.secondary) }
-                        Text(group.title)
-                    }
                 }
             }
-            if !others.isEmpty {
+            if !extra.isEmpty {
+                Section("From config.json") {
+                    ForEach(extra, id: \.self) { ShortcutRow(action: $0, name: actionName($0), detail: nil) }
+                }
+            }
+            if !overview.isEmpty {
                 Section {
-                    ForEach(others, id: \.self) { ShortcutRow(action: $0, name: actionName($0), detail: nil) }
+                    ForEach(overview, id: \.keys) { key in
+                        LabeledContent(key.name) { KeyCaps(text: key.keys) }
+                    }
                 } header: {
-                    Text("From config.json")
+                    Text("In the overview")
+                } footer: {
+                    Text("Press ⌘/ in the overview for every key.").settingsFooter()
+                }
+            }
+            if groups.isEmpty, extra.isEmpty, overview.isEmpty {
+                Section {
+                    Text("No shortcuts match “\(query)”.").font(Design.row).foregroundStyle(.secondary).frame(maxWidth: .infinity)
                 }
             }
             Section {
-                ForEach(overviewKeys, id: \.keys) { key in
-                    LabeledContent(key.name) { KeyCaps(text: key.keys) }
-                }
-            } header: {
-                Text("In the overview")
-            } footer: {
-                HStack(alignment: .firstTextBaseline) {
-                    Text("Press ⌘/ in the overview for every key.").settingsFooter()
+                LabeledContent {
                     Button("Restore defaults…") { model.confirmRestoreShortcuts = true }
                         .disabled(model.settings.bindings == defaults.bindings)
+                } label: {
+                    Text("Restore all shortcuts")
+                    Text("Every action gets its default shortcut back.")
                 }
             }
         }
@@ -59,6 +73,13 @@ struct KeyboardPane: View {
         } message: {
             Text("Every action gets its default shortcut back.")
         }
+    }
+
+    private var query: String { model.keyQuery.trimmingCharacters(in: .whitespaces) }
+
+    /// Whether the search keeps a shortcut: its name or its line under it has the words.
+    private func shown(_ name: String, _ detail: String?) -> Bool {
+        query.isEmpty || name.localizedStandardContains(query) || (detail?.localizedStandardContains(query) ?? false)
     }
 }
 
@@ -124,7 +145,7 @@ struct FamilyRow: View {
                     }
                     VStack(alignment: .leading, spacing: 2) {
                         Text(name)
-                        if let detail { Text(detail).font(.callout).foregroundStyle(.secondary) }
+                        if let detail { Text(detail).font(Design.secondary).foregroundStyle(.secondary) }
                     }
                 }
             }
@@ -148,7 +169,7 @@ struct ShortcutNotes: View {
     var body: some View {
         if let c = model.conflict, c.slot.target == target {
             HStack(spacing: 6) {
-                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.yellow)
+                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
                 Text(conflictText(c)).fixedSize(horizontal: false, vertical: true)
                 Spacer()
                 Button("Cancel") { model.conflict = nil }
@@ -158,13 +179,13 @@ struct ShortcutNotes: View {
                 }
                 .keyboardShortcut(.defaultAction)
             }
-            .font(.callout)
+            .font(Design.secondary)
             .controlSize(.small)
         } else {
             let notes = Array(Set(chords.compactMap(systemUse))).sorted()
             ForEach(notes, id: \.self) { note in
                 Label(note, systemImage: "info.circle")
-                    .font(.callout)
+                    .font(Design.secondary)
                     .foregroundStyle(.secondary)
             }
         }
@@ -189,20 +210,14 @@ struct ShortcutRecorder: View {
     var body: some View {
         let recording = model.recording == slot
         let (text, dim) = label(recording: recording)
+        let id = "\(slot)"
         Button { recording ? (model.recording = nil) : model.startRecording(slot) } label: {
-            Text(text)
-                .foregroundStyle(dim ? .secondary : .primary)
-                .lineLimit(1)
-                .frame(minWidth: 96)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 3)
-                .background(RoundedRectangle(cornerRadius: 5, style: .continuous).fill(Color(nsColor: .textBackgroundColor)))
-                .overlay(RoundedRectangle(cornerRadius: 5, style: .continuous)
-                    .strokeBorder(recording ? Color.accentColor : Color(nsColor: .separatorColor), lineWidth: recording ? 2 : 1))
-                .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous).strokeBorder(Color.accentColor.opacity(recording ? 0.3 : 0), lineWidth: 3).padding(-3))
-                .contentShape(Rectangle())
+            KeyCaps(text: text, dim: dim, hovering: model.hovered == id, recording: recording)
         }
         .buttonStyle(.plain)
+        .onHover { inside in
+            if inside { model.hovered = id } else if model.hovered == id { model.hovered = nil }
+        }
         .help(recording ? hint : "Click to change")
         .accessibilityLabel(recording ? "Recording a shortcut" : "Shortcut: \(text)")
         .accessibilityHint(hint)
@@ -216,29 +231,16 @@ struct ShortcutRecorder: View {
     private func label(recording: Bool) -> (String, Bool) {
         switch slot.target {
         case let .family(family):
-            if recording { return model.held.isEmpty ? ("Hold modifiers…", true) : (model.held.symbols + family.keysSymbol, false) }
+            if recording { return model.held.isEmpty ? ("Type shortcut", true) : (model.held.symbols + family.keysSymbol, false) }
             switch model.settings.binding(of: family) {
             case let .modifiers(m): return (m.symbols + family.keysSymbol, false)
             case .custom: return ("Custom", false)
             case .none: return ("None", true)
             }
         case .action:
-            if recording { return model.held.isEmpty ? ("Recording…", true) : (model.held.symbols, false) }
+            if recording { return model.held.isEmpty ? ("Type shortcut", true) : (model.held.symbols, false) }
             return slot.chord.map { ($0.symbol, false) } ?? ("None", true)
         }
-    }
-}
-
-/// Keys shown, not edited.
-struct KeyCaps: View {
-    let text: String
-
-    var body: some View {
-        Text(text)
-            .foregroundStyle(.secondary)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 1)
-            .background(RoundedRectangle(cornerRadius: 4, style: .continuous).fill(.primary.opacity(0.06)))
     }
 }
 

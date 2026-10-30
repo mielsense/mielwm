@@ -29,9 +29,17 @@ struct LabeledSlider: View {
     }
 }
 
+private let footerIndent: CGFloat = ProcessInfo.processInfo.isOperatingSystemAtLeast(OperatingSystemVersion(majorVersion: 26, minorVersion: 0, patchVersion: 0)) ? 0 : 10
+
 extension Text {
-    /// Indented like the section titles and row labels, so all text starts on one edge.
+    /// Indented like the section titles and row labels, so all text starts on one edge. macOS 26 indents footers itself.
     func settingsFooter() -> some View {
-        font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.leading).frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 10)
+        font(Design.secondary).foregroundStyle(.secondary).multilineTextAlignment(.leading).frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, footerIndent)
     }
+}
+
+/// "1×", "2×", "0.5×".
+func doublingText(_ exponent: Double) -> String {
+    String(format: pow(2, exponent) < 0.95 ? "%.2g×" : "%.1f×", pow(2, exponent)).replacingOccurrences(of: ".0×", with: "×")
 }

@@ -179,5 +179,5 @@ func aeroSpaceImportNote(_ found: AeroSpaceImport) -> String {
     if !found.workspaceRules.isEmpty { parts.append("\(found.workspaceRules.count) workspace rules") }
     if !found.floatingApps.isEmpty { parts.append("\(found.floatingApps.count) floating apps") }
     let list = parts.count > 1 ? parts.dropLast().joined(separator: ", ") + " and " + parts.last! : parts.joined()
-    return "mielwm took your \(list) from AeroSpace's config. Change them any time in Settings > Layout & workspaces."
+    return "mielwm took your \(list) from AeroSpace's config. Change them any time in Settings > Layout and Settings > Windows."
 }

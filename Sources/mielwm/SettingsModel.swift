@@ -21,6 +21,7 @@ final class SettingsModel: ObservableObject {
     @Published var pane: SettingsPane {
         didSet {
             scrolled = false
+            pastHeader = false
             if remembersPane { UserDefaults.standard.set(pane.rawValue, forKey: "settingsPane") }
         }
     }
@@ -31,12 +32,17 @@ final class SettingsModel: ObservableObject {
     @Published var conflict: ShortcutConflict?
     @Published var expanded: Set<ShortcutFamily> = [] // custom families showing their keys
     @Published var scrolled = false // the pane is scrolled: a line under the title bar
+    @Published var pastHeader = false // its header card is out of sight: the title bar shows the name instead
     @Published var cliStatus = CLITool.status()
     @Published var screens: [ScreenInfo] = [] // as tiling sees them, each with its status bar
     @Published var screen: ScreenInfo? // the one the window is on
     /// The running canvas's screens, else a fresh read.
     var readScreens: () -> [ScreenInfo] = { Displays.screens() }
     private var windowScreenID: CGDirectDisplayID?
+    @Published var paneQuery = "" // the sidebar's search
+    @Published var keyQuery = "" // the Keyboard pane's search
+    @Published var focusedGap: String? // the gap field being edited, highlighted in the diagram
+    @Published var hovered: String? // the row under the pointer, where a row shows more on hover
     /// The Appearance pane's canvas, made on the first visit; its GPU textures go when the window closes.
     var preview: AppearancePreview {
         if let madePreview { return madePreview }

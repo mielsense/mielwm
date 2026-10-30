@@ -10,21 +10,16 @@ struct AppearancePane: View {
     var body: some View {
         let look = model.settings.look
         Form {
+            Section { PaneHeader(pane: .appearance) }
             Section {
                 AppearancePreviewView(settings: model.settings, dark: colorScheme == .dark, preview: model.preview)
-                AccentPicker()
             } footer: {
-                Text("The canvas as you set it. The overview shows the change right away.").settingsFooter()
+                Text("The canvas as you set it. The overview shows each change right away.").settingsFooter()
             }
-            Section("Lens") {
-                Toggle(isOn: model.flag("distortion:enabled")) {
-                    Text("Bend the edges")
-                    Text("The zoomed-out canvas curves away at the edges of the screen, like through a lens.")
-                }
-                LabeledSlider("Strength", value: model.number("distortion:strength"), in: 0 ... 0.5) { "\(Int(($0 * 200).rounded()))%" }
-                    .disabled(!look.lensEnabled)
-                LabeledSlider("Magnification", value: model.number("distortion:edge_scale"), in: 1 ... 1.5) { "\(Int((($0 - 1) * 200).rounded()))%" }
-                    .disabled(!look.lensEnabled)
+            Section("Theme") {
+                AccentPicker()
+                // Slot: the "Glass style" picker (appearance:glass, Liquid or Frosted) from
+                // feat/on-screen-indicators goes here, as a VisualPicker over Design.Glass.
             }
             Section("Background") {
                 Toggle("Show the desktop picture", isOn: model.flag("wallpaper"))
@@ -36,21 +31,39 @@ struct AppearancePane: View {
             }
             Section("Grid") {
                 Toggle("Show the grid", isOn: model.flag("canvas:grid_enabled"))
-                Picker("Style", selection: model.text("canvas:grid_style")) {
-                    Text("Dots").tag("dots")
-                    Text("Lines").tag("lines")
+                VisualPicker(title: "Style", selection: model.text("canvas:grid_style"), options: ["dots", "lines"], name: { $0 == "dots" ? "Dots" : "Lines" }) {
+                    GridThumbnail(dots: $0 == "dots")
                 }
                 .disabled(!look.gridEnabled)
+                .opacity(look.gridEnabled ? 1 : 0.5)
                 LabeledSlider("Opacity", value: model.number("canvas:grid_opacity"), in: 0 ... 0.5) { "\(Int(($0 * 100).rounded()))%" }
                     .disabled(!look.gridEnabled)
             }
             Section("Windows") {
                 LabeledSlider("Corner rounding", value: model.number("window:rounding"), in: 0 ... 40) { "\(Int($0.rounded())) pt" }
                 Toggle("Shadows", isOn: model.flag("window:shadow"))
-                Toggle("Show window names", isOn: model.flag("navigator:labels"))
-                Toggle(isOn: model.flag("canvas:minimap_enabled")) {
-                    Text("Show the minimap")
-                    Text("A map of the whole canvas in a corner of the overview.")
+            }
+        }
+    }
+}
+
+/// The canvas grid: dots or lines over the dark canvas.
+struct GridThumbnail: View {
+    let dots: Bool
+
+    var body: some View {
+        Canvas { context, size in
+            context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(Color(white: 0.16)))
+            let step: CGFloat = 8
+            for x in stride(from: step / 2, to: size.width, by: step) {
+                for y in stride(from: step / 2, to: size.height, by: step) where dots {
+                    context.fill(Path(ellipseIn: CGRect(x: x - 0.9, y: y - 0.9, width: 1.8, height: 1.8)), with: .color(.white.opacity(0.45)))
+                }
+                if !dots { context.fill(Path(CGRect(x: x, y: 0, width: 0.6, height: size.height)), with: .color(.white.opacity(0.3))) }
+            }
+            if !dots {
+                for y in stride(from: step / 2, to: size.height, by: step) {
+                    context.fill(Path(CGRect(x: 0, y: y, width: size.width, height: 0.6)), with: .color(.white.opacity(0.3)))
                 }
             }
         }
@@ -78,7 +91,7 @@ struct AccentPicker: View {
                 .frame(width: 44, height: 22)
                 .help("Choose any color")
             }
-            HStack(spacing: 2) {
+            HStack(spacing: 0) {
                 Swatch(name: "Automatic", detail: "Follows the accent color in System Settings", selected: accent == "auto",
                        fill: AnyShapeStyle(AngularGradient(colors: [.red, .orange, .yellow, .green, .blue, .purple, .red], center: .center)),
                        light: false) { model.set("navigator:accent", .text("auto")) }
@@ -131,15 +144,15 @@ struct Swatch: View {
 
     var body: some View {
         Button(action: action) {
+            // As System Settings marks the chosen color: a ring of the same color around it.
             ZStack {
                 Circle().fill(fill).frame(width: 16, height: 16)
                 Circle().strokeBorder(.black.opacity(0.12), lineWidth: 0.5).frame(width: 16, height: 16)
                 if selected {
-                    Circle().fill(light ? Color.black.opacity(0.55) : .white).frame(width: 6, height: 6)
-                    Circle().strokeBorder(Color.secondary.opacity(0.6), lineWidth: 1.5).frame(width: 21, height: 21)
+                    Circle().strokeBorder(light ? AnyShapeStyle(Color.secondary) : fill, lineWidth: 2).frame(width: 22, height: 22)
                 }
             }
-            .frame(width: 22, height: 22)
+            .frame(width: 24, height: 24)
             .contentShape(Circle())
         }
         .buttonStyle(.plain)
