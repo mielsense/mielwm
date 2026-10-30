@@ -1,76 +1,63 @@
-# Workspaces and layouts
+# Workspaces
 
-Windows live on one endless canvas, grouped into numbered workspaces that tile them the way AeroSpace does.
-
-![Workspaces on the canvas, zoomed out](images/overview-dark.jpg)
+Numbered workspaces hold your windows, side by side on one canvas, and you switch between them with a key or a swipe.
 
 ## The canvas
 
 Every window has a place on the canvas, a surface much larger than your screens. Normally you look at one screen-sized part of it, and mielwm puts the real windows wherever the canvas says.
 
-Windows outside that part wait in a bottom corner of a display, tucked away with one point still on screen. AeroSpace hides windows the same way, because macOS doesn't let an app truly hide another app's window. They stay ordinary macOS windows the whole time, and mielwm puts them all back on screen when it quits or pauses.
+Windows outside that part wait in a bottom corner of a display, with one point still on screen. AeroSpace hides windows the same way, because macOS doesn't let an app truly hide another app's window. They stay ordinary macOS windows the whole time, and mielwm puts them all back on screen when it quits or pauses.
 
-## Workspaces
+## Workspaces 1 to 9
 
 A workspace is a screen-sized area of the canvas. Workspaces 1 to 9 sit side by side in a fixed row, so `⌥3` always lands in the same place. A workspace with no windows disappears once you leave it, and its number is free again.
+
+Each workspace has its own [layout](layouts.md): tiles, a stack, or floating windows.
+
+## Switching
 
 | Keys | What it does |
 | --- | --- |
 | `⌥1` … `⌥9` | Go to that workspace. |
 | `⌥⇧1` … `⌥⇧9` | Move the focused window to that workspace and go with it. |
 | `⌃←`, `⌃→` | The previous or next workspace that has windows. They stop at the first and last. |
-| Three fingers left, right | The same, from the trackpad. See [Trackpad and mouse](trackpad.md). |
+| Three fingers left or right | The same, from the trackpad. See [Trackpad and mouse](trackpad.md). |
 
-Switching is instant, with no animation. The menu bar shows the numbers of the workspaces that have windows, with the current one filled. The same numbers show at the bottom of the display for 0.7 seconds after each switch, which helps when the menu bar is on another display. Turn this off with Show workspace on switch in Settings > Menu bar.
+Switching is instant, with no animation. The workspace numbers show at the bottom of the display for 0.7 seconds, with the current one filled, and the menu bar item shows them too. [Menu bar and indicators](menu-bar.md) explains both.
 
-## Layouts
+### Going back
 
-A workspace lays its windows out one of two ways, and any window can float instead.
+The Last workspace action goes to the workspace you were on before, and again goes back. It has no key until you give it one in Settings > Keyboard, because `⌥Tab` is the window switcher.
 
-### Tiles
-
-Tiles split the screen between the workspace's windows, side by side on a wide display and above each other on a tall one. The gaps come from Settings > Layout, and match AeroSpace's by default: 8 points between windows and 12 around the edge.
-
-A tiled window can't be dragged smaller than its tile. Drag the edge between two tiles to move it, or use `⌥=` and `⌥-` to grow and shrink the focused tile. `⌥⇧` with an arrow swaps a window with its neighbour, and past the last tile it moves to the next workspace.
-
-`⌥/` tiles the workspace. Pressed again, it flips between side by side and above each other.
-
-### Stack
-
-A stack shows one window at a time at full size, like AeroSpace's accordion. `⌥,` stacks the workspace and `⌥,` again goes back to tiles. In a stack, `⌥←` and `⌥→` step through its windows, and so does `⌥Tab`. Zoomed out, a stack looks like a fanned deck of cards.
-
-When you go to a stack, or another of its windows comes to the front, a strip at the top of the stack shows its windows in order: each app's icon and the window's title, the front one highlighted, and where it sits, like "2 of 4". It goes after 0.7 seconds and never takes space from the windows. When the titles don't fit, the strip shows only the front window's title.
-
-Peek edges, in Settings > Layout, move the windows behind the front one aside by up to 16 points, so you can see that they are there. The window before the front one shows its left edge and the one after it shows its right edge, like the padding in AeroSpace's accordion. It's off by default.
-
-### Floating
-
-`⌥.` floats the focused window. A floating window keeps whatever size and place you give it. `⌥.` again tiles it back into the workspace it sits on. A floating window belongs to the workspace it's on, so it's still there when you come back.
-
-Some apps always float, because their windows don't make sense as tiles: System Settings, Activity Monitor, Calculator and Archive Utility by default. Windows that can't be resized float too.
+Turn on Settings > Layout > Workspace key goes back, and the key of the workspace you're on does the same: on workspace 3, `⌥3` takes you back to where you came from. `mielwm workspace 3` from the [command line](command-line.md) and clicks in a menu bar app stay put.
 
 ## New windows
 
-A new window joins the workspace you're on, next to the focused window. It takes the workspace's layout, which is tiles unless you change it in Settings > Layout.
+A new window joins the workspace you're on, next to the focused window, and takes that workspace's layout. A new workspace starts with the layout from Settings > Layout > New windows, which is tiles unless you change it.
 
-Workspace rules send an app's windows to a fixed workspace, so Spotify can always open on 2 and Discord on 1. Add them in Settings, or import your AeroSpace `on-window-detected` rules ([AeroSpace and Barik](aerospace.md)).
+Some windows go elsewhere:
+
+- Apps in Settings > Windows > Floating apps always float.
+- Apps in Settings > Windows > Workspace rules open on their own workspace, so Spotify can always open on 2.
+- [Window rules](window-rules.md) in the config file float a window or send it to a workspace by its app's name or its title.
+- Windows that can't be resized float.
 
 When mielwm starts, every window that's already open gets a workspace of its own, unless a rule says otherwise. That way nothing starts as a pile of tiny tiles.
 
-## Fill, fullscreen and pin
+## Closing and minimizing
 
-`⌥T` fills the screen with the focused window, keeping the gaps, and `⌥T` again puts it back. `⌥F` does the same without gaps. The menu bar stays visible either way. `⌥O` pins a floating window to the screen, so it stays put while the canvas moves under it.
+Closing, minimizing or hiding the focused window keeps you on the same workspace. The most recent window on screen takes the focus. Close and Minimize are also actions you can give a key in Settings > Keyboard.
 
 ## More than one display
 
-The workspace you go to lands on the display under the pointer. The other displays keep showing whatever part of the canvas sits there. Gaps can differ on the built-in display and the others, for a menu bar that only covers one of them.
+The workspace you go to lands on the display under the pointer. The other displays keep showing whatever part of the canvas sits there. Workspaces sit far enough apart that a wide display never shows part of the workspace next to it.
 
-## A status bar at the top
+## Keeping track of windows
 
-Settings > Layout > Top edge decides how much room the tiles leave at the top of each display.
+mielwm hears about new, moved and closed windows from macOS. Apps that are busy sometimes miss a move or a notification, so mielwm also:
 
-- Automatic, the default, finds a status bar such as Barik or SketchyBar along the top of each display and adds its height to the top gap. A display without one gets the top gap alone. Next to the setting you see what it found on the display the Settings window is on, like "Barik, 40 pt". mielwm looks again when an app opens or quits and when displays change.
-- Same as other edges uses the top gap alone on every display.
-- Custom keeps the top gap for the built-in display and takes your own number for the others.
+- reads every app's window list again every 10 seconds, and when you switch to an app,
+- gives a window that missed a move the same move once more a second later,
+- puts every window back in its tile after the Mac wakes from sleep or a display comes or goes.
 
-A menu bar that hides itself needs nothing. macOS already leaves its room when it shows.
+Nothing is read while the displays sleep. If windows still end up out of place, `mielwm refresh` reads every list again and puts every window where the canvas says.

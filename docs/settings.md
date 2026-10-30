@@ -1,102 +1,150 @@
-# Settings and the menu bar
+# Settings
 
-Everything you can change in the Settings window, and what the menu bar item does.
+Every pane of the Settings window, what each setting does, and its name in the config file.
 
-Open Settings from the menu bar item, with `⌘,` in the overview, or with `mielwm settings` from a terminal. It opens at the pane you used last.
+## Opening Settings
 
-The sidebar lists the panes in groups. The search field at its top finds a pane by its name or by a setting in it: type "gap" and Layout shows, with "Gaps" under it.
+Open Settings from the mielwm menu bar item, with `⌘,` in the overview, or with `mielwm settings` from a terminal. It opens at the pane you used last.
 
-![The Layout pane](images/settings-layout-dark.png)
+The sidebar lists eleven panes in groups. The search field at its top finds a pane by its name or by a setting in it: type "gap" and Layout shows, with Gaps under it.
+
+Changes apply to your windows right away. Each one is saved to `~/.config/mielwm/config.json` a moment after you stop changing it, so dragging a slider is one write. Edits you make to the file yourself show up in the open window as soon as you save. The [configuration file](configuration.md) page lists every key, including the ones Settings doesn't show.
 
 ## General
 
-- Open mielwm at login.
-- Whether windows come back to their places after a restart.
-- Animation on or off, and its speed.
+Start mielwm when you log in, and choose how it remembers and animates your windows.
+
+![The General pane](images/settings-general-dark.png)
+
+| Setting | What it does | Config key |
+| --- | --- | --- |
+| Open at login | Starts mielwm when you log in. Works when mielwm runs from mielwm.app. If macOS asks, allow it in System Settings > General > Login Items. | none |
+| Remember where windows are | After a restart, windows come back to their places on the canvas. | `canvas:remember_layout` |
+| Animation > Animate the camera | The overview flies between views. Off, it cuts. | `animation:enabled` |
+| Animation > Speed | How fast it flies, from a quarter to four times the default. | `animation:speed` |
 
 ## Layout
 
-- The layout new windows get, tiles, stack or floating, and which way tiles split. Each choice is a small picture you click.
-- The gaps between windows and around the screen edge, with a small desktop that redraws as you type. Point at a gap's field and its gap lights up, with its size. It shows the top gap on the display the Settings window is on.
-- The top edge: Automatic, Same as other edges, or Custom. [Workspaces and layouts](workspaces.md#a-status-bar-at-the-top) explains each.
-- Peek edges for stacks, so the windows behind the front one show their edges.
-- Workspace key goes back: the key of the workspace you're on takes you to the one before.
-- Focus and move past the edge: `⌥` arrows and `⌥⇧` arrows go on into the next workspace instead of stopping at the edge.
+How new windows tile, and the gaps around them and the screen edges. [Layouts and gaps](layouts.md) explains each one.
 
-[Workspaces and layouts](workspaces.md) explains what each of these does.
+![The Layout pane](images/settings-layout-dark.png)
+
+| Setting | What it does | Config key |
+| --- | --- | --- |
+| New windows > Layout | Tiles, Stack or Floating, for new workspaces. | `layout:default` |
+| New windows > Orientation | Automatic, Side by side, or Above each other. | `layout:orientation` |
+| Stacks > Peek edges | Off, or 1 to 16 points of the windows behind a stack's front one. | `layout:stack_peek` |
+| Gaps | Between windows, side by side and above each other, and the left, right and bottom edges. | `gaps:*` |
+| Gaps > Top edge | Automatic, Same as other edges, or Custom. | `gaps:outer_top_external` |
+| Gaps > Top gap | The gap at the top. In Custom, one for the built-in display and one for the others. | `gaps:outer_top` |
+| Workspaces > Workspace key goes back | The key of the workspace you're on takes you to the one before. | `layout:auto_back_and_forth` |
+| Workspaces > Focus and move past the edge | `⌥` arrows and `⌥⇧` arrows go on into the next workspace instead of stopping. | `layout:cross_workspaces` |
 
 ## Windows
 
-- Apps whose windows always float.
-- Workspace rules, which send an app's windows to a fixed workspace.
+Apps whose windows float above the tiles, and apps that always open on one workspace. [Floating windows](floating.md) has the details.
+
+![The Windows pane](images/settings-windows-dark.png)
+
+| Setting | What it does | Config key |
+| --- | --- | --- |
+| Floating apps | Windows of these apps float above the tiles. | `layout:floating_apps` |
+| Workspace rules | New windows of these apps open on their workspace. | `layout:workspace_rules` |
+
+Add app, under each list, picks a running app or opens Finder to choose one. [Window rules](window-rules.md) by name or title live only in the config file.
 
 ## Overview
 
-- How far the overview zooms out when it opens.
-- Window names and the minimap.
-- The lens, its strength and magnification.
+How far the canvas zooms out, the lens at its edges, and what shows on it. [The overview](overview.md) explains each part.
+
+![The Overview pane](images/settings-overview-dark.png)
+
+| Setting | What it does | Config key |
+| --- | --- | --- |
+| Zoomed-out level | How far the overview zooms out when it opens, from 10% to 95%. | `canvas:initial_zoom` |
+| Show window names | The name of the selected window. | `navigator:labels` |
+| Show the minimap | A map of the whole canvas in a corner. | `canvas:minimap_enabled` |
+| Lens > Bend the edges | The canvas curves away at the screen's edges. | `distortion:enabled` |
+| Lens > Strength | How strongly it bends. | `distortion:strength` |
+| Lens > Magnification | How far the canvas extends under the bent edge. | `distortion:edge_scale` |
 
 ## Keyboard
 
-Every shortcut, grouped by what it does. Click a shortcut, then type the new keys. The search field at the top finds a shortcut by name. [Keyboard](keyboard.md) covers recording, families of keys and conflicts.
+Every shortcut, grouped by what it does: Overview, Windows, Layout, Workspaces, Focus & move, and mielwm. Click a shortcut, then type the new keys. `Esc` cancels and `Delete` clears it. The search field at the top finds a shortcut by name.
+
+![The Keyboard pane](images/settings-keyboard-dark.png)
+
+Below the groups, From config.json lists keys you bound in the file to other actions, and In the overview lists the overview's own keys. Restore defaults… gives every action its default shortcut back. [Keyboard](keyboard.md) covers recording, families of keys and conflicts.
 
 ## Trackpad & mouse
 
-- Three-finger swipes between workspaces, with a warning when macOS's own swipe gets in the way.
-- The keys you hold to move a window by dragging it, or resize it with the right button: ⌃⌥ by default.
-- Whether clicks, drags and scrolling work in the overview, and how fast it pans and zooms.
+Swipes, the pointer in the overview, and the keys you hold to drag a window. [Trackpad and mouse](trackpad.md) has every gesture.
+
+![The Trackpad & mouse pane](images/settings-trackpad-dark.png)
+
+| Setting | What it does | Config key |
+| --- | --- | --- |
+| Trackpad > Swipe between workspaces | Three fingers left or right go to the next or previous workspace. A warning shows when macOS's own swipe gets in the way. | `input:swipe_workspaces` |
+| Windows > Move and resize windows | The keys you hold to drag a window from anywhere, or resize it with the right button. `⌃⌥` by default. | `input:move_modifier` |
+| Pointer and scrolling > Use the pointer in the overview | Clicks, drags, scrolling and hover in the overview. | `navigator:pointer` |
+| Pointer and scrolling > Panning speed | How far a drag pans the canvas, from a quarter to four times the default. | `input:pan_sensitivity` |
+| Pointer and scrolling > Zoom speed | How fast the scroll wheel zooms, from a quarter to four times the default. | `input:scroll_factor` |
 
 ## Appearance
 
-Appearance starts with a live preview of the overview, drawn by the same renderer, so every change shows as you make it.
-
-- The accent color. Automatic follows System Settings, or pick a preset or any color.
-- The glass style of every panel mielwm draws: the search field and its results, the pills and tags, the shortcuts sheet, the minimap, the `⌥Tab` switcher and the notices over the desktop. Liquid glass is clear and bends the edges of what is behind it, like macOS 26. Frosted blurs it, like earlier macOS versions. Liquid glass needs macOS 26 and is the default there. With Reduce Transparency on, every panel is solid.
-- The background: your desktop picture, how much it dims, and blur.
-- The grid on the canvas, dots or lines, and how strong it is.
-- How windows look in the overview: corner rounding and shadows.
+The overview's accent color, glass, background, grid and windows. A live preview of the overview sits at the top, so every change shows as you make it.
 
 ![The Appearance pane](images/settings-appearance-dark.png)
 
+| Setting | What it does | Config key |
+| --- | --- | --- |
+| Accent color | Automatic follows the accent color in System Settings. Or pick one of 17 presets, or any color with the color well. | `navigator:accent` |
+| Glass style | Liquid glass or Frosted, for the overview's panels and the notices. Liquid glass needs macOS 26. See [Glass](overview.md#glass). | `appearance:glass` |
+| Background > Show the desktop picture | Your desktop picture behind the canvas. | `wallpaper` |
+| Background > Dim | How much the background darkens, 0% to 90%. | `canvas:background_dim` |
+| Background > Blur, Blur amount | Blur the desktop picture, and how much. | `blur`, `blur_strength` |
+| Grid > Show the grid | Dots or lines on the canvas. | `canvas:grid_enabled` |
+| Grid > Style | Dots or Lines. | `canvas:grid_style` |
+| Grid > Opacity | How strong the grid is, 0% to 50%. | `canvas:grid_opacity` |
+| Windows > Corner rounding | Window corners in the overview, 0 to 40 points. | `window:rounding` |
+| Windows > Shadows | Shadows under windows in the overview. | `window:shadow` |
+
 ## Menu bar
 
-What the mielwm item in the menu bar shows: all workspaces, the current one only, or the icon. [The menu bar](#the-menu-bar) below explains each.
+What the mielwm item in the menu bar shows. [Menu bar and indicators](menu-bar.md) describes the item, its menu and the notices.
 
-Show workspace on switch puts the same numbers at the bottom of the display for a moment each time you switch, which helps when the menu bar is on another display.
+![The Menu bar pane](images/settings-menubar-dark.png)
+
+| Setting | What it does | Config key |
+| --- | --- | --- |
+| Menu bar item | All workspaces, Current only, or Icon. | `menubar:style` |
+| On screen > Show workspace on switch | The workspace numbers show at the bottom of the display for a moment when you switch. | `notices:workspace` |
 
 ## AeroSpace & Barik
 
-- Work with Barik, so Barik's menu bar shows your workspaces. [AeroSpace and Barik](aerospace.md#barik) explains it.
-- Import from AeroSpace, which reads your AeroSpace config and shows what it will apply.
+Show your workspaces in a menu bar app built for AeroSpace, or bring your AeroSpace settings over.
+
+![The AeroSpace & Barik pane](images/settings-integrations-dark.png)
+
+| Setting | What it does | Config key |
+| --- | --- | --- |
+| Work with Barik | Points a supported menu bar app at mielwm, so it shows mielwm's workspaces and windows. mielwm asks before it edits the app's config and relaunches it. See [AeroSpace-compatible apps](compatible-apps.md). | `integrations:barik` |
+| Import from AeroSpace > Import… | Reads your AeroSpace config and shows what it will change before anything is applied. See [Import your config](import.md). | none |
 
 ## Advanced
 
-- Show the configuration file in Finder, or open it in your editor. Any errors in it are listed here.
-- Install the `mielwm` command into `~/.local/bin`. See [Command line](command-line.md).
-- Reset everything. The configuration file goes to the Trash, so you can get it back.
+The config file, the command-line tool and a fresh start.
+
+![The Advanced pane](images/settings-advanced-dark.png)
+
+| Setting | What it does |
+| --- | --- |
+| Config file > Show in Finder, Open | Shows `~/.config/mielwm/config.json` in Finder, or opens it in your editor. When the file has errors, Some settings could not be read lists them above. |
+| Command-line tool > Install | Links the `mielwm` command into `~/.local/bin`. Remove takes it out again. See [Command line](command-line.md). |
+| Reset all settings > Reset… | Every setting and shortcut back to its default. The config file goes to the Trash, so you can get it back. |
 
 ## About
 
-The version you run, and links to the website, these docs, the changelog, the source code and the license. About mielwm in the menu bar item's menu opens it too.
+The version you run, and links to the website, these docs, the changelog, the source code and the license. About mielwm in the menu bar item's menu opens this pane.
 
-## How settings are saved
-
-Every setting lives in `~/.config/mielwm/config.json`. Settings writes it a moment after you stop changing something, so dragging a slider is one write, not a hundred. It leaves keys it didn't touch alone, but JSON comments get lost. A setting changed back to its default disappears from the file.
-
-Changes apply to your windows right away. Edits you make to the file yourself show up in the open Settings window as soon as you save. [Configuration file](configuration.md) lists every key.
-
-## The menu bar
-
-What the menu bar item shows is up to you, in Settings > Menu bar:
-
-- All workspaces: the numbers of the workspaces that have windows, with the current one filled.
-- Current only: just the current workspace's number, for a crowded menu bar or one cut short by the notch.
-- Icon: the mielwm icon. Turning on Work with Barik switches All workspaces to this, since Barik shows the numbers already.
-
-While the configuration file has errors, a warning sign takes its place.
-
-The menu tells you what mielwm is doing: the current workspace and its layout, that it's paused, or what it's waiting for, such as a permission or AeroSpace quitting. Below that, each workspace with windows has a line with the icons of its apps, up to four, and a check on the current one. Click one to go there. From the menu you can also open the overview, tidy your windows, pause mielwm, open Settings or quit.
-
-When an app turns on secure input, the menu says "Secure input is on, shortcuts may not work". macOS hides your keys from other apps while it's on, and mielwm's shortcuts stop until it's off. Password fields turn it on for a moment, and Terminal's Secure Keyboard Entry keeps it on until you turn it off in the Terminal menu.
-
-Pausing puts every window back on a screen and leaves them alone until you resume. It's handy when an app misbehaves under tiling and you want normal macOS for a minute. Quitting puts the windows back too.
+![The About pane](images/settings-about-dark.png)

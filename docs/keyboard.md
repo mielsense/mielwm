@@ -22,7 +22,7 @@ Every shortcut mielwm has, and how to change them. The defaults are AeroSpace's 
 | `⌥-`, `⌥=` | Shrink, grow the window. |
 | `⌃⌥` + drag | Move a window with the left button, resize it with the right. |
 
-Focus and move stop at the edge of the workspace, the way AeroSpace's do. To have them go on into the next workspace, turn on Settings > Layout > Focus and move past the edge. In the overview the arrows always reach every window.
+Focus and move stop at the edge of the workspace, the way AeroSpace's do. To have them go on into the next workspace, turn on Settings > Layout > Focus and move past the edge. In the overview the arrows always reach every window. [Focus and switching](focus.md) has the details.
 
 `⌥0`, `⌥⇧0` and `⌥;` do nothing on purpose, so they never type º, ‚ or … by accident.
 
@@ -32,12 +32,15 @@ Focus and move stop at the edge of the workspace, the way AeroSpace's do. To hav
 
 These actions have no shortcut until you give them one, in Settings > Keyboard or the [configuration file](configuration.md#shortcuts):
 
-| Action | What it does |
-| --- | --- |
-| Last workspace | Go to the workspace you were on before. Again goes back. With Settings > Layout > Workspace key goes back, `⌥1` … `⌥9` on the workspace you're on do this too. |
-| Close window | Close the focused window, as a click on its close button would. The app may still ask to save. |
-| Minimize window | Minimize the focused window to the Dock. |
-| `resize smart +100` | Make the window 100 points bigger. See [the command line](command-line.md) for the forms. |
+| Action | Section in Settings > Keyboard | What it does |
+| --- | --- | --- |
+| Last workspace | Workspaces | Go to the workspace you were on before. Again goes back. See [Focus and switching](focus.md#the-last-workspace). |
+| Close window | Windows | Close the focused window, as a click on its close button would. The app may still ask to save. |
+| Minimize window | Windows | Minimize the focused window to the Dock. |
+| Tidy windows | Layout | Line up the floating windows on the canvas, grouped by app. |
+| Settings | mielwm | Open Settings. |
+
+`resize` takes any amount, like `resize smart +100` or `resize width -50`. It has no row in Settings, so bind it in the config file. Keys bound that way show in Settings > Keyboard under From config.json. [Command line](command-line.md#resize) explains the forms.
 
 ## In the overview
 
@@ -65,13 +68,13 @@ The `⌃` versions, like `⌃0` and `⌃Z`, work too, and so does `F1` for the k
 
 ## Changing shortcuts
 
-Open Settings > Keyboard. Click a shortcut and press the new keys. `Esc` cancels and `Delete` removes it. The arrow next to a changed row restores its default, and Restore defaults does every row. The search field at the top finds a shortcut by name.
+Open Settings > Keyboard. Click a shortcut and press the new keys. `Esc` cancels and `Delete` removes it. The arrow next to a changed row restores its default, and Restore defaults… at the bottom does every row. The search field at the top finds a shortcut by name.
 
 ![The Keyboard pane in Settings](images/settings-keyboard-dark.png)
 
 Keys that come in families take one row each. One row goes to a workspace, shown as "⌥1–9", one moves a window there, "⌥⇧1–9", and one covers focus and move, "⌥←→↑↓". Click the row, hold the new modifiers and press any one of its keys, and the whole family changes together. If you changed some of them one by one in the config file, the row says Custom and opens up to show each key.
 
-If the keys you press already belong to another action, the row says which one and offers to take them. It also warns when macOS uses the same keys, such as screenshots or switching input sources. mielwm refuses `⌘Q`, `⌘W`, `⌘C`, `⌘V` and the other keys every app relies on, because a global shortcut on them would break them everywhere.
+If the keys you press already belong to another action, the row says which one, and Use here moves them to this action. It also warns when macOS uses the same keys, such as screenshots or switching input sources. mielwm refuses `⌘Q`, `⌘W`, `⌘C`, `⌘V` and the other keys every app relies on, because a global shortcut on them would break them everywhere.
 
 While you record, mielwm's own shortcuts pause, so keys it already uses reach the recorder.
 
