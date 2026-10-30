@@ -125,6 +125,20 @@ func settingsPreview(_ args: [String]) -> Never {
         model.recording = nil
         model.conflict = nil
         model.expanded = []
+        // The Layout pane's diagram and top edge rows: with the status bar this display has (found), and with a sample one.
+        settings.show(.layout)
+        pump(0.8)
+        let found = model.screen?.topBar
+        for (file, bar) in [("found", found), ("sample", TopBar(owner: "Barik", height: 40))] {
+            model.screen?.topBar = bar
+            for (part, y) in [("diagram", 0.0), ("gaps", 380.0)] {
+                if let scroll = detailScrollView(in: settings.window.contentView), let doc = scroll.documentView {
+                    doc.scroll(NSPoint(x: 0, y: doc.isFlipped ? y : doc.frame.height - y - scroll.contentView.bounds.height))
+                }
+                pump(0.5)
+                savePNG(settings.window, to: out.appendingPathComponent("settings-layout-\(part)-\(file)-\(name).png"))
+            }
+        }
         if let saved { try? saved.write(to: paths.config) } else { try? fm.removeItem(at: paths.config) }
         model.reload()
         settings.window.orderOut(nil)
@@ -166,7 +180,19 @@ func settingsPreview(_ args: [String]) -> Never {
 /// (an open menu can't be drawn offscreen). Needs Screen Recording for the terminal.
 @MainActor
 private func saveMenuPreview(to url: URL) {
-    let menu = AppDelegate(mode: .normal).previewMenu(Controller(mode: .manageOnly(0)))
+    let controller = Controller(mode: .manageOnly(0))
+    // A window from each of the first open apps, spread over workspaces 1 to 3, so the menu lists them.
+    let apps = NSWorkspace.shared.runningApplications.filter { $0.activationPolicy == .regular && $0.bundleIdentifier != nil }.prefix(6)
+    let screen = controller.state.screens.first?.visibleFrame ?? .zero
+    controller.state.settings.defaultLayout = .tiles
+    controller.state.settings.workspaceRules = apps.enumerated().map { "\($1.bundleIdentifier!)=\([1, 1, 1, 2, 3, 3][$0])" }.joined(separator: ",")
+    _ = controller.state.send(.tick(controller.state.now + 20))
+    for (i, app) in apps.enumerated() {
+        _ = controller.state.send(.system(.windowAppeared(WindowSnapshot(id: WindowID(pid: app.processIdentifier, number: UInt32(i + 1)), bundleID: app.bundleIdentifier,
+                                                                         appName: app.localizedName ?? "", title: "", frame: screen.insetBy(dx: 100, dy: 100)))))
+    }
+    _ = controller.state.send(.action(.workspace(1)))
+    let menu = AppDelegate(mode: .normal).previewMenu(controller)
     guard let screen = NSScreen.main else { return }
     let at = NSPoint(x: screen.frame.midX - 120, y: screen.frame.midY + 150)
     let rect = "\(Int(at.x) - 12),\(Int(screen.frame.maxY - at.y) - 12),\(Int(menu.size.width) + 24),\(Int(menu.size.height) + 24)"

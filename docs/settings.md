@@ -9,7 +9,7 @@ Open Settings from the menu bar item, with `⌘,` in the overview, or with `miel
 ## General
 
 - Open mielwm at login.
-- Show workspace numbers in the menu bar, or just the icon.
+- What the menu bar item shows: all workspaces, the current one only, or the icon.
 - How far the overview zooms out when it opens.
 - Whether clicks, drags and scrolling work in the overview.
 - Animation on or off, and its speed.
@@ -18,7 +18,8 @@ Open Settings from the menu bar item, with `⌘,` in the overview, or with `miel
 ## Layout & workspaces
 
 - The layout new windows get, tiles, stack or floating, and which way tiles split.
-- The gaps between windows and around the screen edge, with a small diagram that updates as you type.
+- The gaps between windows and around the screen edge, with a small diagram that updates as you type. It shows the top gap on the display the Settings window is on.
+- The top edge: Automatic, Same as other edges, or Custom. [Workspaces and layouts](workspaces.md#a-status-bar-at-the-top) explains each.
 - Three-finger swipes between workspaces, with a warning when macOS's own swipe gets in the way.
 - Workspace rules, which send an app's windows to a fixed workspace.
 - Apps whose windows always float.
@@ -57,8 +58,16 @@ Changes apply to your windows right away. Edits you make to the file yourself sh
 
 ## The menu bar
 
-The menu bar item shows the numbers of the workspaces that have windows, with the current one filled. Turn the numbers off in General and it shows the mielwm icon instead. While the configuration file has errors, a warning sign takes its place.
+What the menu bar item shows is up to you, in General > Menu bar:
 
-The menu tells you what mielwm is doing: the current workspace and its layout, that it's paused, or what it's waiting for, such as a permission or AeroSpace quitting. From there you can also open the overview, tidy your windows, pause mielwm, open Settings or quit.
+- All workspaces: the numbers of the workspaces that have windows, with the current one filled.
+- Current only: just the current workspace's number, for a crowded menu bar or one cut short by the notch.
+- Icon: the mielwm icon. Turning on Work with Barik switches All workspaces to this, since Barik shows the numbers already.
+
+While the configuration file has errors, a warning sign takes its place.
+
+The menu tells you what mielwm is doing: the current workspace and its layout, that it's paused, or what it's waiting for, such as a permission or AeroSpace quitting. Below that, each workspace with windows has a line with the icons of its apps, up to four, and a check on the current one. Click one to go there. From the menu you can also open the overview, tidy your windows, pause mielwm, open Settings or quit.
+
+When an app turns on secure input, the menu says "Secure input is on, shortcuts may not work". macOS hides your keys from other apps while it's on, and mielwm's shortcuts stop until it's off. Password fields turn it on for a moment, and Terminal's Secure Keyboard Entry keeps it on until you turn it off in the Terminal menu.
 
 Pausing puts every window back on a screen and leaves them alone until you resume. It's handy when an app misbehaves under tiling and you want normal macOS for a minute. Quitting puts the windows back too.

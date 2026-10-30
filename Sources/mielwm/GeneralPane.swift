@@ -19,9 +19,13 @@ struct GeneralPane: View {
                     }
                 }
                 .disabled(!bundled)
-                Toggle(isOn: model.flag("menubar:workspaces")) {
-                    Text("Show workspaces in the menu bar")
-                    Text("The numbers of the workspaces that have windows, with the current one filled.")
+                Picker(selection: Binding(get: { model.settings.menuBarStyle }, set: setMenuBarStyle)) {
+                    Text("All workspaces").tag(MenuBarStyle.all)
+                    Text("Current only").tag(MenuBarStyle.current)
+                    Text("Icon").tag(MenuBarStyle.icon)
+                } label: {
+                    Text("Menu bar")
+                    Text(menuBarNote)
                 }
             }
             Section("Overview") {
@@ -47,10 +51,30 @@ struct GeneralPane: View {
         }
     }
 
+    private var menuBarNote: String {
+        if model.settings.barik, model.settings.menuBarStyle != .icon {
+            return "Barik shows your workspaces too. Icon keeps them from showing twice."
+        }
+        switch model.settings.menuBarStyle {
+        case .all: return "The numbers of the workspaces that have windows, with the current one filled."
+        case .current: return "Only the current workspace's number, for a crowded menu bar."
+        case .icon: return "The mielwm icon. Its menu lists the workspaces."
+        }
+    }
+
+    private func setMenuBarStyle(_ style: MenuBarStyle) { model.apply(style.configChanges) }
+
     private func setLogin(_ on: Bool) {
         do { try on ? SMAppService.mainApp.register() : SMAppService.mainApp.unregister() } catch {
             model.problem = "Open at login: \(error.localizedDescription)"
         }
         model.loginStatus = SMAppService.mainApp.status
+    }
+}
+
+extension MenuBarStyle {
+    /// The config edits that set this style. They drop the older menubar:workspaces switch, which would say the same thing.
+    var configChanges: [String: SettingValue?] {
+        ["menubar:style": MielCore.Settings.entry("menubar:style", .text(rawValue)), "menubar:workspaces": nil]
     }
 }

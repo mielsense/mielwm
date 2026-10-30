@@ -32,7 +32,7 @@ struct AdvancedPane: View {
                     Text((model.paths.config.path as NSString).abbreviatingWithTildeInPath)
                 }
             } footer: {
-                Text("Settings are saved there as you change them, and edits to the file show up here. Some settings exist only in the file; the README lists them.").settingsFooter()
+                Text("Settings are saved there as you change them, and edits to the file show up here. Some settings exist only in the file. [Configuration file](https://wm.miel.my/docs/configuration) lists them all.").settingsFooter()
             }
             Section {
                 LabeledContent {

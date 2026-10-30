@@ -132,13 +132,6 @@ private func object(_ url: URL) throws -> NSDictionary {
     #expect(old.errors.isEmpty && old.settings.chords(for: .fill).count == 2)
 }
 
-@Test func menuBarIndicatorIsASetting() {
-    #expect(Settings().menuBarWorkspaces)
-    let off = parseSettings(config: json(#"{"menubar": {"workspaces": false}}"#))
-    #expect(off.errors.isEmpty && !off.settings.menuBarWorkspaces)
-    #expect(Settings.entry("menubar:workspaces", .flag(true)) == nil)
-}
-
 @Test func writerKeepsASymlinkedConfig() throws {
     let dir = try tempDir(), fm = FileManager.default
     let real = dir.appendingPathComponent("dotfiles/config.json"), p = paths(dir.appendingPathComponent("mielwm"))

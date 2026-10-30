@@ -13,6 +13,14 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 - `resize` takes an amount and a side, like AeroSpace's `resize smart +100` or `resize width -50`.
 - Close and minimize the focused window from a shortcut or the command line. Neither has a key by default.
 - Import from AeroSpace also brings over rules by app name or title, `workspace-back-and-forth`, `close`, `macos-native-minimize`, `resize` with any amount, and `--auto-back-and-forth`. `⌥Tab` stays the window switcher.
+- The top gap leaves room for a status bar such as Barik or SketchyBar only on displays that have one. Without one, external displays get the same 12 point top gap as the built-in display instead of 54. Settings > Layout & workspaces > Top edge also offers Same as other edges and Custom, and a number already in your config keeps working as Custom.
+
+### Settings and the menu bar
+
+- The menu bar item can show all workspaces, the current one only, or the icon. Turning on Work with Barik switches All workspaces to the icon.
+- The menu lists each workspace with windows, with its apps' icons and a check on the current one. Click one to go there.
+- The menu warns when secure input is on, since mielwm's shortcuts don't work while it is.
+- Settings > Advanced links to the Configuration file page for the settings that exist only in the file.
 
 ### Fixes
 

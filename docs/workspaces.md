@@ -60,3 +60,13 @@ When mielwm starts, every window that's already open gets a workspace of its own
 ## More than one display
 
 The workspace you go to lands on the display under the pointer. The other displays keep showing whatever part of the canvas sits there. Gaps can differ on the built-in display and the others, for a menu bar that only covers one of them.
+
+## A status bar at the top
+
+Settings > Layout & workspaces > Top edge decides how much room the tiles leave at the top of each display.
+
+- Automatic, the default, finds a status bar such as Barik or SketchyBar along the top of each display and adds its height to the top gap. A display without one gets the top gap alone. Next to the setting you see what it found on the display the Settings window is on, like "Barik, 40 pt". mielwm looks again when an app opens or quits and when displays change.
+- Same as other edges uses the top gap alone on every display.
+- Custom keeps the top gap for the built-in display and takes your own number for the others.
+
+A menu bar that hides itself needs nothing. macOS already leaves its room when it shows.
