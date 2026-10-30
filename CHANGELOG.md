@@ -11,6 +11,7 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 ### Settings and the menu bar
 
 - The menu bar item can show all workspaces, the current one only, or the icon. Turning on Work with Barik switches it to the icon.
+- The menu lists each workspace with windows, with its apps' icons and a check on the current one. Click one to go there.
 
 ### Fixes
 

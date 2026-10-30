@@ -171,7 +171,19 @@ func settingsPreview(_ args: [String]) -> Never {
 /// (an open menu can't be drawn offscreen). Needs Screen Recording for the terminal.
 @MainActor
 private func saveMenuPreview(to url: URL) {
-    let menu = AppDelegate(mode: .normal).previewMenu(Controller(mode: .manageOnly(0)))
+    let controller = Controller(mode: .manageOnly(0))
+    // A window from each of the first open apps, spread over workspaces 1 to 3, so the menu lists them.
+    let apps = NSWorkspace.shared.runningApplications.filter { $0.activationPolicy == .regular && $0.bundleIdentifier != nil }.prefix(6)
+    let screen = controller.state.screens.first?.visibleFrame ?? .zero
+    controller.state.settings.defaultLayout = .tiles
+    controller.state.settings.workspaceRules = apps.enumerated().map { "\($1.bundleIdentifier!)=\([1, 1, 1, 2, 3, 3][$0])" }.joined(separator: ",")
+    _ = controller.state.send(.tick(controller.state.now + 20))
+    for (i, app) in apps.enumerated() {
+        _ = controller.state.send(.system(.windowAppeared(WindowSnapshot(id: WindowID(pid: app.processIdentifier, number: UInt32(i + 1)), bundleID: app.bundleIdentifier,
+                                                                         appName: app.localizedName ?? "", title: "", frame: screen.insetBy(dx: 100, dy: 100)))))
+    }
+    _ = controller.state.send(.action(.workspace(1)))
+    let menu = AppDelegate(mode: .normal).previewMenu(controller)
     guard let screen = NSScreen.main else { return }
     let at = NSPoint(x: screen.frame.midX - 120, y: screen.frame.midY + 150)
     let rect = "\(Int(at.x) - 12),\(Int(screen.frame.maxY - at.y) - 12),\(Int(menu.size.width) + 24),\(Int(menu.size.height) + 24)"

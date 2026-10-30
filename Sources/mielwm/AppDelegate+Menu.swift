@@ -36,6 +36,18 @@ extension AppDelegate {
         }
         let on = controller != nil
         add(statusLine.title, statusLine.symbol, nil, enabled: false)
+        let workspaces = menuWorkspaces
+        if !workspaces.isEmpty {
+            menu.addItem(.separator())
+            let current = controller?.workspaceStatus.current
+            for (n, apps) in workspaces {
+                let item = add("Workspace \(n)", "\(n).square", #selector(goToWorkspace), enabled: on)
+                item.tag = n
+                item.state = n == current ? .on : .off
+                item.attributedTitle = Self.workspaceTitle(item.title, icons: apps.prefix(4).compactMap(\.icon))
+                item.toolTip = apps.compactMap(\.localizedName).joined(separator: ", ")
+            }
+        }
         if waitingForAeroSpace {
             add(swipeAeroSpace() == nil ? "Quit AeroSpace" : "Quit AeroSpace and SwipeAeroSpace", "xmark.circle", #selector(quitAeroSpace))
         }
@@ -66,6 +78,31 @@ extension AppDelegate {
         }
     }
 
+    /// Workspaces 1-9 that have windows, with their apps in tile order.
+    private var menuWorkspaces: [(number: Int, apps: [NSRunningApplication])] {
+        guard let state = controller?.state else { return [] }
+        return state.workspaces.compactMap { ws in
+            guard let n = ws.number, !ws.members.isEmpty else { return nil }
+            var pids: [pid_t] = []
+            for id in ws.members where !pids.contains(id.pid) { pids.append(id.pid) }
+            return (n, pids.compactMap { NSRunningApplication(processIdentifier: $0) })
+        }.sorted { $0.number < $1.number }
+    }
+
+    /// The title, then small app icons after it.
+    private static func workspaceTitle(_ title: String, icons: [NSImage]) -> NSAttributedString {
+        let font = NSFont.menuFont(ofSize: 0)
+        let text = NSMutableAttributedString(string: title + "  ", attributes: [.font: font])
+        for icon in icons {
+            let attachment = NSTextAttachment()
+            attachment.image = icon
+            attachment.bounds = CGRect(x: 0, y: ((font.capHeight - 16) / 2).rounded(), width: 16, height: 16)
+            text.append(NSAttributedString(attachment: attachment))
+            text.append(NSAttributedString(string: " ", attributes: [.font: font]))
+        }
+        return text
+    }
+
     /// The first, disabled line of the menu: what mielwm is doing.
     private var statusLine: (title: String, symbol: String) {
         if onboarding != nil { return ("Waiting for permissions", "lock") }
@@ -81,6 +118,7 @@ extension AppDelegate {
     @objc private func toggleCanvas() { controller == nil ? begin() : stopCanvas() }
     @objc private func overview() { controller?.input(.action(.toggleOverview)) }
     @objc private func tidy() { controller?.input(.action(.arrange)) }
+    @objc private func goToWorkspace(_ item: NSMenuItem) { controller?.input(.action(.workspace(item.tag))) }
     @objc private func quit() { NSApp.terminate(nil) }
 
     @objc private func openSettings() { showSettings(at: nil) }
