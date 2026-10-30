@@ -125,6 +125,7 @@ function renderer(toc: TocEntry[]) {
 				if (doc && slug) return `<a href="${slug === 'README' ? '/docs' : docHref(slug)}${doc[3] ?? ''}">${text}</a>`;
 				// a page the lead hasn't written yet reads as plain text instead of a broken link
 				if (doc && doc[1] !== '../') return `<span>${text}</span>`;
+				if (href.startsWith(`${site.url}/`)) return `<a href="${escape(href.slice(site.url.length))}">${text}</a>`;
 				if (/^https?:/.test(href)) return `<a href="${escape(href)}" target="_blank" rel="noreferrer">${text}</a>`;
 				if (/^\.\.\//.test(href)) return `<a href="${site.repo}/blob/main/${escape(href.slice(3))}" target="_blank" rel="noreferrer">${text}</a>`;
 				return false;
@@ -235,3 +236,12 @@ export function searchIndex(): SearchEntry[] {
 	return entries.map((entry) => ({ ...entry, text: entry.text.trim() }));
 }
 
+/** One version's section of CHANGELOG.md, rendered: the newest released one when `version` has none. */
+export function changelogSection(version?: string): { version: string; html: string } | undefined {
+	const sections = (markdown.get('changelog') ?? '').split(/^(?=## )/m).slice(1);
+	const named = (section: string) => /^##\s+\[?([^\s\]]+)/.exec(section)?.[1] ?? '';
+	const section = sections.find((s) => named(s) === version) ?? sections.find((s) => named(s) !== 'Unreleased');
+	if (!section) return;
+	const body = section.slice(section.indexOf('\n') + 1);
+	return { version: named(section), html: renderer([]).parse(body) as string };
+}

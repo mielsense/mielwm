@@ -77,7 +77,7 @@ scripts/build-app.sh --install`;
 				view pulls back to show every window at once.
 			</p>
 			<div class="flex flex-wrap items-center gap-2">
-				<Button href={site.download} size="lg" class="ps-4">
+				<Button href="/download" size="lg" class="ps-4">
 					<Icon icon={DownloadIcon} size={16} />
 					Download for macOS
 				</Button>
@@ -275,8 +275,8 @@ scripts/build-app.sh --install`;
 					<h2 id="get" class="text-5xl leading-[1.02] font-medium tracking-[-0.035em] text-balance text-[#2b1000]">Get mielwm</h2>
 					<p class="text-base text-[#3b1600]">Free and MIT licensed. Quitting it puts every window back on screen.</p>
 				</div>
-				<Button variant="glow" href={site.download} class="group glow-white h-12 w-full justify-between rounded-[12px] ps-4 pe-3.5 text-base">
-					<span class="flex items-center gap-2"><Icon icon={DownloadIcon} size={16} />Download mielwm.dmg</span>
+				<Button variant="glow" href="/download" class="group glow-white h-12 w-full justify-between rounded-[12px] ps-4 pe-3.5 text-base">
+					<span class="flex items-center gap-2"><Icon icon={DownloadIcon} size={16} />Download mielwm</span>
 					<span class="hidden text-sm text-[#5d5d5d] sm:inline">macOS 15+, Apple silicon</span>
 				</Button>
 				<div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">

@@ -108,7 +108,7 @@
 						<Icon icon={GithubIcon} size={16} />
 					</Button>
 					<ThemeToggle />
-					<Button href={site.download} size="sm" class="ms-1.5 hidden ps-2.5 sm:inline-flex">
+					<Button href="/download" size="sm" class="ms-1.5 hidden ps-2.5 sm:inline-flex">
 						<Icon icon={DownloadIcon} size={14} />
 						Download
 					</Button>

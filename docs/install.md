@@ -8,7 +8,7 @@ mielwm runs on macOS 15 or later, on Apple silicon. It works best with a single 
 
 ## Download and open
 
-1. Download `mielwm.dmg` from the [latest release](https://github.com/mielsense/mielwm/releases/latest).
+1. Download `mielwm.dmg` from the [download page](https://wm.miel.my/download). It also lists the version, its size, its SHA-256 and older versions.
 2. Open it and drag mielwm into Applications.
 3. Open mielwm from Applications, not from the disk image.
 
@@ -18,7 +18,7 @@ The welcome window then asks for two permissions. [First steps](first-steps.md) 
 
 ## Updating
 
-1. Download the new `mielwm.dmg`.
+1. Download the new `mielwm.dmg` from the [download page](https://wm.miel.my/download).
 2. Quit mielwm from its menu bar item. Every window goes back on a screen.
 3. Drag the new copy into Applications to replace the old one, and open it.
 
