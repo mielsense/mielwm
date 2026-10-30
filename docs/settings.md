@@ -71,7 +71,7 @@ What the mielwm item in the menu bar shows: all workspaces, the current one only
 
 ## About
 
-The version you run, and links to the website, these docs, the changelog, the source code and the license.
+The version you run, and links to the website, these docs, the changelog, the source code and the license. About mielwm in the menu bar item's menu opens it too.
 
 ## How settings are saved
 

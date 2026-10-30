@@ -160,12 +160,6 @@ func settingsPreview(_ args: [String]) -> Never {
         savePNG(onboarding, to: out.appendingPathComponent("onboarding-\(name).png"))
         onboarding.orderOut(nil)
 
-        NSApp.orderFrontStandardAboutPanel(options: aboutOptions)
-        pump(0.6)
-        if let about = NSApp.windows.first(where: { $0.isVisible && $0 !== settings.window && $0 !== onboarding }) {
-            savePNG(about, to: out.appendingPathComponent("about-\(name).png"))
-            about.close()
-        }
         saveMenuBarPreview(dark: name == "dark", to: out.appendingPathComponent("menubar-\(name).png"))
         for (file, alert) in [("alert-aerospace", AppDelegate.aeroSpaceAlert(swipe: true, note: nil)),
                               ("alert-config", AppDelegate.configProblemsAlert(["config.json: unknown setting 'canvas:grid_colour'"]))] {

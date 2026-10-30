@@ -20,6 +20,7 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 - Shortcuts show as light key caps instead of boxes, and a search field in Settings > Keyboard finds one by name.
 - Settings > Trackpad & mouse sets the keys you hold to move and resize windows, and how fast the overview pans and zooms. These were in the config file only.
 - On macOS 26 and later, mielwm's windows use the system's current look, with the new sidebar, grouped rows and controls.
+- About mielwm in the menu opens Settings > About, with the version and links to the website, docs, changelog and source.
 - The welcome window lists its two permissions the way Privacy & Security does, with a badge on each one you allowed.
 
 ### Fixes
