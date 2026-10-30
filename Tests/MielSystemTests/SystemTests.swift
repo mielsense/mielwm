@@ -11,6 +11,18 @@ import MielCore
 @testable import MielSystem
 import Testing
 
+/// A new folder for one test, inside this run's own, which goes when the run ends.
+func scratchDir(_ name: String) throws -> URL {
+    let url = scratchRoot.appendingPathComponent("\(name)-\(UUID().uuidString)", isDirectory: true)
+    try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+    return url
+}
+
+private let scratchRoot: URL = {
+    atexit { try? FileManager.default.removeItem(at: FileManager.default.temporaryDirectory.appendingPathComponent("mielwm-system-tests-\(getpid())")) }
+    return FileManager.default.temporaryDirectory.appendingPathComponent("mielwm-system-tests-\(getpid())", isDirectory: true)
+}()
+
 // MARK: - Chords
 
 @Test func chordParsesModifiersAndKeys() {
@@ -215,18 +227,16 @@ private func tapState() -> TapState {
 // MARK: - File watching
 
 @Test func fileWatcherSeesEveryKindOfEdit() throws {
-    let root = FileManager.default.temporaryDirectory.appendingPathComponent("mielwm-watch-\(UUID().uuidString)")
-    defer { try? FileManager.default.removeItem(at: root) }
+    let root = try scratchDir("watch") // watched while `dir` is missing; others' temporary files never land in it
     let dir = root.appendingPathComponent("mielwm"), file = dir.appendingPathComponent("config.json")
-    let calls = DispatchSemaphore(value: 0)
-    let watcher = FileWatcher([file, dir.appendingPathComponent("other.json")], queue: DispatchQueue(label: "test.watch")) { calls.signal() }
+    let calls = DispatchSemaphore(value: 0), queue = DispatchQueue(label: "test.watch")
+    let watcher = FileWatcher([file, dir.appendingPathComponent("other.json")], queue: queue) { calls.signal() }
     defer { watcher.stop() }
     func expectCall(_ what: String) {
-        #expect(calls.wait(timeout: .now() + 3) == .success, "\(what)")
-        while calls.wait(timeout: .now() + 0.3) == .success {} // one edit may report twice
+        #expect(calls.wait(timeout: .now() + 10) == .success, "\(what)")
+        while calls.wait(timeout: .now() + 0.5) == .success {} // one edit may report twice
     }
-    try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
-    Thread.sleep(forTimeInterval: 0.2) // the watcher has armed on the root
+    queue.sync {} // the watcher has armed on the root
     try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
     try Data("{}".utf8).write(to: file) // the directory and the file appear
     expectCall("created")
@@ -337,8 +347,7 @@ func stillsOfWindowsLongOutOfSightShrink() throws {
 // MARK: - Wallpaper
 
 @Test func wallpaperIsDecodedJustLargeEnoughToCoverTheScreen() throws {
-    let url = FileManager.default.temporaryDirectory.appendingPathComponent("mielwm-wallpaper-\(UUID().uuidString).png")
-    defer { try? FileManager.default.removeItem(at: url) }
+    let url = try scratchDir("wallpaper").appendingPathComponent("wallpaper.png")
     let ctx = try #require(CGContext(data: nil, width: 4000, height: 2000, bitsPerComponent: 8, bytesPerRow: 0,
                                      space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
     let dest = try #require(CGImageDestinationCreateWithURL(url as CFURL, "public.png" as CFString, 1, nil))

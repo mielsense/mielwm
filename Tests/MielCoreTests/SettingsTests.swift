@@ -5,11 +5,10 @@ import Testing
 
 func json(_ text: String) -> Data { Data(text.utf8) }
 
-/// One folder per run, emptied when the next run starts, so test files don't pile up.
+/// One folder per run, deleted when the run ends. Its own, so runs in other checkouts leave it alone.
 private let testRoot: URL = {
-    let root = FileManager.default.temporaryDirectory.appendingPathComponent("mielwm-tests", isDirectory: true)
-    try? FileManager.default.removeItem(at: root)
-    return root
+    atexit { try? FileManager.default.removeItem(at: FileManager.default.temporaryDirectory.appendingPathComponent("mielwm-tests-\(getpid())")) }
+    return FileManager.default.temporaryDirectory.appendingPathComponent("mielwm-tests-\(getpid())", isDirectory: true)
 }()
 
 func tempDir() throws -> URL {

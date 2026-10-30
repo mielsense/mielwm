@@ -25,11 +25,19 @@ private final class FakeApps: BarikApps {
 private let shim = "/Applications/mielwm.app/Contents/Helpers/aerospace"
 private let original = "theme = \"system\"\n\n[widgets]\ndisplayed = [\"default.spaces\"]\n"
 
+/// Defaults kept in memory: nothing lands in ~/Library/Preferences, and runs in other checkouts can't touch them.
+private final class MemoryDefaults: UserDefaults {
+    private var values: [String: Any] = [:]
+    override func set(_ value: Any?, forKey key: String) { values[key] = value }
+    override func object(forKey key: String) -> Any? { values[key] }
+    override func string(forKey key: String) -> String? { values[key] as? String }
+    override func removeObject(forKey key: String) { values[key] = nil }
+}
+
 @MainActor
 private func link(_ apps: FakeApps, shim: String = shim) throws -> (BarikLink, home: URL) {
-    let home = FileManager.default.temporaryDirectory.appendingPathComponent("mielwm-barik-\(UUID().uuidString)")
-    try FileManager.default.createDirectory(at: home, withIntermediateDirectories: true)
-    let defaults = try #require(UserDefaults(suiteName: "mielwm-barik-test-\(UUID().uuidString)"))
+    let home = try scratchDir("barik")
+    let defaults = try #require(MemoryDefaults(suiteName: nil))
     return (BarikLink(home: home, shim: shim, helper: URL(fileURLWithPath: "/x/AeroSpace.app"), apps: apps, defaults: defaults), home)
 }
 
