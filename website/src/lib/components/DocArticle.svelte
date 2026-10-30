@@ -51,14 +51,12 @@
 	<article class="w-full max-w-[50rem] min-w-0" style:--mesh={look.mesh} style:--tint={look.tint}>
 		<header class="group/section relative isolate mb-10 flex flex-col gap-3 pt-2">
 			<div class="mesh-glow pointer-events-none absolute -inset-x-4 -top-8 -bottom-6 -z-10 sm:-inset-x-8" aria-hidden="true"></div>
-			<div class="flex min-h-8 items-center justify-between gap-4">
+			<div class="flex min-h-8 items-center gap-4">
 				{#if group}
 					<p class="flex items-center gap-2 text-sm font-medium text-strong">
 						<Sticker icon={look.icon} bg={look.mesh} />
 						{group.title}
 					</p>
-				{:else}
-					<span></span>
 				{/if}
 				<CopyPage source={doc.source} />
 			</div>

@@ -75,10 +75,16 @@ function dimensions(name: string): { width: number; height: number } | undefined
 const KEYS = /^(?:[⌘⌥⌃⇧]+(?:[A-Za-z0-9]|F\d{1,2}|Tab|Return|Space|Esc|Delete|[←→↑↓⌫\-=,./;'`[\]])?|Esc|Return|Tab|Space|F\d{1,2}|[←→↑↓]+)$/;
 
 /** A page's one-line lead, the paragraph after `# Title`, without rendering the page. */
+const leads = new Map<string, string>();
 function leadOf(slug: string): string {
-	const tokens = new Marked().lexer(markdown.get(slug) ?? '');
-	const next = tokens.slice(tokens.findIndex((t) => t.type === 'heading' && t.depth === 1) + 1).find((t) => t.type !== 'space');
-	return next?.type === 'paragraph' ? plain(new Marked().parseInline(next.text) as string) : '';
+	let lead = leads.get(slug);
+	if (lead === undefined) {
+		const tokens = new Marked().lexer(markdown.get(slug) ?? '');
+		const next = tokens.slice(tokens.findIndex((t) => t.type === 'heading' && t.depth === 1) + 1).find((t) => t.type !== 'space');
+		lead = next?.type === 'paragraph' ? plain(new Marked().parseInline(next.text) as string) : '';
+		leads.set(slug, lead);
+	}
+	return lead;
 }
 
 /** The index: links above the first heading, then `## Group` headings over `- [Title](slug.md)` items, in reading order. Missing pages are left out. */

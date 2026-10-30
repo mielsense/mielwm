@@ -30,7 +30,7 @@
 	});
 </script>
 
-<Button variant="secondary" size="sm" {status} labels={{ success: 'Copied', error: 'Copy failed' }} onclick={copy} class="shrink-0">
+<Button variant="secondary" size="sm" {status} labels={{ success: 'Copied', error: 'Copy failed' }} onclick={copy} class="ms-auto shrink-0">
 	<Icon icon={CopyIcon} size={14} />
 	Copy page
 </Button>

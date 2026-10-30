@@ -2,7 +2,7 @@
 	import { Button } from '@mielui/svelte/components/button';
 	import Icon from '@/components/Icon.svelte';
 	import Sticker from '@/components/Sticker.svelte';
-	import { ArrowUpRightIcon, BookIcon, DownloadIcon, ListIcon, type IconData } from '@/icons';
+	import { ArrowUpRightIcon, BookIcon, ChevronRightIcon, DownloadIcon, ListIcon, type IconData } from '@/icons';
 	import { mesh } from '@/mesh';
 	import { site } from '@/site';
 
@@ -14,7 +14,6 @@
 	const file = $derived(latest ? `mielwm-${latest.version}.dmg` : 'mielwm.dmg');
 	const day = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 	const megabytes = (bytes: number) => `${(bytes / 1e6).toFixed(1)} MB`;
-	const chevron = '<svg class="row-chevron" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M9.5 6.5 15 12l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 </script>
 
 <svelte:head>
@@ -154,7 +153,7 @@
 								<span class="row-lead">
 									{release.prerelease ? 'Pre-release, ' : ''}{day(release.date)}{release.dmg ? `, ${megabytes(release.dmg.size)}` : ''}
 								</span>
-								{@html chevron}
+								<Icon icon={ChevronRightIcon} size={14} class="row-chevron" />
 							</a>
 						</li>
 					{/each}
