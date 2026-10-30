@@ -14,10 +14,13 @@ func settingsPreview(_ args: [String]) -> Never {
     NSApp.applicationIconImage = appIcon()
     let fm = FileManager.default
     let out = URL(fileURLWithPath: value("--out", in: args) ?? "settings-preview", isDirectory: true)
-    let scratch = fm.temporaryDirectory.appendingPathComponent("mielwm-settings-preview-\(getpid())", isDirectory: true)
+    // A test copy's own MIELWM_CONFIG_DIR is scratch already: work there, so the Advanced pane shows that path
+    let ownDir = ProcessInfo.processInfo.environment["MIELWM_CONFIG_DIR"]
+    let scratch = ownDir.map { URL(fileURLWithPath: $0, isDirectory: true) }
+        ?? fm.temporaryDirectory.appendingPathComponent("mielwm-settings-preview-\(getpid())", isDirectory: true)
     try? fm.createDirectory(at: out, withIntermediateDirectories: true)
     try? fm.createDirectory(at: scratch, withIntermediateDirectories: true)
-    defer { try? fm.removeItem(at: scratch) }
+    defer { if ownDir == nil { try? fm.removeItem(at: scratch) } }
     let real = ConfigPaths.standard()
     let paths = ConfigPaths(config: scratch.appendingPathComponent("config.json"))
     try? fm.copyItem(at: real.config, to: paths.config)
