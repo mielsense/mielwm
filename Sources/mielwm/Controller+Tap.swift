@@ -50,7 +50,7 @@ extension Controller {
         switch event {
         case let .action(action, _):
             if !state.isOverview { state.activeScreenID = screenUnderMouse()?.id }
-            input(.action(action))
+            input(.action(state.boundAction(action)))
         case let .key(press):
             if let key = Self.namedKey(keyCode: press.keyCode, characters: press.characters, modifiers: press.modifiers) {
                 input(.key(key, press.modifiers))

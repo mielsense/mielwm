@@ -135,6 +135,20 @@ extension Controller {
             t.invalidate()
             tickTimer = nil
         }
+        // A window waiting to be parked again needs one tick then, not sixty a second meanwhile.
+        let wake = wanted ? nil : state.nextWake
+        guard wake != wakeAt else { return }
+        wakeTimer?.invalidate()
+        wakeTimer = nil
+        wakeAt = wake
+        guard let wake else { return }
+        wakeTimer = Timer(timeInterval: max(0, wake - CACurrentMediaTime()), repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.wakeAt = nil
+                self?.input(.tick(CACurrentMediaTime()))
+            }
+        }
+        RunLoop.main.add(wakeTimer!, forMode: .common)
     }
 
     func didOpenOverview() {

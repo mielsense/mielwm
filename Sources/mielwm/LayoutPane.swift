@@ -63,6 +63,16 @@ struct LayoutPane: View {
             } header: {
                 Text("Trackpad")
             }
+            Section("Workspaces") {
+                Toggle(isOn: model.flag("layout:auto_back_and_forth")) {
+                    Text("Workspace key goes back")
+                    Text("The key of the workspace you're on takes you to the one before.")
+                }
+                Toggle(isOn: model.flag("layout:cross_workspaces")) {
+                    Text("Focus and move past the edge")
+                    Text("At the edge of a workspace, ⌥ arrows and ⌥⇧ arrows go on into the next one instead of stopping.")
+                }
+            }
             Section {
                 ForEach(parseWorkspaceRules(s.workspaceRules).sorted { ($0.value, AppInfo(bundleID: $0.key).name) < ($1.value, AppInfo(bundleID: $1.key).name) }, id: \.key) { id, number in
                     AppRow(bundleID: id, remove: { setRule(id, nil) }) {
