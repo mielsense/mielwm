@@ -2,11 +2,15 @@ import ApplicationServices
 import CoreGraphics
 import os
 
+// Accessibility values are CoreFoundation types, which Swift can't cast with
+// `as?`. Each `as!` in the system layer follows a CFGetTypeID check, and
+// AXValueCreate fails only for a type it doesn't know, never for these.
+
 /// Private but stable since 10.x: the CGWindowID behind an AX window element.
 @_silgen_name("_AXUIElementGetWindow")
 func _AXUIElementGetWindow(_ element: AXUIElement, _ id: UnsafeMutablePointer<CGWindowID>) -> AXError
 
-let axTimeout: Float = 0.25
+let axTimeout: Float = 0.25 // seconds an app has to answer one call
 
 /// AX round trips made so far, for `MIELWM_TIMINGS` (Controller).
 public let axCalls = OSAllocatedUnfairLock(initialState: 0)
