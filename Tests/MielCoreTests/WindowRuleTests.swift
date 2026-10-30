@@ -55,3 +55,17 @@ import Testing
     settings.windowRules = ["a-matcher-only": WindowRule(app: "ghostty"), "b": WindowRule(app: "ghostty", workspace: 2)]
     #expect(settings.windowRule(for: snapshot(1, onBuiltIn)) == WindowRule(app: "ghostty", workspace: 2))
 }
+
+@Test func aRulesWorkspaceWinsOverTheFloatingAppsAndLayout() {
+    var settings = testSettings(layout: .tiles)
+    settings.floatingApps = "us.zoom.xos"
+    settings.windowRules = ["zoom": WindowRule(app: "zoom", workspace: 3), "pip": WindowRule(title: "pip", floating: true, workspace: 4)]
+    let zoom = snapshot(1, onBuiltIn, title: "Meeting", app: "zoom.us", bundle: "us.zoom.xos")
+    let pip = snapshot(2, onBuiltIn, title: "PiP", app: "Zoom PiP", bundle: "us.zoom.xos")
+    var s = tilingState([zoom, pip], settings: settings)
+    #expect(s.window(wid(1))?.workspace == 3) // the rule, not the app's place on the floating list
+    #expect(s.window(wid(2))?.workspace == nil) // floating wins in a rule that says both
+    settings.defaultLayout = .floating
+    s = tilingState([zoom], settings: settings)
+    #expect(s.window(wid(1))?.workspace == 3)
+}

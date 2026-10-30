@@ -309,9 +309,11 @@ extension CanvasState {
     /// Where a new window goes, nil to float: rules (window rules first), then (while starting up)
     /// a workspace of its own, else the current workspace after the focused member.
     func placement(for s: WindowSnapshot) -> (slot: Int, position: Int?)? {
-        let rule = settings.windowRule(for: s) // by name and title, so before the per-app lists
-        if !s.isResizable || rule?.floating == true || settings.floats(s.bundleID) || settings.defaultLayout == .floating { return nil }
-        if let n = rule?.workspace ?? s.bundleID.flatMap({ settings.workspaceRuleTable[$0.lowercased()] }) { return (n, nil) }
+        let rule = settings.windowRule(for: s) // by name and title: more specific than the per-app lists and the layout
+        if !s.isResizable || rule?.floating == true { return nil } // a floating window stays where it opened, whatever workspace a rule names
+        if let n = rule?.workspace { return (n, nil) }
+        if settings.floats(s.bundleID) || settings.defaultLayout == .floating { return nil }
+        if let n = s.bundleID.flatMap({ settings.workspaceRuleTable[$0.lowercased()] }) { return (n, nil) }
         // Startup (the restore window): whatever is already open gets its own workspace, so nothing starts as tiny tiles.
         if now < restoreUntil { return (freeSlot(skippingRules: true), nil) }
         guard let c = currentWorkspace, let k = workspaceIndex(c) else { return (freeSlot(), nil) }
