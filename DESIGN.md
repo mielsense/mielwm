@@ -40,7 +40,7 @@ Regular is the default, for every line of text you read. Two heavier weights mar
 - Semibold marks a heading or what is chosen: a pane's name, the chosen option in a `VisualPicker`, the shortcuts sheet's title and section names, the letters a search matched, and the current number in the workspace pill.
 - Medium is for small labels that must read at a glance: `StatusBadge`, the size a gap shows in the gaps diagram, window names on the canvas and the front window in the stack strip.
 
-SF Symbols take the weight of the text beside them, or medium inside an icon tile. Key caps are always regular. The overview's HUD scales every size by the HUD scale setting.
+SF Symbols take the weight of the text beside them, or medium inside an icon tile. A small glyph that stands alone, like a disclosure chevron or a link's arrow, is semibold, as in System Settings, so it keeps its shape at 10 or 11 points. Key caps are always regular. The overview's HUD scales every size by the HUD scale setting.
 
 ## Spacing
 
