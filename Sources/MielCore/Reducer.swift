@@ -249,7 +249,7 @@ extension CanvasState {
     /// position, then size again gives three reports) only the newest report
     /// is kept, and judged if the expectation lapses without a match. A late
     /// report of an earlier move of ours (a busy app, many windows moving at
-    /// once) is ignored too, unless the user is dragging.
+    /// once) is ignored too, unless the user is dragging or the window is parked.
     mutating func frameChanged(_ id: WindowID, _ frame: CGRect, dragging: Bool) {
         guard let i = index(id) else { return }
         windows[i].real = frame
@@ -261,7 +261,8 @@ extension CanvasState {
             windows[i].pending = nil
             return
         }
-        if !dragging, windows[i].sent.contains(where: { now <= $0.deadline && frame.isClose(to: $0.frame, tolerance: Self.frameTolerance) }) {
+        // Not for a parked window: an app pulling it back to a frame we set before is the fight `judge` handles.
+        if !dragging, !windows[i].parked, windows[i].sent.contains(where: { now <= $0.deadline && frame.isClose(to: $0.frame, tolerance: Self.frameTolerance) }) {
             return
         }
         if live != nil {

@@ -179,6 +179,18 @@ func dragByTitleBar(_ s: inout CanvasState, by dx: CGFloat) -> [WindowCommand] {
     #expect(s.canvasFrame(1) == dragged)
 }
 
+@Test func aParkedWindowPulledBackToARecentFrameIsParkedAgain() throws {
+    var s = tilingState([snapshot(1, onBuiltIn)])
+    var slot = CGRect.null
+    for n in [2, 1, 2] { // ⌥2, ⌥1, ⌥2 within a few seconds, each move confirmed
+        let frame = try #require(moves(s.send(.action(.workspace(n))))[wid(1)])
+        _ = s.send(.system(.windowFrameChanged(wid(1), frame)))
+        if n == 2 { slot = frame }
+    }
+    // The app restores the tile frame we sent a moment ago.
+    #expect(moves(s.send(.system(.windowFrameChanged(wid(1), area))))[wid(1)] == slot)
+}
+
 @Test func aTileThatGaveInStaysGivenInThroughStrayReports() {
     var s = twoTiles()
     let refused = CGRect(x: 12, y: 50, width: 740, height: 700) // a maximum height, say
