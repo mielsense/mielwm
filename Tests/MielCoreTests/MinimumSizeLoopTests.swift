@@ -27,7 +27,7 @@ func play(_ s: inout CanvasState, _ first: [WindowCommand], minWidth: [UInt32: C
 
 @Test func minSizeMiddleTileWithMinWidthLateRefusal() {
     var s = tilingState([snapshot(1, onBuiltIn), snapshot(2, onBuiltIn), snapshot(3, onBuiltIn)])
-    for w in s.windows { _ = s.send(.system(.windowFrameChanged(w.id, w.frame))) }
+    s.confirmMoves()
     let start = s.send(.action(.refresh))
     // window 2 (middle) cannot go under 800 wide; nudge it by retiling
     var settings = s.settings; settings.gapInnerHorizontal += 1
@@ -38,7 +38,7 @@ func play(_ s: inout CanvasState, _ first: [WindowCommand], minWidth: [UInt32: C
 
 @Test func minSizeMiddleTileWithMinWidthImmediateRefusal() {
     var s = tilingState([snapshot(1, onBuiltIn), snapshot(2, onBuiltIn), snapshot(3, onBuiltIn)])
-    for w in s.windows { _ = s.send(.system(.windowFrameChanged(w.id, w.frame))) }
+    s.confirmMoves()
     var settings = s.settings; settings.gapInnerHorizontal += 1
     let n = play(&s, s.send(.setSettings(settings)), minWidth: [2: 800], echo: false)
     #expect(n < 40)
@@ -46,7 +46,7 @@ func play(_ s: inout CanvasState, _ first: [WindowCommand], minWidth: [UInt32: C
 
 @Test func minSizeTwoMinWidthsLateRefusal() {
     var s = tilingState([snapshot(1, onBuiltIn), snapshot(2, onBuiltIn)])
-    for w in s.windows { _ = s.send(.system(.windowFrameChanged(w.id, w.frame))) }
+    s.confirmMoves()
     var settings = s.settings; settings.gapInnerHorizontal += 1
     let n = play(&s, s.send(.setSettings(settings)), minWidth: [1: 800, 2: 800], echo: true)
     #expect(n < 40)
@@ -54,7 +54,7 @@ func play(_ s: inout CanvasState, _ first: [WindowCommand], minWidth: [UInt32: C
 
 @Test func minSizeMaxHeightLateRefusal() {
     var s = tilingState([snapshot(1, onBuiltIn), snapshot(2, onBuiltIn)])
-    for w in s.windows { _ = s.send(.system(.windowFrameChanged(w.id, w.frame))) }
+    s.confirmMoves()
     var settings = s.settings; settings.gapInnerHorizontal += 1
     let n = play(&s, s.send(.setSettings(settings)), minWidth: [:], maxHeight: [1: 700], echo: true)
     #expect(n < 40)
@@ -63,7 +63,7 @@ func play(_ s: inout CanvasState, _ first: [WindowCommand], minWidth: [UInt32: C
 @Test func minSizeMiddleDirect() {
     for echo in [true, false] {
         var s = tilingState([snapshot(1, onBuiltIn), snapshot(2, onBuiltIn), snapshot(3, onBuiltIn)])
-        for w in s.windows { _ = s.send(.system(.windowFrameChanged(w.id, w.frame))) }
+        s.confirmMoves()
         var f = s.canvasFrame(2)!; f.size.width = 800
         let n = play(&s, s.send(.system(.windowFrameChanged(wid(2), f, dragging: true))), minWidth: [2: 800], echo: echo)
         #expect(n < 40)
@@ -73,7 +73,7 @@ func play(_ s: inout CanvasState, _ first: [WindowCommand], minWidth: [UInt32: C
 @Test func minSizeTwoDirect() {
     for echo in [true, false] {
         var s = tilingState([snapshot(1, onBuiltIn), snapshot(2, onBuiltIn)])
-        for w in s.windows { _ = s.send(.system(.windowFrameChanged(w.id, w.frame))) }
+        s.confirmMoves()
         var f = s.canvasFrame(1)!; f.size.width = 800
         let n = play(&s, s.send(.system(.windowFrameChanged(wid(1), f, dragging: true))), minWidth: [1: 800, 2: 800], echo: echo)
         #expect(n < 40)
@@ -84,7 +84,7 @@ func play(_ s: inout CanvasState, _ first: [WindowCommand], minWidth: [UInt32: C
     for echo in [true, false] {
         var s = tilingState([snapshot(1, onBuiltIn), snapshot(2, onBuiltIn), snapshot(3, onBuiltIn), snapshot(4, onBuiltIn)])
         _ = s.send(.system(.windowFocused(wid(1))))
-        for w in s.windows { _ = s.send(.system(.windowFrameChanged(w.id, w.frame))) }
+        s.confirmMoves()
         let order = s.members(1)!
         let mid = order[1]
         var f = s.canvasFrame(mid)!; f.size.width = 900
@@ -96,7 +96,7 @@ func play(_ s: inout CanvasState, _ first: [WindowCommand], minWidth: [UInt32: C
 @Test func minSizeSlowApp() {
     var s = tilingState([snapshot(1, onBuiltIn), snapshot(2, onBuiltIn), snapshot(3, onBuiltIn), snapshot(4, onBuiltIn)])
     _ = s.send(.system(.windowFocused(wid(1))))
-    for w in s.windows { _ = s.send(.system(.windowFrameChanged(w.id, w.frame))) }
+    s.confirmMoves()
     var f = s.canvasFrame(2)!; f.size.width = 900
     var commands = s.send(.system(.windowFrameChanged(wid(2), f, dragging: true))), n = 0
     while n < 12, let m = moves(commands)[wid(2)] {

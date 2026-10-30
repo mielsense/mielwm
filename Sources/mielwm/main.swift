@@ -34,7 +34,7 @@ let usage = """
                                   menu; --selftest drives the window's controls instead; --live
                                   keeps the window open 10 s; --aerospace reads that AeroSpace
                                   config instead of yours. No canvas, moves nothing
-                                  (development; the README has the rest)
+                                  (development; CONTRIBUTING.md has the rest)
       mielwm --overview-preview [--out <dir>] [--accessibility]
                                   save the overview's search, results, shortcuts, toast and
                                   switcher in each glass style, light and dark, as PNGs of the

@@ -79,12 +79,8 @@ public struct KeyChord: Hashable, Codable, Sendable, CustomStringConvertible {
 }
 
 public extension Action {
-    /// `mielwm <command>` and binding names: "overview", "search [text]",
-    /// "tune", "help", "switch next|prev", "focus|nudge|pan left|right|up|down",
-    /// "zoom in|out", "fit", "frame", "summon", "land", "back", "fill",
-    /// "fullscreen", "pin", "grow", "shrink", "resize smart|width|height +N|-N",
-    /// "close", "minimize", "arrange", "undo", "redo", "refresh", "noop",
-    /// "workspace-back-and-forth".
+    /// `mielwm <command>` and binding names, as `command` writes them, plus
+    /// AeroSpace's names for the layouts and for moving to a workspace.
     init?(command: String) {
         let words = command.trimmingCharacters(in: .whitespaces).split(separator: " ", maxSplits: 1).map(String.init)
         guard let verb = words.first?.lowercased() else { return nil }

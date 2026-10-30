@@ -20,7 +20,7 @@ struct TrackpadPane: View {
                 }
                 if s.swipeWorkspaces, systemThreeFingerSwipe() {
                     LabeledContent {
-                        Button("Open Trackpad Settings…") {
+                        Button("Open Trackpad settings…") {
                             NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.Trackpad-Settings.extension")!)
                         }
                     } label: {

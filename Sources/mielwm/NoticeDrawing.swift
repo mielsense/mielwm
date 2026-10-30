@@ -38,7 +38,7 @@ private struct NoticeInk {
     var secondary: NSColor { increaseContrast ? .labelColor : .secondaryLabelColor }
     var accentFill: NSColor { NSColor(accent) }
     var onAccent: NSColor { accent.onAccent }
-    /// The front window's capsule in the stack strip, and keycaps.
+    /// The front window's capsule in the stack strip.
     var raised: NSColor { NSColor.labelColor.withAlphaComponent(increaseContrast ? 0.2 : 0.1) }
     /// A key cap's fill, after `Design.KeyCap`.
     var keyFill: NSColor { NSColor.labelColor.withAlphaComponent(Design.KeyCap.rest) }

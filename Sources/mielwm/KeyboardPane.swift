@@ -54,7 +54,7 @@ struct KeyboardPane: View {
             }
             if groups.isEmpty, extra.isEmpty, overview.isEmpty {
                 Section {
-                    Text("No shortcuts match “\(query)”.").font(Design.row).foregroundStyle(.secondary).frame(maxWidth: .infinity)
+                    Text("No shortcuts match \"\(query)\".").font(Design.row).foregroundStyle(.secondary).frame(maxWidth: .infinity)
                 }
             }
             Section {
@@ -108,7 +108,7 @@ struct ShortcutRow: View {
     }
 }
 
-/// A family as one shortcut ("⌥1–9"); when its keys differ, "Custom", and a
+/// A family as one shortcut ("⌥1-9"); when its keys differ, "Custom", and a
 /// disclosure with a row per key.
 struct FamilyRow: View {
     let family: ShortcutFamily
@@ -190,14 +190,14 @@ struct ShortcutNotes: View {
         }
     }
 
-    /// "⌃← and ⌃→ already do “Previous workspace” and “Next workspace”."
+    /// "⌃← and ⌃→ already do "Previous workspace" and "Next workspace"."
     private func conflictText(_ c: ShortcutConflict) -> String {
         func list(_ items: [String]) -> String {
             items.count < 2 ? items.joined() : items.dropLast().joined(separator: ", ") + " and " + items.last!
         }
         var names: [String] = []
         for name in c.others.map(actionName) where !names.contains(name) { names.append(name) }
-        return "\(list(c.chords.map(\.symbol))) already \(c.chords.count == 1 ? "does" : "do") \(list(names.map { "“\($0)”" }))."
+        return "\(list(c.chords.map(\.symbol))) already \(c.chords.count == 1 ? "does" : "do") \(list(names.map { "\"\($0)\"" }))."
     }
 }
 

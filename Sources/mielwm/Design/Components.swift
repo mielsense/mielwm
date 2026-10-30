@@ -48,7 +48,7 @@ struct IconTile: View {
     }
 }
 
-/// The top of a pane: a filled card with its 64 pt icon, its name and one line
+/// The top of a pane: a filled card with its 48 pt icon, its name and one line
 /// on what is in it, and optionally a control under that, like a search field.
 struct PaneHeader<Accessory: View>: View {
     let pane: SettingsPane

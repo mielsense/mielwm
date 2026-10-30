@@ -27,17 +27,11 @@ final class ScreenState {
     var labelRevision = 0 // the Look revision the cached labels were drawn with
     var workspaceLabels: [String: MTLTexture] = [:]
 
-    var palette: HUDLayer?
-    var switcher: HUDLayer?
-    var corners: [HUDLayer?] = [nil, nil, nil, nil]
-    var toast: HUDLayer?
-
     var markers = [SIMD4<Float>](repeating: .zero, count: 64)
     var markerDims = [Float](repeating: 0, count: 64)
 
     /// What the last drawable showed (its time zeroed), to skip frames that would look the same.
-    var drawn: (scene: Scene, generations: [UInt64], blink: Double)?
-    var caret: (rect: CGRect, alpha: Double)? // where the last frame put the caret, in px
+    var drawn: (scene: Scene, generations: [UInt64])?
 
     init() {
         worldPass.colorAttachments[0].loadAction = .clear

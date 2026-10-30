@@ -88,7 +88,7 @@ extension AppDelegate {
         guard NSScreen.screens.count > 1, !Displays.spansDisplays(), !UserDefaults.standard.bool(forKey: key) else { return }
         UserDefaults.standard.set(true, forKey: key)
         let alert = NSAlert.mielwm()
-        alert.messageText = "Turn off “Displays have separate Spaces”"
+        alert.messageText = "Turn off \"Displays have separate Spaces\""
         alert.informativeText = """
             While it's on, macOS keeps each window on one display, so a window can't sit across two \
             displays and dragging between them snaps. Turn it off in System Settings > Desktop & Dock > \

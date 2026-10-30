@@ -49,7 +49,7 @@ scripts/benchmark.sh           # CPU and memory, the numbers in docs/performance
 scripts/barik-test.sh          # Barik's own AeroSpace code against a test copy
 ```
 
-- `mielwm snapshot --state overview|search:<text>|help|switcher|desktop [--light|--dark] --out x.png` draws any state of the overview to a PNG from made-up windows. `--real` uses your windows' pictures but still moves nothing.
+- `mielwm snapshot --state overview|search:<text>|help|switcher|desktop [--light|--dark] --out x.png` draws any state of the overview to a PNG from made-up windows, with the chrome in its solid Reduce Transparency material, since Liquid glass only draws on screen. `--real` uses your windows' pictures but still moves nothing.
 - `mielwm --settings-preview --out <dir>` saves every Settings pane, the onboarding and the menu as PNGs in light and dark, on a copy of your config. `--selftest` drives the Settings window through its controls instead.
 - `mielwm --manage-only <pid>` manages one app's windows only, with no shortcuts and no focus changes. Point it at `mielwm-testwindows` to try something live. `MIELWM_SOCKET`, `MIELWM_CONFIG_DIR` and `MIELWM_TEST_OVERLAY=1` give the test copy its own socket and settings and turn on its overlay. Always set `MIELWM_SOCKET` on commands you send to it, or they reach the mielwm you use.
 

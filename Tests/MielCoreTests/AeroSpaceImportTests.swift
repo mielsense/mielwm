@@ -126,3 +126,17 @@ import Testing
     #expect(changes["layout:auto_back_and_forth"] == .some(.flag(true)))
     #expect(found.summary().contains("2 window rules by app name or title."))
 }
+
+@Test func oneOfAKindIsCountedInTheSingular() {
+    var one = AeroSpaceImport()
+    one.workspaceRules = ["com.x": 2]
+    one.floatingApps = ["com.y"]
+    one.windowRules = ["aerospace-1": WindowRule(title: "Picture-in-Picture", floating: true)]
+    one.bindings = ["opt+1": "workspace 1"]
+    #expect(aeroSpaceImportNote(one) == "mielwm took your 1 workspace rule, 1 floating app and 1 window rule from AeroSpace's config. "
+        + "Change them any time in Settings > Layout and Settings > Windows, and window rules in the config file.")
+    #expect(one.summary().contains("1 window rule by app name or title."))
+    #expect(one.summary().contains("1 shortcut, all the same as mielwm's."))
+    one.workspaceRules["com.z"] = 3
+    #expect(aeroSpaceImportNote(one).contains("2 workspace rules"))
+}

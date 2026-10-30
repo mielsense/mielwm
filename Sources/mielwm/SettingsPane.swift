@@ -15,7 +15,7 @@ enum SettingsPane: String, CaseIterable {
         case .trackpad: "Trackpad & mouse"
         case .appearance: "Appearance"
         case .menubar: "Menu bar"
-        case .integrations: "AeroSpace & Barik"
+        case .integrations: "AeroSpace"
         case .advanced: "Advanced"
         case .about: "About"
         }
@@ -32,7 +32,7 @@ enum SettingsPane: String, CaseIterable {
         case .trackpad: "Swipes, the pointer in the overview, and the keys you hold to drag a window."
         case .appearance: "The overview's accent color, background, grid and windows."
         case .menubar: "What the mielwm item in the menu bar shows."
-        case .integrations: "Show your workspaces in Barik, or bring your AeroSpace settings over."
+        case .integrations: "Show your workspaces in apps made for AeroSpace, or bring your AeroSpace settings over."
         case .advanced: "The config file, the command-line tool and a fresh start."
         case .about: "Your windows on one endless canvas, tiled in workspaces."
         }
@@ -62,7 +62,7 @@ enum SettingsPane: String, CaseIterable {
                            "Glass style", "Liquid glass", "Frosted", "Glass", "Transparency"]
         case .menubar: ["Menu bar item", "All workspaces", "Current only", "Icon", "Workspace numbers", "On screen", "Show workspace on switch",
                         "Workspace indicator"]
-        case .integrations: ["Barik", "Work with Barik", "AeroSpace", "Import from AeroSpace"]
+        case .integrations: ["Work with AeroSpace-compatible apps", "Menu bars and tools", "AeroSpace", "Import from AeroSpace", "Barik"]
         case .advanced: ["Config file", "config.json", "Command-line tool", "Terminal", "Reset all settings", "Some settings could not be read"]
         case .about: ["Version", "Website", "Documentation", "Changelog", "Source code", "GitHub", "License"]
         }
@@ -95,14 +95,12 @@ enum SettingsPane: String, CaseIterable {
 
     var tint: Color {
         switch self {
-        case .general, .keyboard, .trackpad, .advanced: Design.Tint.gray
-        case .layout: Design.Tint.blue
+        case .general, .keyboard, .trackpad, .advanced, .about: Design.Tint.gray
+        case .layout, .menubar: Design.Tint.blue
         case .windows: Design.Tint.indigo
         case .overview: Design.Tint.cyan
         case .appearance: Design.Tint.graphite
-        case .menubar: Design.Tint.blue
         case .integrations: Design.Tint.green
-        case .about: Design.Tint.gray
         }
     }
 

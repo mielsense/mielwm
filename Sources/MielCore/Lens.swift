@@ -1,7 +1,7 @@
 import CoreGraphics
 import Foundation
 
-// The barrel lens of shaders/barrel.frag, as positions. With
+// The barrel lens of the lens shader (MielRender/Shaders.swift), as positions. With
 //   progress = lensEnabled ? transition ^ lensTransitionPower : 0
 //   k        = lensStrength * progress          (shader uniform `distort`)
 //   e        = 1 + (lensEdgeScale - 1) * progress (uniform `contrast`)
@@ -9,7 +9,7 @@ import Foundation
 //   c  = p / s * 2 - 1                (both axes in -1...1)
 //   c' = c * (1 + k * |c|^2) / e
 //   source = (c' * 0.5 + 0.5) * s
-// which is the shader's `warped`.
+// which is what the shader's `lens_uv` computes.
 
 /// How far the lens has eased in for an overview transition (0...1).
 public func lensProgress(look: Look, transition: Double) -> Double {
