@@ -2,7 +2,7 @@
 
 mielwm tiles your windows into numbered workspaces, the way AeroSpace does, on one canvas you can zoom out of to see every window at once.
 
-![Every workspace on the canvas, zoomed out](images/overview-dark.png)
+![Every workspace on the canvas, zoomed out](images/overview-dark.jpg)
 
 ## Start here
 

@@ -2,7 +2,7 @@
 
 Zoom out to see every window at once as a live picture, then search or point to go anywhere.
 
-![The overview, zoomed out over four workspaces](images/overview-dark.png)
+![The overview, zoomed out over four workspaces](images/overview-dark.jpg)
 
 ## Opening it
 
@@ -16,7 +16,7 @@ You can also open it from the menu bar item's menu, or with `mielwm overview` fr
 
 Start typing as soon as it opens. The search field is a capsule at the top of the screen, like Spotlight, with the results in a card below it. mielwm searches window titles and app names, and the results narrow with each letter.
 
-![Searching in the overview](images/search-dark.png)
+![Searching in the overview](images/search-dark.jpg)
 
 Every word you type has to appear somewhere, with its letters together. So `fas` finds `fastfetch`, and `term git` finds a Terminal window with git in its title. Case and accents don't matter, and dead keys and input methods work as usual. Windows that don't match fade, so you can still see where they are.
 
@@ -48,7 +48,7 @@ In the search field, `⌃U`, `⌃W`, `⌃N` and `⌃P` work the way they do in a
 
 The `⌃` versions of these keys, like `⌃0` and `⌃Z`, work too, and so does `F1` for the key list.
 
-![Every key, on the shortcuts sheet](images/help-dark.png)
+![Every key, on the shortcuts sheet](images/help-dark.jpg)
 
 ## With the pointer
 

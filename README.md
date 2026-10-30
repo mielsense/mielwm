@@ -13,7 +13,7 @@
   <a href="CHANGELOG.md">Changelog</a>
 </p>
 
-![The mielwm overview](docs/images/overview-dark.png)
+![The mielwm overview](docs/images/overview-dark.jpg)
 
 Windows tile into numbered workspaces the way AeroSpace does it, and `⌥1` to `⌥9` switch between them. Three fingers on the trackpad swipe to the next one. When you lose track of something, `⌃⌥G` zooms out through a curved lens to every window as a live picture, and typing a few letters takes you to the one you meant.
 
