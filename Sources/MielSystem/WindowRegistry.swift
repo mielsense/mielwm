@@ -362,6 +362,8 @@ final class AppTracker {
         case .setFrame(let id, let frame):
             // Core may have sent it before hearing the window went full screen.
             guard !fullScreen.contains(id), let window = element(id) else { return }
+            // shortcut: an app that resizes a window without kAXResizedNotification keeps that size on
+            // the next same-size move; set the size every time if such an app turns up.
             guard sizes[id] != frame.size else { // the same size: a move alone (parking, workspace switches)
                 window.set(kAXPositionAttribute, axValue(frame.origin))
                 return
