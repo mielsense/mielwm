@@ -45,6 +45,7 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 
 ### Fixes
 
+- Work with AeroSpace-compatible apps turns on without Barik. It starts the AeroSpace helper, and edits Barik's config only when there is one.
 - Pausing or quitting mielwm while you type or click can no longer crash it.
 - A display plugged in, removed or rearranged while mielwm starts is picked up at once, instead of at the next display change.
 - After Esc closes the overview, the window you were on keeps the keyboard, even when macOS reports another app in front for a moment.

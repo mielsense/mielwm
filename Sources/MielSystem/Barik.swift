@@ -21,7 +21,6 @@ public protocol BarikApps: AnyObject {
 @MainActor
 public final class BarikLink {
     public enum Problem: Error, Equatable {
-        case noConfig // Barik writes one the first time it runs
         case unsupported(String) // aerospace is set in a form mielwm doesn't edit
         case temporaryLocation // mielwm runs from a place gone at quit; Barik would call a dead path
     }
@@ -51,20 +50,22 @@ public final class BarikLink {
         BarikConfig.candidates(home: home).first { FileManager.default.fileExists(atPath: $0.path) }
     }
 
-    /// Points Barik at mielwm, starts the helper and relaunches a running Barik.
+    /// Starts the helper, so apps that run the `aerospace` command see mielwm.
+    /// When Barik has a config, points it at mielwm and relaunches a running Barik.
     public func turnOn() throws {
         guard !temporaryLocation else { throw Problem.temporaryLocation }
-        guard let file = config else { throw Problem.noConfig }
-        let text = try String(contentsOf: file, encoding: .utf8)
-        guard let edited = BarikConfig.pointing(text, to: shim) else { throw Problem.unsupported(file.path) }
-        if edited.text != text {
-            let backup = URL(fileURLWithPath: file.path + ".mielwm-backup")
-            if !FileManager.default.fileExists(atPath: backup.path) {
-                try Data(text.utf8).write(to: backup, options: .withoutOverwriting)
+        if let file = config {
+            let text = try String(contentsOf: file, encoding: .utf8)
+            guard let edited = BarikConfig.pointing(text, to: shim) else { throw Problem.unsupported(file.path) }
+            if edited.text != text {
+                let backup = URL(fileURLWithPath: file.path + ".mielwm-backup")
+                if !FileManager.default.fileExists(atPath: backup.path) {
+                    try Data(text.utf8).write(to: backup, options: .withoutOverwriting)
+                }
+                try write(edited.text, to: file)
+                // Another copy's command: the user's own value is the one saved then.
+                if !edited.wasMielwm { defaults.set(edited.previous, forKey: Self.previousKey) }
             }
-            try write(edited.text, to: file)
-            // Another copy's command: the user's own value is the one saved then.
-            if !edited.wasMielwm { defaults.set(edited.previous, forKey: Self.previousKey) }
         }
         apps.startHelper(helper) { [apps] _ in apps.relaunchBarik() }
     }

@@ -14,24 +14,23 @@ Point the app at that command instead of AeroSpace's, and it shows mielwm's work
 
 ## Turning it on from Settings
 
-Settings > AeroSpace > Work with AeroSpace-compatible apps sets this up for a supported menu bar app on its own:
+Settings > AeroSpace > Work with AeroSpace-compatible apps starts a hidden helper, so apps made for AeroSpace see mielwm running. If Barik is set up, it also points Barik at mielwm's command:
 
-1. Open the menu bar app at least once, so it writes its config file.
-2. Make sure mielwm runs from your Applications folder. From the disk image or straight from Downloads, the switch asks you to move it first, because that copy disappears when mielwm quits.
-3. Turn on Work with AeroSpace-compatible apps, and confirm.
+1. Make sure mielwm runs from your Applications folder. From the disk image or straight from Downloads, the switch asks you to move it first, because that copy disappears when mielwm quits.
+2. Turn on Work with AeroSpace-compatible apps, and confirm.
 
-The menu bar app relaunches, and a few seconds later it shows mielwm's workspaces. mielwm's own menu bar item switches from All workspaces to Icon, so the numbers don't show twice.
+Barik relaunches, and a few seconds later it shows mielwm's workspaces. Any other app needs its path to the command changed once, as [Other apps](#other-apps) shows. mielwm's own menu bar item switches from All workspaces to Icon, so the numbers don't show twice.
 
 ### What it changes on your Mac
 
-- mielwm sets one line in the app's config file, `aerospace.path`, to its own `aerospace` command. Before the first edit it saves a copy next to the file, ending in `.mielwm-backup`, and never overwrites that copy.
 - A tiny hidden helper app named AeroSpace runs while the switch is on, because some apps only ask when they see AeroSpace running. It quits by itself when mielwm quits.
+- When Barik's config file exists, mielwm sets one line in it, `aerospace.path`, to its own `aerospace` command. Before the first edit it saves a copy next to the file, ending in `.mielwm-backup`, and never overwrites that copy. Without the file, mielwm edits nothing.
 
-mielwm asks before it edits the file and before it relaunches the app. If you move mielwm.app later, it updates that line the next time it starts.
+mielwm asks before it edits the file and before it relaunches Barik. If you move mielwm.app later, it updates that line the next time it starts. If you set up Barik after you turned the switch on, turn it off and on again.
 
 ### Turning it off
 
-Turn the switch off. mielwm puts the app's old `aerospace.path` back, or removes the line if there wasn't one, quits the helper and relaunches the app. This works from any copy of mielwm, even after you moved it. If you plan to uninstall mielwm, turn the switch off first.
+Turn the switch off. mielwm quits the helper. If it edited Barik's config, it puts the old `aerospace.path` back, or removes the line if there wasn't one, and relaunches Barik. This works from any copy of mielwm, even after you moved it. If you plan to uninstall mielwm, turn the switch off first.
 
 ## Other apps
 
