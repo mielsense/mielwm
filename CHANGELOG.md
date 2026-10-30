@@ -9,6 +9,11 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 - Leaving macOS full screen, like a full screen video, no longer flashes two desktops side by side. mielwm leaves a full screen window alone and keeps its tile for when it comes back.
 - Switching workspaces no longer flashes the old windows over the new workspace.
 
+### Performance
+
+- The overview uses about half the CPU while your windows sit still, and switching workspaces uses less too.
+- Holding `⌃⌥` to drag a window no longer starts the overview's window pictures. With the default `⌃⌥G`, the overview can take up to 0.12 seconds longer to open while it gets fresh pictures.
+
 ## 0.1.0
 
 Released October 27, 2026. The first release.
