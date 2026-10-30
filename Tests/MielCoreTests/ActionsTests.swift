@@ -127,6 +127,26 @@ let filled = CGRect(x: 12, y: 50, width: 1488, height: 850) // built-in visible 
     #expect(s.canvasFrame(2) == onExternal)
 }
 
+@Test func toastsNameTheKeyThatWorksWhereTheyShow() {
+    var s = makeState([snapshot(1, onBuiltIn)])
+    _ = s.send(.system(.windowFocused(wid(1))))
+    _ = s.send(.action(.arrange))
+    #expect(s.toast == "Tidied 1 window") // no undo key outside the overview by default
+    _ = s.send(.action(.undo))
+    #expect(s.toast == "Undone")
+    _ = s.send(.action(.toggleOverview))
+    _ = s.send(.action(.arrange))
+    #expect(s.toast == "Tidied 1 window  {⌘Z} Undo")
+    _ = s.send(.action(.undo))
+    #expect(s.toast == "Undone  {⌘⇧Z} Redo")
+
+    var bound = testSettings()
+    bound.bindings["ctrl+opt+z"] = "undo"
+    var t = makeState([snapshot(1, onBuiltIn)], settings: bound)
+    _ = t.send(.action(.arrange))
+    #expect(t.toast == "Tidied 1 window  {⌃⌥Z} Undo")
+}
+
 // MARK: Summon, navigation, MRU
 
 @Test func summonBringsTheSelectionToWhereTheSessionStarted() {

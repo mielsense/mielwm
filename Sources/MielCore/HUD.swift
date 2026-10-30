@@ -65,7 +65,7 @@ public extension CanvasState {
                 let hint = directionHint(for: w.frame, viewCenter: view, viewSize: activeScreen.frame.size)
                 let row = n - overview.listOffset
                 return HUDRow(title: w.displayTitle, detail: hint.isEmpty ? w.appName : w.appName + " · " + hint,
-                              bundleID: w.bundleID, trailing: n == overview.selected ? "↩" : row < 9 ? "⌃\(row + 1)" : "",
+                              bundleID: w.bundleID, trailing: n == overview.selected ? "↩" : row < 9 ? "⌘\(row + 1)" : "",
                               highlights: r.titleRanges)
             }
             h.selectedRow = h.rows.isEmpty ? nil : overview.selected - overview.listOffset

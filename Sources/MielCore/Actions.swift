@@ -38,7 +38,7 @@ extension CanvasState {
         case .grow: resizeTarget(by: look.gridSize)
         case .shrink: resizeTarget(by: -look.gridSize)
         case .arrange: arrangeAll()
-        case .undo: showToast(undo(redo: false) ? "Undone  {⌃⇧Z} Redo" : "Nothing to undo")
+        case .undo: showToast(undo(redo: false) ? "Undone" + keyHint(.redo, "Redo") : "Nothing to undo")
         case .redo: showToast(undo(redo: true) ? "Redone" : "Nothing to redo")
         case .refresh: sync(force: true)
         case .noop: break
@@ -115,6 +115,14 @@ extension CanvasState {
         windows[i].frame = deskCamera.toCanvas(screen.visibleFrame, deskCenter: deskCenter)
         fullscreens[id]?.suspended = false
         sync([id])
+    }
+
+    /// "  {⌘Z} Undo" for a toast, with the key that does `action` where the
+    /// toast shows: ⌘Z and ⌘⇧Z in the overview, else the user's binding. Empty when nothing is bound.
+    func keyHint(_ action: Action, _ label: String) -> String {
+        let key = isOverview ? (action == .undo ? "⌘Z" : "⌘⇧Z") // Overview.swift's keys
+            : settings.chords.filter { $0.value == action }.map(\.key.symbol).min()
+        return key.map { "  {\($0)} \(label)" } ?? ""
     }
 
     mutating func focusWindow(_ id: WindowID) {
@@ -362,7 +370,7 @@ extension CanvasState {
             fills[windows[i].id] = nil
             fullscreens[windows[i].id] = nil
         }
-        showToast("Tidied \(items.count) windows  {⌘Z} Undo")
+        showToast("Tidied \(items.count) \(items.count == 1 ? "window" : "windows")" + keyHint(.undo, "Undo"))
         layoutRevision += 1
         if !isOverview { sync() }
     }

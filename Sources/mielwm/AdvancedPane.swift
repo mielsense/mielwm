@@ -43,9 +43,9 @@ struct AdvancedPane: View {
                 } label: {
                     Text("Command-line tool")
                     switch model.cliStatus {
-                    case let .installed(at): Text("Installed as \(at). Try “\(CLITool.name) overview”.")
+                    case let .installed(at): Text("Installed as \(at). Try \"\(CLITool.name) overview\".")
                     case let .taken(at): Text("\(at) is another file. Install replaces it.")
-                    case .missing: Text("Links “\(CLITool.name)” into ~/.local/bin, to drive mielwm from Terminal.")
+                    case .missing: Text("Links \"\(CLITool.name)\" into ~/.local/bin, to drive mielwm from Terminal.")
                     }
                 }
             }

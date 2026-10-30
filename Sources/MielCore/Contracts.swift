@@ -383,7 +383,7 @@ public struct HUDRow: Hashable, Sendable {
     public var title: String
     public var detail: String
     public var bundleID: String? // app icon
-    public var trailing: String // shortcut hint ("⌃1")
+    public var trailing: String // shortcut hint ("⌘1")
     public var highlights: [Range<Int>] // matched character offsets in `title`
 
     public init(title: String, detail: String = "", bundleID: String? = nil,

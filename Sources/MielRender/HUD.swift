@@ -201,7 +201,7 @@ final class HUDPainter {
             if hud.rows.isEmpty {
                 let r = CGRect(x: x, y: y, width: rowWidth, height: rowHeight)
                 let title = TextStyle(size: look.titleSize * s)
-                let message = "No windows match “\(hud.query)”"
+                let message = "No windows match \"\(hud.query)\""
                 text(b, message, title, theme.textDim, x: r.minX + 12 * s, cy: r.midY, maxWidth: rowWidth - 24 * s)
             }
             for row in 0..<count {
