@@ -28,12 +28,41 @@ If the file isn't valid JSON, mielwm keeps its defaults and shows the error in t
 | `layout:orientation` | `"auto"` | Tiles side by side (`horizontal`), above each other (`vertical`), or by the display's shape (`auto`). |
 | `layout:workspace_rules` | `""` | `bundle.id=N` pairs, comma separated: that app's windows open on workspace N. |
 | `layout:floating_apps` | System Settings, Activity Monitor, Calculator, Archive Utility | Bundle ids, comma separated, whose windows always float. |
+| `layout:cross_workspaces` | `false` | Focus and move keys go on into the next workspace at the edge, instead of stopping. |
+| `layout:auto_back_and_forth` | `false` | The key of the workspace you're on takes you to the one before. `mielwm workspace N` and Barik stay put. |
 | `gaps:inner_horizontal` | `8` | Points between tiles side by side. |
 | `gaps:inner_vertical` | `8` | Points between tiles above each other. |
 | `gaps:outer_left`, `gaps:outer_right`, `gaps:outer_bottom` | `12` | Points between the tiles and the screen edge. |
 | `gaps:outer_top` | `12` | The top gap on the built-in display. |
 | `gaps:outer_top_external` | `54` | The top gap on other displays, with room for a status bar. |
 | `canvas:gap` | `12` | How far Fill (`⌥T`) stays from the screen edges. |
+
+## Window rules
+
+A window rule floats a window or sends it to a workspace by its app's name or its title, like AeroSpace's `on-window-detected`. Give each rule a name and the fields it needs:
+
+```json
+{
+  "rules": {
+    "firefox-pip": { "app_id": "org.mozilla.firefox", "title": "Picture-in-Picture", "floating": true },
+    "zoom": { "app": "^zoom", "workspace": 3 }
+  }
+}
+```
+
+| Field | What it does |
+| --- | --- |
+| `app` | A regular expression found anywhere in the app's name, ignoring case. |
+| `title` | The same for the window's title. |
+| `app_id` | The app's bundle id, exactly. |
+| `floating` | `true` makes the window float. |
+| `workspace` | `1` to `9`: the window opens on that workspace. |
+
+A window has to match every matcher a rule has. A rule with no matcher, or with neither `floating` nor `workspace`, does nothing and never hides a later rule. When several rules match, the first by name wins, with numbers in order, so `rule-2` comes before `rule-10`. Rules apply when a window first appears, so a title that changes later doesn't move it.
+
+A rule wins over the other settings. Its `workspace` sends the window there even when the app is in `layout:floating_apps` or `layout:default` is `floating`, and it comes before `layout:workspace_rules`. A rule with `floating` floats the window where it opened. If it also names a workspace, the workspace is ignored.
+
+Flat keys work too: `"rules:firefox-pip:title": "Picture-in-Picture"`. Settings doesn't edit window rules yet, so they live only in this file.
 
 ## Input
 

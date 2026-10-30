@@ -143,7 +143,7 @@ public final class WindowRegistry {
     private func activated(_ pid: pid_t) {
         activePid = pid
         lastFocused = nil
-        trackers[pid]?.reportFocus()
+        if let tracker = trackers[pid] { tracker.reportFocus() } else { deliver(.unmanagedFocus(pid: pid)) }
     }
 
     /// Keeps `windows` current and drops what Core must never see: events
@@ -171,6 +171,9 @@ public final class WindowRegistry {
         case .windowFocused(let id):
             guard id.pid == activePid, id != lastFocused, windows[id] != nil else { return }
             lastFocused = id
+        case .unmanagedFocus(let pid):
+            guard pid == activePid else { return }
+            lastFocused = nil // coming back to the same window is news again
         case .appHidden(let pid, _):
             guard trackers[pid] != nil else { return }
         case .appTerminated, .screensChanged:
@@ -188,7 +191,7 @@ public final class WindowRegistry {
 extension WindowCommand {
     var window: WindowID {
         switch self {
-        case .setFrame(let id, _), .focus(let id): id
+        case .setFrame(let id, _), .focus(let id), .close(let id), .minimize(let id): id
         }
     }
 }
@@ -375,12 +378,19 @@ final class AppTracker {
             app.set(kAXFrontmostAttribute, kCFBooleanTrue)
             let pid = pid
             DispatchQueue.main.async { NSRunningApplication(processIdentifier: pid)?.activate() }
+        case .close(let id):
+            // The close button, as a click: the app may still ask to save first.
+            guard let window = element(id), let button = window.value(kAXCloseButtonAttribute),
+                  CFGetTypeID(button) == AXUIElementGetTypeID() else { return }
+            AXUIElementPerformAction(button as! AXUIElement, kAXPressAction as CFString)
+        case .minimize(let id):
+            element(id)?.set(kAXMinimizedAttribute, kCFBooleanTrue)
         }
     }
 
     private func postFocus() {
         guard let value = app.value(kAXFocusedWindowAttribute), CFGetTypeID(value) == AXUIElementGetTypeID(),
-              let id = adopt(value as! AXUIElement) else { return }
+              let id = adopt(value as! AXUIElement) else { return post(.unmanagedFocus(pid: pid)) } // the desktop, a sheet, a panel
         post(.windowFocused(id))
     }
 

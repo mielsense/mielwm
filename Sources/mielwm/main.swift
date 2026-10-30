@@ -8,10 +8,11 @@ let usage = """
       mielwm                      run the app (menu bar)
       mielwm <action> [args]      tell the running app: overview, search [text], settings,
                                   help, switch next|prev, focus|nudge|pan left|right|up|down,
-                                  workspace 1-9|next|prev, move-to-workspace 1-9,
-                                  layout tiles|stack|floating, zoom in|out, fit, frame,
-                                  summon, land, back, fill, fullscreen, pin, grow, shrink,
-                                  arrange, undo, redo, refresh
+                                  workspace 1-9|next|prev, workspace-back-and-forth,
+                                  move-to-workspace 1-9, layout tiles|stack|floating,
+                                  zoom in|out, fit, frame, summon, land, back, fill,
+                                  fullscreen, pin, grow, shrink, resize smart|width|height +N|-N,
+                                  close, minimize, arrange, undo, redo, refresh
       mielwm state                the running app's canvas as JSON
       mielwm quit                 quit the running app (every window back on a screen)
       mielwm snapshot --state desktop|overview|overview:<command>|search:<q>|switcher|help

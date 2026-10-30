@@ -102,6 +102,8 @@ public struct CanvasState: Sendable {
     public internal(set) var workspaces: [Workspace] = []
     /// The workspace the desk camera rests on, or last rested on.
     public internal(set) var currentWorkspace: Int?
+    /// The workspace current before it, for workspace-back-and-forth.
+    public internal(set) var previousWorkspace: Int?
     public internal(set) var slots: SlotGrid
 
     var toastUntil = 0.0
@@ -114,6 +116,8 @@ public struct CanvasState: Sendable {
     var lastCheckpoint: Checkpoint?
     var graceUntil: Double?
     var expectedFocus: (id: WindowID, until: Double)?
+    var pendingFocus: WindowID? // reported focused while hidden or minimized: it gets focus once it shows
+    var heldFocus: SystemEvent? // the last focus report while expectedFocus lands, applied after
     var dragging: WindowID?
     var saved: LayoutSnapshot?
     var claimed = Set<Int>()

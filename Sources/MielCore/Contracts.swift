@@ -94,6 +94,9 @@ public enum SystemEvent: Sendable, Equatable {
     /// Focus from any source: our own commands, Cmd-Tab, the Dock, a click,
     /// an app raising itself.
     case windowFocused(WindowID)
+    /// Focus went to nothing mielwm manages: the desktop, a sheet or panel,
+    /// an app it leaves alone. No managed window has focus now.
+    case unmanagedFocus(pid: Int32)
     case appHidden(pid: Int32, Bool)
     case appTerminated(pid: Int32)
     case screensChanged([ScreenInfo])
@@ -121,6 +124,10 @@ public enum WindowCommand: Sendable, Equatable {
     case setFrame(WindowID, CGRect)
     /// Raise the window, make it main and key, activate its app.
     case focus(WindowID)
+    /// Press the window's close button, as a click on it would.
+    case close(WindowID)
+    /// Minimize it to the Dock.
+    case minimize(WindowID)
 }
 
 // MARK: - Live window images
@@ -222,6 +229,8 @@ public enum Action: Hashable, Codable, Sendable {
     case fullscreen
     case pin
     case grow, shrink
+    case resize(ResizeAxis, Int) // AeroSpace's resize: points more (or fewer, below zero)
+    case close, minimize // the window itself (its close button, the Dock)
     case arrange
     case undo, redo
     case refresh
@@ -232,8 +241,14 @@ public enum Action: Hashable, Codable, Sendable {
     case toggleFloating // tiled ⇄ floating
     case workspace(Int) // 1...9: fly to that workspace
     case workspaceStep(forward: Bool) // next / previous workspace
+    case workspaceBackAndForth // the workspace shown before this one
     case moveToWorkspace(Int) // the window moves there and the camera follows
     case settings // opens the Settings window (handled by the app)
+}
+
+/// Which side `resize` changes: along the tiles' split (smart), or one dimension.
+public enum ResizeAxis: String, Hashable, Codable, Sendable, CaseIterable {
+    case smart, width, height
 }
 
 /// How a workspace lays out its windows. Floating windows belong to none.

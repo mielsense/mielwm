@@ -202,7 +202,7 @@ final class Controller {
     /// Reports, text and modifiers never bring the overlay up: no need to try them on a copy first.
     private func mayOpenOverlay(_ input: CoreInput) -> Bool {
         switch input {
-        case .system(.windowFrameChanged), .system(.windowTitleChanged), .modifiersChanged, .text, .markedText: false
+        case .system(.windowFrameChanged), .system(.windowTitleChanged), .system(.unmanagedFocus), .modifiersChanged, .text, .markedText: false
         default: true
         }
     }
@@ -226,6 +226,8 @@ final class Controller {
             switch c {
             case .focus:
                 if mode != .normal { continue } // tests never take the user's focus
+                now.append(c)
+            case .close, .minimize:
                 now.append(c)
             case let .setFrame(id, _):
                 commandSerial[id, default: 0] += 1

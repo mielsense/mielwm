@@ -4,8 +4,19 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 
 ## Unreleased
 
+### Workspaces and layouts
+
+- `⌥` arrows and `⌥⇧` arrows stop at the edge of the workspace, as in AeroSpace. Turn on Settings > Layout & workspaces > Focus and move past the edge to keep going into the next one.
+- A new `workspace-back-and-forth` action goes to the workspace you were on before. It has no key by default, since `⌥Tab` is the window switcher.
+- Turn on Settings > Layout & workspaces > Workspace key goes back, and the key of the workspace you're on takes you to the one before.
+- Window rules can match an app's name or a window's title, so a Picture-in-Picture or splash window can float or open on a fixed workspace. They live in the config file.
+- `resize` takes an amount and a side, like AeroSpace's `resize smart +100` or `resize width -50`.
+- Close and minimize the focused window from a shortcut or the command line. Neither has a key by default.
+- Import from AeroSpace also brings over rules by app name or title, `workspace-back-and-forth`, `close`, `macos-native-minimize`, `resize` with any amount, and `--auto-back-and-forth`. `⌥Tab` stays the window switcher.
+
 ### Fixes
 
+- After you click the desktop, a dialog or an app mielwm leaves alone, window keys like `⌥T` no longer act on the last window you used.
 - Leaving macOS full screen, like a full screen video, no longer flashes two desktops side by side. mielwm leaves a full screen window alone and keeps its tile for when it comes back.
 - Closing, minimizing or hiding the focused window keeps you on the same workspace. The most recent window on screen takes focus.
 - An app that resizes its own window, like an Electron app restoring its size, no longer shifts the split between tiles. Only dragging an edge does.

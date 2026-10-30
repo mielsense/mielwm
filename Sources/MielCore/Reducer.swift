@@ -119,7 +119,13 @@ extension CanvasState {
             sync(force: true)
         }
         if toast != nil, now >= toastUntil { toast = nil }
-        if let f = expectedFocus, now >= f.until { expectedFocus = nil }
+        if let f = expectedFocus, now >= f.until {
+            expectedFocus = nil
+            if let report = heldFocus { // focus changed again while ours landed: that is where it is now
+                heldFocus = nil
+                handle(report)
+            }
+        }
     }
 
     // MARK: System events
@@ -129,7 +135,7 @@ extension CanvasState {
             refocusIfLost() // the focused window may have closed, minimized or hidden
             // The search list follows windows coming, going and being renamed.
             switch event {
-            case .windowFrameChanged, .windowFocused, .screensChanged: break
+            case .windowFrameChanged, .windowFocused, .unmanagedFocus, .screensChanged: break
             default:
                 if overview.isOpen {
                     overview.rebuild(overviewContext, resetSelection: false)
@@ -139,6 +145,7 @@ extension CanvasState {
         }
         switch event {
         case let .windowAppeared(snapshot): appeared(snapshot)
+        case let .unmanagedFocus(pid): focusLeft(pid)
         case let .windowClosed(id): remove { $0.id == id }
         case let .windowFrameChanged(id, frame, dragging): frameChanged(id, frame, dragging: dragging)
         case let .windowTitleChanged(id, title):
@@ -148,7 +155,7 @@ extension CanvasState {
             guard let i = index(id) else { return }
             windows[i].isMinimized = minimized
             retile(windows[i].workspace) // a minimized window gives up its tile
-            if !minimized { sync([id]) }
+            if !minimized { sync([id]); focusPending() }
         case let .windowFullScreen(id, on):
             guard let i = index(id) else { return }
             windows[i].isFullScreen = on
@@ -162,7 +169,7 @@ extension CanvasState {
         case let .appHidden(pid, hidden):
             for i in windows.indices where windows[i].id.pid == pid { windows[i].isHidden = hidden }
             for slot in Set(windows.filter { $0.id.pid == pid }.compactMap(\.workspace)) { retile(slot) }
-            if !hidden { sync(Set(windows.filter { $0.id.pid == pid }.map(\.id))) }
+            if !hidden { sync(Set(windows.filter { $0.id.pid == pid }.map(\.id))); focusPending() }
         case let .appTerminated(pid): remove { $0.id.pid == pid }
         case let .screensChanged(new): screensChanged(new)
         }
@@ -325,10 +332,19 @@ extension CanvasState {
     /// (d) Focus from outside (Cmd-Tab, the Dock, a click, an app raising
     /// itself). A window on screen stays where it is; one off camera or
     /// parked brings the camera to it. Our own windows don't count, nor do
-    /// stray reports while a focus we asked for lands.
+    /// stray reports while a focus we asked for lands: the last one waits,
+    /// and applies after, unless ours reports in later.
     mutating func focusedFromOutside(_ id: WindowID) {
-        guard id.pid != ownPID, let i = index(id), windows[i].isShown else { return }
-        if let f = expectedFocus, f.id != id, now < f.until { return }
+        guard id.pid != ownPID else { return }
+        if let f = expectedFocus, f.id != id, now < f.until { heldFocus = .windowFocused(id); return }
+        heldFocus = nil // ours landed, or there was none
+        guard let i = index(id), windows[i].isShown else { // a dialog or sheet, say, or a window about to show
+            if expectedFocus?.id == id { expectedFocus = nil } // ours reported in before it shows: nothing to hold back
+            focusLeft(id.pid)
+            if index(id) != nil { pendingFocus = id } // macOS can report focus before the unhide or unminimize
+            return
+        }
+        pendingFocus = nil
         focused = id
         mru.note(id)
         raise(i)
@@ -339,6 +355,23 @@ extension CanvasState {
         } else if w.pinned == nil, !isFullyVisible(w) {
             cut(to: landingCamera(id))
         }
+    }
+
+    /// Focus went to something mielwm doesn't manage (no window, or one it
+    /// leaves alone): no managed window has it, so
+    /// window keys do nothing rather than act on the last one. mielwm's own
+    /// windows (the overview, Settings) keep it; while a focus we asked for
+    /// lands, the report waits like any other.
+    mutating func focusLeft(_ pid: Int32) {
+        guard pid != ownPID, !isOverview, !overview.isOpen else { return }
+        if expectedFocus.map({ now < $0.until }) == true { heldFocus = .unmanagedFocus(pid: pid); return }
+        focused = nil
+        pendingFocus = nil
+    }
+
+    /// The window last reported focused while it was not shown, now that it is.
+    mutating func focusPending() {
+        if let id = pendingFocus, window(id)?.isShown == true { focusedFromOutside(id) }
     }
 
     /// (h) Screens came or went: keep canvas frames and the camera's offset

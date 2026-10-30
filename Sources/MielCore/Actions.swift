@@ -35,8 +35,11 @@ extension CanvasState {
         case .fill: toggleFill()
         case .fullscreen: toggleFullscreen()
         case .pin: togglePin()
-        case .grow: resizeTarget(by: look.gridSize)
-        case .shrink: resizeTarget(by: -look.gridSize)
+        case .grow: resizeTarget(look.gridSize, tile: 50)
+        case .shrink: resizeTarget(-look.gridSize, tile: -50)
+        case let .resize(axis, amount): resizeTarget(CGFloat(amount), tile: CGFloat(amount), axis: axis)
+        case .close: if let i = target { outbox.append(.close(windows[i].id)) }
+        case .minimize: if let i = target { outbox.append(.minimize(windows[i].id)) }
         case .arrange: arrangeAll()
         case .undo: showToast(undo(redo: false) ? "Undone  {⌃⇧Z} Redo" : "Nothing to undo")
         case .redo: showToast(undo(redo: true) ? "Redone" : "Nothing to redo")
@@ -46,10 +49,19 @@ extension CanvasState {
         case .layoutStack: setLayout(.stack)
         case .toggleFloating: toggleFloating()
         case let .workspace(n): goToWorkspace(n)
+        case .workspaceBackAndForth: if let p = previousWorkspace { goToWorkspace(p) }
         case let .workspaceStep(forward): stepWorkspace(forward: forward)
         case let .moveToWorkspace(n): moveToWorkspace(n)
         case .settings: break // the app opens the Settings window
         }
+    }
+
+    /// What a bound key does. With layout:auto_back_and_forth the key of the
+    /// workspace you are on goes to the one before; the command line and
+    /// Barik stay put, as AeroSpace's `workspace N` without the flag does.
+    public func boundAction(_ action: Action) -> Action {
+        guard settings.autoBackAndForth, case let .workspace(n) = action, n == currentWorkspace, let p = previousWorkspace else { return action }
+        return .workspace(p)
     }
 
     // MARK: Overview
@@ -121,6 +133,7 @@ extension CanvasState {
         focused = id
         mru.note(id)
         expectedFocus = (id, now + Self.focusLifetime)
+        heldFocus = nil
         outbox.append(.focus(id))
     }
 
@@ -233,7 +246,11 @@ extension CanvasState {
         }
         let from = target.map { windows[$0] }
         let matches = isOverview ? overview.matchSet : nil
-        let pool = candidates.filter { $0.id != from?.id && (matches?.contains($0.id) ?? true) }
+        var pool = candidates.filter { $0.id != from?.id && (matches?.contains($0.id) ?? true) }
+        if staysInWorkspace { // AeroSpace stops at the workspace's edge; the overview roams the canvas
+            let home = from.flatMap(homeSlot) ?? currentWorkspace
+            pool = pool.filter { [nil, home].contains(homeSlot($0)) } // nil: pinned, or off every slot (another display)
+        }
         guard let id = nearestWindow(from: from?.frame, direction: d, candidates: pool.map { ($0.id, $0.frame) }) else { return }
         if isOverview {
             follow(id)
@@ -242,6 +259,9 @@ extension CanvasState {
         }
         reveal(id)
     }
+
+    /// Focus and move keys stop at the workspace's edge: at 100%, with workspaces, unless set to cross.
+    var staysInWorkspace: Bool { !isOverview && !settings.crossWorkspaces && settings.defaultLayout != .floating }
 
     /// At 100%: focus it, and move the camera only if it is not fully on screen.
     mutating func reveal(_ id: WindowID) {
@@ -324,20 +344,25 @@ extension CanvasState {
         sync([id])
     }
 
-    /// ⌥= / ⌥-: one grid step bigger or smaller, around its center.
-    mutating func resizeTarget(by step: CGFloat) {
+    /// ⌥= / ⌥- and AeroSpace's resize: a floating window `step` bigger or
+    /// smaller around its center (`axis`: both sides, or one), a tile `tile`
+    /// points along the split. Flat tiles can't change across the split.
+    mutating func resizeTarget(_ step: CGFloat, tile change: CGFloat, axis: ResizeAxis = .smart) {
         guard let i = target, windows[i].isResizable else { return }
         let id = windows[i].id
-        if let ws = workspace(of: id) { // tiled: 50 points along the split, AeroSpace's resize smart
-            guard ws.mode == .tiles, let tile = tiles(ws).first(where: { $0.id == id })?.frame else { return }
+        if let ws = workspace(of: id) {
+            let h = isHorizontal(ws)
+            guard ws.mode == .tiles, axis == .smart || (axis == .width) == h,
+                  let tile = tiles(ws).first(where: { $0.id == id })?.frame else { return }
             checkpoint("resize", window: id)
-            return setTileLength(id, to: (isHorizontal(ws) ? tile.width : tile.height) + (step > 0 ? 50 : -50))
+            return setTileLength(id, to: (h ? tile.width : tile.height) + change)
         }
         checkpoint("resize", window: id)
+        let dw = axis == .height ? 0 : step, dh = axis == .width ? 0 : step
         if let pin = windows[i].pinned {
-            windows[i].pinned = pin.resized(by: step).roundedFrame
+            windows[i].pinned = pin.resized(width: dw, height: dh).roundedFrame
         } else {
-            windows[i].frame = windows[i].frame.resized(by: step).roundedFrame
+            windows[i].frame = windows[i].frame.resized(width: dw, height: dh).roundedFrame
         }
         fills[id] = nil
         layoutRevision += 1
@@ -462,7 +487,7 @@ extension CanvasState {
 
     /// ⌥⇧ arrows on a tiled window: it swaps with its neighbour that way (in
     /// a stack: moves in the order); past the ends, left and right take it to
-    /// the workspace before or after.
+    /// the workspace before or after, when moves cross workspaces.
     mutating func nudgeTile(_ id: WindowID, _ d: Direction) {
         guard let ws = workspace(of: id), let k = workspaceIndex(ws.slot) else { return }
         let shown = tiles(ws).map(\.id)
@@ -473,7 +498,7 @@ extension CanvasState {
             layoutRevision += 1
             return retile(ws.slot)
         }
-        guard d.isHorizontal, ws.slot + d.sign >= 1 else { return }
+        guard d.isHorizontal, ws.slot + d.sign >= 1, !staysInWorkspace else { return }
         moveToWorkspace(ws.slot + d.sign, at: d == .right ? 0 : nil)
     }
 
@@ -547,8 +572,8 @@ extension Direction {
 }
 
 extension CGRect {
-    /// `step` wider and taller around the same center, never below 160 × 100.
-    func resized(by step: CGFloat) -> CGRect {
-        CGRect(origin: .zero, size: CGSize(width: Swift.max(160, width + step), height: Swift.max(100, height + step))).centered(at: center)
+    /// `dw` wider and `dh` taller around the same center, never below 160 × 100.
+    func resized(width dw: CGFloat, height dh: CGFloat) -> CGRect {
+        CGRect(origin: .zero, size: CGSize(width: Swift.max(160, width + dw), height: Swift.max(100, height + dh))).centered(at: center)
     }
 }

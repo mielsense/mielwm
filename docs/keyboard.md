@@ -13,7 +13,7 @@ Every shortcut mielwm has, and how to change them. The defaults are AeroSpace's 
 | `⌥/` | Tile. Pressed again, the tiles flip between side by side and above each other. |
 | `⌥,` | Stack the workspace, or go back to tiles. |
 | `⌥.` | Float the window, or tile it again. |
-| `⌥` arrows | Focus the nearest window that way. In a stack, the next or previous window. |
+| `⌥` arrows | Focus the nearest window that way, within the workspace. In a stack, the next or previous window. |
 | `⌥⇧` arrows | Swap tiles, or nudge a floating window a grid step. Hold to keep going. |
 | `⌥Tab`, `⌥⇧Tab` | A tap goes back to the last window. Hold `⌥` for the list and let go to switch. In a stack, the next window. |
 | `⌥T` | Fill the screen, keeping the gaps. Again to put it back. |
@@ -22,9 +22,22 @@ Every shortcut mielwm has, and how to change them. The defaults are AeroSpace's 
 | `⌥-`, `⌥=` | Shrink, grow the window. |
 | `⌃⌥` + drag | Move a window with the left button, resize it with the right. |
 
+Focus and move stop at the edge of the workspace, the way AeroSpace's do. To have them go on into the next workspace, turn on Settings > Layout & workspaces > Focus and move past the edge. In the overview the arrows always reach every window.
+
 `⌥0`, `⌥⇧0` and `⌥;` do nothing on purpose, so they never type º, ‚ or … by accident.
 
 `⌃←` and `⌃→` are also Mission Control's keys for switching Spaces. mielwm uses one Space, so they're free, but Settings warns you about it.
+
+## Without a key
+
+These actions have no shortcut until you give them one, in Settings > Keyboard or the [configuration file](configuration.md#shortcuts):
+
+| Action | What it does |
+| --- | --- |
+| Last workspace | Go to the workspace you were on before. Again goes back. With Settings > Layout & workspaces > Workspace key goes back, `⌥1` … `⌥9` on the workspace you're on do this too. |
+| Close window | Close the focused window, as a click on its close button would. The app may still ask to save. |
+| Minimize window | Minimize the focused window to the Dock. |
+| `resize smart +100` | Make the window 100 points bigger. See [the command line](command-line.md) for the forms. |
 
 ## In the overview
 

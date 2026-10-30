@@ -310,6 +310,7 @@ extension CanvasState {
 
 @Test func nudgeSwapsTilesThenCrossesToTheNextWorkspace() {
     var s = twoTiles()
+    s.settings.crossWorkspaces = true
     _ = s.send(.action(.nudge(.right)))
     #expect(s.members(1) == [2, 1])
     #expect(s.canvasFrame(1) == right && s.canvasFrame(2) == left)
@@ -523,7 +524,9 @@ extension CanvasState {
 }
 
 @Test func focusKeysAndASwitcherTapCutToTheWindowWithNoFlight() {
-    var s = makeState([snapshot(1, onBuiltIn), snapshot(2, onBuiltIn)], settings: testSettings(animated: true, layout: .tiles))
+    var settings = testSettings(animated: true, layout: .tiles)
+    settings.crossWorkspaces = true
+    var s = makeState([snapshot(1, onBuiltIn), snapshot(2, onBuiltIn)], settings: settings)
     _ = s.send(.system(.windowFocused(wid(1))))
     _ = s.send(.action(.focus(.right))) // window 2 lives on workspace 2, off screen
     #expect(s.focused == wid(2) && s.currentWorkspace == 2)

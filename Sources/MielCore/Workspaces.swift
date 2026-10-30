@@ -125,6 +125,9 @@ extension CanvasState {
 
     func workspace(of id: WindowID) -> Workspace? { workspaceIndex(window(id)?.workspace).map { workspaces[$0] } }
 
+    /// The workspace a window is in: its own, or for a floating one the slot it sits in (pinned: none).
+    func homeSlot(_ w: ManagedWindow) -> Int? { w.workspace ?? (w.pinned == nil ? slot(under: w.frame.center) : nil) }
+
     func layoutScreen(_ ws: Workspace) -> ScreenInfo {
         ws.screenID.flatMap { id in screens.first { $0.id == id } } ?? primaryScreen(screens) ?? activeScreen
     }
@@ -170,7 +173,7 @@ extension CanvasState {
     /// The lowest slot without windows; `skippingRules` keeps the slots rules name for their apps.
     func freeSlot(skippingRules: Bool = false) -> Int {
         let taken = Set(workspaces.filter { !$0.members.isEmpty }.map(\.slot))
-            .union(skippingRules ? Set(settings.workspaceRuleTable.values) : [])
+            .union(skippingRules ? Array(settings.workspaceRuleTable.values) + settings.windowRules.values.compactMap(\.workspace) : [])
         return (1...).first { !taken.contains($0) }!
     }
 
@@ -206,6 +209,7 @@ extension CanvasState {
     }
 
     mutating func setCurrent(_ slot: Int) {
+        if let c = currentWorkspace, c != slot { previousWorkspace = c }
         currentWorkspace = slot
         ensureWorkspace(slot)
         pruneWorkspaces()
@@ -347,10 +351,13 @@ extension CanvasState {
 
     // MARK: New windows
 
-    /// Where a new window goes, nil to float: rules, then (while starting up)
+    /// Where a new window goes, nil to float: rules (window rules first), then (while starting up)
     /// a workspace of its own, else the current workspace after the focused member.
     func placement(for s: WindowSnapshot) -> (slot: Int, position: Int?)? {
-        if !s.isResizable || settings.floats(s.bundleID) || settings.defaultLayout == .floating { return nil }
+        let rule = settings.windowRule(for: s) // by name and title: more specific than the per-app lists and the layout
+        if !s.isResizable || rule?.floating == true { return nil } // a floating window stays where it opened, whatever workspace a rule names
+        if let n = rule?.workspace { return (n, nil) }
+        if settings.floats(s.bundleID) || settings.defaultLayout == .floating { return nil }
         if let n = s.bundleID.flatMap({ settings.workspaceRuleTable[$0.lowercased()] }) { return (n, nil) }
         // Startup (the restore window): whatever is already open gets its own workspace, so nothing starts as tiny tiles.
         if now < restoreUntil { return (freeSlot(skippingRules: true), nil) }
