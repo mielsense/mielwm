@@ -12,6 +12,7 @@ final class SettingsWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
 
     let model: SettingsModel
     let window: NSWindow
+    private let sidebarView: NSView
     private var title: AnyCancellable?
     private var titleShown: AnyCancellable?
     private var placed = false // where it was last time, or centered on the first show
@@ -25,7 +26,9 @@ final class SettingsWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
             split.splitView = SeamlessSplitView()
             split.splitView.isVertical = true
         }
-        let sidebar = NSSplitViewItem(sidebarWithViewController: NSHostingController(rootView: SettingsSidebar().environmentObject(model)))
+        let sidebarController = NSHostingController(rootView: SettingsSidebar().environmentObject(model))
+        sidebarView = sidebarController.view
+        let sidebar = NSSplitViewItem(sidebarWithViewController: sidebarController)
         sidebar.canCollapse = false
         sidebar.minimumThickness = Self.sidebarWidth
         sidebar.maximumThickness = Self.sidebarWidth
@@ -69,6 +72,10 @@ final class SettingsWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
         model.readScreen(window.screen)
+        // The sidebar list has the focus, as in System Settings, not the search field it starts with.
+        DispatchQueue.main.async { [self] in // after the list's first layout
+            if let list = firstView(NSTableView.self, in: sidebarView) { window.makeFirstResponder(list) }
+        }
     }
 
     // The title sits over the detail pane, after the sidebar's edge.
@@ -113,6 +120,13 @@ final class SettingsWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
         submenu("Window", [NSMenuItem(title: "Close", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")])
         return main
     }()
+}
+
+/// The first view of `type` in `view`'s tree, depth first.
+func firstView<T: NSView>(_ type: T.Type, in view: NSView) -> T? {
+    if let found = view as? T { return found }
+    for sub in view.subviews { if let found = firstView(type, in: sub) { return found } }
+    return nil
 }
 
 /// Before macOS 26, no divider: the sidebar's translucency already sets it apart, as in System Settings.
