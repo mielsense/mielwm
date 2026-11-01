@@ -97,27 +97,20 @@ func settingsPreview(_ args: [String]) -> Never {
             settings.show(pane)
             pump(pane == .appearance ? 1.5 : 0.8)
             let file = "settings-\(pane.rawValue)-\(name)"
-            savePNG(settings.window, to: out.appendingPathComponent(file + ".png"))
+            screenPNG(settings.window, to: out.appendingPathComponent(file + ".png"))
             // A pane taller than the window: its end too.
             if let scroll = detailScrollView(in: settings.window.contentView), let doc = scroll.documentView,
                doc.frame.height > scroll.contentView.bounds.height + 1 {
                 doc.scroll(NSPoint(x: 0, y: doc.isFlipped ? doc.frame.height : 0))
                 pump(0.4)
-                savePNG(settings.window, to: out.appendingPathComponent(file + "-end.png"))
+                screenPNG(settings.window, to: out.appendingPathComponent(file + "-end.png"))
             }
             // The glass style picker sits where the first view ends: a view of it on its own, taken from the screen.
             if pane == .appearance, let scroll = detailScrollView(in: settings.window.contentView), let doc = scroll.documentView {
                 let y = 420.0
                 doc.scroll(NSPoint(x: 0, y: doc.isFlipped ? y : doc.frame.height - y - scroll.contentView.bounds.height))
                 pump(0.4)
-                // From the screen: Liquid glass renders only there, not in an offscreen copy of the view.
-                settings.window.orderFrontRegardless()
-                pump(0.4)
-                let shot = Process()
-                shot.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-                shot.arguments = ["-x", "-o", "-l", String(settings.window.windowNumber), out.appendingPathComponent(file + "-glass.png").path]
-                try? shot.run()
-                shot.waitUntilExit()
+                screenPNG(settings.window, to: out.appendingPathComponent(file + "-glass.png"))
             }
         }
         // The AeroSpace import, as the AeroSpace pane asks about it.
@@ -292,6 +285,19 @@ private func detailScrollView(in view: NSView?) -> NSScrollView? {
     }
     walk(view)
     return all.max { $0.convert($0.bounds, to: nil).minX < $1.convert($1.bounds, to: nil).minX }
+}
+
+/// The window as it is on screen, without its shadow. Liquid glass and the sidebar's
+/// vibrant text render only there, not in an offscreen copy of the view.
+@MainActor
+private func screenPNG(_ window: NSWindow, to url: URL) {
+    window.orderFrontRegardless()
+    pump(0.4)
+    let shot = Process()
+    shot.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+    shot.arguments = ["-x", "-o", "-l", String(window.windowNumber), url.path]
+    try? shot.run()
+    shot.waitUntilExit()
 }
 
 /// The whole window, title bar and toolbar included.
