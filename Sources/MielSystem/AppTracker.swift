@@ -83,6 +83,7 @@ final class AppTracker: @unchecked Sendable {
 
     private static let attempts = 20
     private static let retryDelay = 0.25 // seconds between attempts while an app is still launching
+    private static let replacedWindowCheck = 1.0 // seconds after a window goes to look for its replacement
 
     private func setUp(attempt: Int) {
         guard !stopped, observer == nil else { return }
@@ -116,7 +117,10 @@ final class AppTracker: @unchecked Sendable {
         case kAXWindowCreatedNotification:
             adopt(element)
         case kAXUIElementDestroyedNotification:
-            if let id = ids[element] { forget(id, element) }
+            guard let id = ids[element] else { return }
+            forget(id, element)
+            // Some apps replace a window's element (on wake, say): the new one is listed under the same number.
+            queue.asyncAfter(deadline: .now() + Self.replacedWindowCheck) { self.scan() }
         case kAXMovedNotification, kAXResizedNotification:
             guard let id = ids[element], let (frame, isFullScreen) = frame(of: element) else { return }
             sizes[id] = frame.size

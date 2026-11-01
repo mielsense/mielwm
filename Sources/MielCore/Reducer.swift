@@ -174,6 +174,11 @@ extension CanvasState {
     mutating func remove(where match: (ManagedWindow) -> Bool) {
         let gone = windows.filter(match).map(\.id)
         guard !gone.isEmpty else { return }
+        for w in windows where match(w) {
+            let ws = workspace(of: w.id)
+            departed.append(Departed(id: w.id, frame: w.frame, workspace: ws, position: ws?.members.firstIndex(of: w.id) ?? 0))
+        }
+        departed = Array(departed.suffix(Self.departedMemory))
         windows.removeAll(where: match)
         for id in gone {
             mru.remove(id)
@@ -200,7 +205,8 @@ extension CanvasState {
         }
     }
 
-    /// A new window: a saved spot (and workspace) wins; one found in a
+    /// A new window. One that closed lately and came back (the same window
+    /// number) goes back to its spot and workspace. Else a saved spot (and workspace) wins; one found in a
     /// park corner (ours or AeroSpace's) or off every screen goes near the
     /// camera without overlap; anything else stays where it is. Then it joins
     /// a workspace or floats (see `placement`).
@@ -220,7 +226,10 @@ extension CanvasState {
                               isMinimized: s.isMinimized, isFullScreen: s.isFullScreen, isResizable: s.isResizable, real: s.frame)
         let ordinal = windows.filter { $0.bundleID == s.bundleID && $0.displayTitle == w.displayTitle }.count
         var restored: SavedWindow?
-        if now < restoreUntil, let saved, let k = saved.match(id: s.id, bundleID: s.bundleID, title: w.displayTitle, ordinal: ordinal, excluding: claimed) {
+        let returning = departed.lastIndex { $0.id == s.id }.map { departed.remove(at: $0) }
+        if let returning {
+            w.frame = returning.frame
+        } else if now < restoreUntil, let saved, let k = saved.match(id: s.id, bundleID: s.bundleID, title: w.displayTitle, ordinal: ordinal, excluding: claimed) {
             claimed.insert(k)
             w.frame = saved.windows[k].frame
             if saved.version >= 2 { restored = saved.windows[k] } // older layouts knew no workspaces
@@ -232,7 +241,15 @@ extension CanvasState {
             w.frame = deskCamera.toCanvas(s.frame, deskCenter: deskCenter)
         }
         windows.append(w)
-        if let restored {
+        if let returning { // a floating one just keeps its frame
+            if let ws = returning.workspace {
+                if workspaceIndex(ws.slot) == nil { // it was the last one there
+                    workspaces.append(Workspace(slot: ws.slot, mode: ws.mode, orientation: ws.orientation, screenID: ws.screenID))
+                    workspaces.sort { $0.slot < $1.slot }
+                }
+                join(s.id, ws.slot, at: returning.position, weight: ws.weights[s.id])
+            }
+        } else if let restored {
             if let slot = restored.workspace {
                 let position = restored.position ?? .max
                 restoredPositions[s.id] = position
