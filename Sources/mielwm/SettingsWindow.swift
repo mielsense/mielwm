@@ -159,8 +159,8 @@ struct SettingsSidebar: View {
         VStack(spacing: 0) {
             SearchField(text: $model.paneQuery, label: "Search settings")
                 .padding(.horizontal, 10)
-                .padding(.top, 6)
-                .padding(.bottom, 4)
+                .padding(.top, -Design.Space.s) // up under the window buttons, as in System Settings
+                .padding(.bottom, Design.Space.m)
             List(selection: Binding(get: { model.pane }, set: { if let p = $0 { model.pane = p } })) {
                 ForEach(Array(groups.enumerated()), id: \.offset) { _, found in
                     if !found.isEmpty {
@@ -206,6 +206,7 @@ struct SettingsDetail: View {
         }
         .animation(Design.paneChange(reduceMotion: reduceMotion), value: model.pane)
         .formStyle(.grouped)
+        .contentMargins(.top, -Design.Space.m, for: .scrollContent) // the grouped form adds 20: the first card sits 8 under the title bar
         .onScrollGeometryChange(for: Int.self, of: { g in
             let y = g.contentOffset.y + g.contentInsets.top
             return y > 120 ? 2 : y > 1 ? 1 : 0
