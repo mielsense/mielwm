@@ -109,3 +109,20 @@ import Testing
         #expect(s.focused == wid(1), "\(leave)")
     }
 }
+
+@Test func aFocusBlipInTheSameAppDoesNotPullTheCameraBack() {
+    // ⌥5 to an empty workspace leaves macOS focus on the window behind. A Chromium app then reports
+    // its focus going to nothing and back to that window: the camera stays on the empty workspace.
+    var s = tilingState([snapshot(1, onBuiltIn)])
+    _ = s.send(.system(.windowFocused(wid(1))))
+    _ = s.send(.action(.workspace(5)))
+    _ = s.advance(1)
+    _ = s.send(.system(.unmanagedFocus(pid: wid(1).pid)))
+    _ = s.send(.system(.windowFocused(wid(1))))
+    #expect(s.currentWorkspace == 5)
+    #expect(s.focused == wid(1))
+    // Another app in between (the desktop, then ⌘Tab back): that is a choice, and the camera goes there.
+    _ = s.send(.system(.unmanagedFocus(pid: 200)))
+    _ = s.send(.system(.windowFocused(wid(1))))
+    #expect(s.currentWorkspace == 1)
+}

@@ -352,6 +352,10 @@ extension CanvasState {
         guard id.pid != ownPID else { return }
         if let f = expectedFocus, f.id != id, now < f.until { heldFocus = .windowFocused(id); return }
         heldFocus = nil // ours landed, or there was none
+        // Back on the window that had it, after its app's focus went to nothing for a moment (Chromium apps
+        // do that when their window moves): not a choice, so the camera stays, say on an empty workspace.
+        let bounced = id == reportedFocus
+        reportedFocus = id
         guard let i = index(id), windows[i].isShown else { // a dialog or sheet, say, or a window about to show
             if expectedFocus?.id == id { expectedFocus = nil } // ours reported in before it shows: nothing to hold back
             focusLeft(id.pid)
@@ -366,7 +370,7 @@ extension CanvasState {
         if isOverview {
             overview.selectWindow(id)
             follow(id)
-        } else if w.pinned == nil, !isFullyVisible(w) {
+        } else if w.pinned == nil, !bounced, !isFullyVisible(w) {
             cut(to: landingCamera(id))
         }
     }
@@ -377,6 +381,7 @@ extension CanvasState {
     /// windows (the overview, Settings) keep it; while a focus we asked for
     /// lands, the report waits like any other.
     mutating func focusLeft(_ pid: Int32) {
+        if reportedFocus?.pid != pid { reportedFocus = nil } // another app: coming back is a choice
         guard pid != ownPID, !isOverview, !overview.isOpen else { return }
         if expectedFocus.map({ now < $0.until }) == true { heldFocus = .unmanagedFocus(pid: pid); return }
         focused = nil
