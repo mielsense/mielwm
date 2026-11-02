@@ -12,7 +12,7 @@ Released November 2, 2026.
 
 ### Fixes
 
-- Going to an empty workspace no longer jumps to another workspace a moment later. Browsers and other Chromium apps report their window losing and regaining focus when it moves away, and mielwm took that for you choosing the window.
+- Going to an empty workspace no longer jumps you to a browser window on another workspace a moment later.
 
 ## 0.1.2
 
