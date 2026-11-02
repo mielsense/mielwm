@@ -14,7 +14,7 @@ Released November 2, 2026.
 
 - After waking from sleep, windows from other workspaces no longer move to the current one. Some apps rebuild their windows on wake, which mielwm took for new windows. Now a window that comes back goes back to its workspace and place.
 - Menu bars that show mielwm's workspaces no longer miss those windows for up to ten seconds after waking.
-- Settings has less empty space above the search field and above each pane, and more between the search field and the list.
+- Settings has less space above the search field and above each pane, and more between the search field and the list.
 
 ## 0.1.1
 
