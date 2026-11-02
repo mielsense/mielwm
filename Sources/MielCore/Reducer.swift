@@ -352,10 +352,6 @@ extension CanvasState {
         guard id.pid != ownPID else { return }
         if let f = expectedFocus, f.id != id, now < f.until { heldFocus = .windowFocused(id); return }
         heldFocus = nil // ours landed, or there was none
-        // Back on the window that had it, after its app's focus went to nothing for a moment (Chromium apps
-        // do that when their window moves): not a choice, so the camera stays, say on an empty workspace.
-        let bounced = id == reportedFocus
-        reportedFocus = id
         guard let i = index(id), windows[i].isShown else { // a dialog or sheet, say, or a window about to show
             if expectedFocus?.id == id { expectedFocus = nil } // ours reported in before it shows: nothing to hold back
             focusLeft(id.pid)
@@ -363,6 +359,11 @@ extension CanvasState {
             return
         }
         pendingFocus = nil
+        // Back on the window that had it, after its app's focus went to nothing for a moment (Chromium apps
+        // do that when their window moves): not a choice, so the camera stays, say on an empty workspace.
+        // After the check above, so a report replayed once a hidden window shows still counts as new.
+        let bounced = id == reportedFocus
+        reportedFocus = id
         focused = id
         mru.note(id)
         raise(i)

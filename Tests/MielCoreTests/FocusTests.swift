@@ -126,3 +126,17 @@ import Testing
     _ = s.send(.system(.windowFocused(wid(1))))
     #expect(s.currentWorkspace == 1)
 }
+
+@Test func focusReportedBeforeAnUnhideStillMovesTheCamera() {
+    // ⌘Tab to a hidden app on another workspace: focus is reported before it unhides, then replayed.
+    var s = tilingState([snapshot(1, onBuiltIn)])
+    _ = s.send(.system(.windowFocused(wid(1))))
+    _ = s.send(.action(.workspace(5)))
+    _ = s.advance(1)
+    _ = s.send(.system(.unmanagedFocus(pid: 200)))
+    _ = s.send(.system(.appHidden(pid: wid(1).pid, true)))
+    _ = s.send(.system(.windowFocused(wid(1))))
+    _ = s.send(.system(.appHidden(pid: wid(1).pid, false)))
+    #expect(s.focused == wid(1))
+    #expect(s.currentWorkspace == 1)
+}
