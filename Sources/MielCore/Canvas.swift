@@ -34,6 +34,7 @@ public struct ManagedWindow: Hashable, Sendable {
 struct Departed: Sendable {
     var id: WindowID
     var frame: CGRect
+    var pinned: CGRect?
     var workspace: Workspace? // as it was, so it comes back with its layout should it have emptied
     var position: Int
 }

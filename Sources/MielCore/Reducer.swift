@@ -176,7 +176,7 @@ extension CanvasState {
         guard !gone.isEmpty else { return }
         for w in windows where match(w) {
             let ws = workspace(of: w.id)
-            departed.append(Departed(id: w.id, frame: w.frame, workspace: ws, position: ws?.members.firstIndex(of: w.id) ?? 0))
+            departed.append(Departed(id: w.id, frame: w.frame, pinned: w.pinned, workspace: ws, position: ws?.members.firstIndex(of: w.id) ?? 0))
         }
         departed = Array(departed.suffix(Self.departedMemory))
         windows.removeAll(where: match)
@@ -229,6 +229,7 @@ extension CanvasState {
         let returning = departed.lastIndex { $0.id == s.id }.map { departed.remove(at: $0) }
         if let returning {
             w.frame = returning.frame
+            w.pinned = returning.pinned
         } else if now < restoreUntil, let saved, let k = saved.match(id: s.id, bundleID: s.bundleID, title: w.displayTitle, ordinal: ordinal, excluding: claimed) {
             claimed.insert(k)
             w.frame = saved.windows[k].frame
