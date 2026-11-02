@@ -296,8 +296,13 @@ private func screenPNG(_ window: NSWindow, to url: URL) {
     let shot = Process()
     shot.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
     shot.arguments = ["-x", "-o", "-l", String(window.windowNumber), url.path]
-    try? shot.run()
-    shot.waitUntilExit()
+    do {
+        try shot.run()
+        shot.waitUntilExit()
+        if shot.terminationStatus != 0 { log("screencapture failed for \(url.lastPathComponent)") }
+    } catch {
+        log("cannot run screencapture: \(error)")
+    }
 }
 
 /// The whole window, title bar and toolbar included.
