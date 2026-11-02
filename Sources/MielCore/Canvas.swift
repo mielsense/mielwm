@@ -123,6 +123,7 @@ public struct CanvasState: Sendable {
     var expectedFocus: (id: WindowID, until: Double)?
     var pendingFocus: WindowID? // reported focused while hidden or minimized: it gets focus once it shows
     var heldFocus: SystemEvent? // the last focus report while expectedFocus lands, applied after
+    var reportedFocus: WindowID? // the window macOS last said had focus, kept through a blip to nothing in its app
     var dragging: WindowID?
     var saved: LayoutSnapshot?
     var claimed = Set<Int>()

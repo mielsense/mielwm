@@ -6,6 +6,14 @@ What changed in the mielwm app, newest version first. Versions follow [semantic 
 
 Nothing yet.
 
+## 0.1.3
+
+Released November 2, 2026.
+
+### Fixes
+
+- Going to an empty workspace no longer jumps you to a browser window on another workspace a moment later.
+
 ## 0.1.2
 
 Released November 2, 2026.

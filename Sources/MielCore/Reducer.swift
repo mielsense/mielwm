@@ -359,6 +359,11 @@ extension CanvasState {
             return
         }
         pendingFocus = nil
+        // Back on the window that had it, after its app's focus went to nothing for a moment (Chromium apps
+        // do that when their window moves): not a choice, so the camera stays, say on an empty workspace.
+        // After the check above, so a report replayed once a hidden window shows still counts as new.
+        let bounced = id == reportedFocus
+        reportedFocus = id
         focused = id
         mru.note(id)
         raise(i)
@@ -366,7 +371,7 @@ extension CanvasState {
         if isOverview {
             overview.selectWindow(id)
             follow(id)
-        } else if w.pinned == nil, !isFullyVisible(w) {
+        } else if w.pinned == nil, !bounced, !isFullyVisible(w) {
             cut(to: landingCamera(id))
         }
     }
@@ -377,6 +382,7 @@ extension CanvasState {
     /// windows (the overview, Settings) keep it; while a focus we asked for
     /// lands, the report waits like any other.
     mutating func focusLeft(_ pid: Int32) {
+        if reportedFocus?.pid != pid { reportedFocus = nil } // another app: coming back is a choice
         guard pid != ownPID, !isOverview, !overview.isOpen else { return }
         if expectedFocus.map({ now < $0.until }) == true { heldFocus = .unmanagedFocus(pid: pid); return }
         focused = nil
