@@ -121,6 +121,28 @@ extension CanvasState {
     #expect(s.workspaces.map(\.slot) == [1]) // the current one stays, empty
 }
 
+@Test func aWindowThatClosesAndComesBackGoesBackToItsWorkspace() {
+    // On wake some apps replace a window's Accessibility element: a close, then the same window number again.
+    var settings = testSettings(layout: .tiles)
+    settings.workspaceRules = "com.spotify.client=2"
+    let spotify = snapshot(2, onBuiltIn, app: "Spotify", bundle: "com.spotify.client")
+    var s = tilingState([snapshot(1, onBuiltIn), spotify], settings: settings)
+    s.workspaces[s.workspaces.firstIndex { $0.slot == 2 }!].mode = .stack
+    let parked = s.window(wid(2))!.real
+    _ = s.send(.system(.windowClosed(wid(2))))
+    #expect(s.members(2) == nil)
+    settings.workspaceRules = "" // no rule sends it there this time
+    _ = s.send(.setSettings(settings))
+    var again = spotify
+    again.frame = parked
+    _ = s.send(.system(.windowAppeared(again)))
+    #expect(s.members(1) == [1])
+    #expect(s.members(2) == [2])
+    #expect(s.mode(2) == .stack)
+    #expect(s.window(wid(2))?.parked == true)
+    #expect(s.currentWorkspace == 1)
+}
+
 @Test func minimizedWindowsGiveUpTheirTile() {
     var s = twoTiles()
     #expect(moves(s.send(.system(.windowMinimized(wid(2), true)))) == [wid(1): area])

@@ -28,6 +28,17 @@ public struct ManagedWindow: Hashable, Sendable {
     var displayTitle: String { title.isEmpty ? appName : title }
 }
 
+/// A window that closed, and where it was. Some apps replace a window's
+/// Accessibility element on wake, which reads as a close and then a new
+/// window with the same number: that one goes back here (see `appeared`).
+struct Departed: Sendable {
+    var id: WindowID
+    var frame: CGRect
+    var pinned: CGRect?
+    var workspace: Workspace? // as it was, so it comes back with its layout should it have emptied
+    var position: Int
+}
+
 /// A frame we asked for and are waiting to see reported.
 struct Expectation: Hashable, Sendable {
     var frame: CGRect
@@ -54,6 +65,7 @@ public struct CanvasState: Sendable {
     static let reparkQuiet = 3.0 // seconds after the last try that make the next one a first again
     static let toastDuration = 1.8
     static let undoDepth = 30
+    static let departedMemory = 64 // closed windows remembered, should the same one come back
 
     public internal(set) var screens: [ScreenInfo]
     public var settings: Settings { didSet { settingsChanged(from: oldValue) } }
@@ -116,6 +128,7 @@ public struct CanvasState: Sendable {
     var claimed = Set<Int>()
     var restoredPositions: [WindowID: Int] = [:] // tile order from the saved layout
     var restoreUntil: Double
+    var departed: [Departed] = [] // the last windows that closed, oldest first
     var outbox: [WindowCommand] = []
 
     /// `savedLayout` (from the last run) gives windows that come back their

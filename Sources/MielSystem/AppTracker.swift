@@ -83,6 +83,7 @@ final class AppTracker: @unchecked Sendable {
 
     private static let attempts = 20
     private static let retryDelay = 0.25 // seconds between attempts while an app is still launching
+    private static let replacedWindowCheck = 1.0 // seconds after a window goes to look for its replacement
 
     private func setUp(attempt: Int) {
         guard !stopped, observer == nil else { return }
@@ -116,7 +117,14 @@ final class AppTracker: @unchecked Sendable {
         case kAXWindowCreatedNotification:
             adopt(element)
         case kAXUIElementDestroyedNotification:
-            if let id = ids[element] { forget(id, element) }
+            guard let id = ids[element] else { return }
+            guard elements[id] == element else { // its replacement came first: the window stays
+                ids[element] = nil
+                return
+            }
+            forget(id, element)
+            // Some apps replace a window's element (on wake, say): the new one is listed under the same number.
+            queue.asyncAfter(deadline: .now() + Self.replacedWindowCheck) { self.scan() }
         case kAXMovedNotification, kAXResizedNotification:
             guard let id = ids[element], let (frame, isFullScreen) = frame(of: element) else { return }
             sizes[id] = frame.size
@@ -250,8 +258,10 @@ final class AppTracker: @unchecked Sendable {
         if let id = ids[element] { return id }
         guard let number = element.windowNumber else { return nil }
         let id = WindowID(pid: pid, number: number)
-        if elements[id] != nil {
+        if elements[id] != nil { // a new element for a window we know: the app replaced it
+            elements[id] = element
             ids[element] = id
+            observe(element)
             return id
         }
         guard let snapshot = snapshot(element, id) else { return nil }
@@ -260,13 +270,16 @@ final class AppTracker: @unchecked Sendable {
         if snapshot.isFullScreen { fullScreen.insert(id) }
         if !snapshot.isManageable { ignored.insert(id) }
         sizes[id] = snapshot.frame.size
-        if let observer, let refcon {
-            for name in windowNotifications {
-                AXObserverAddNotification(observer, element, name as CFString, refcon.toOpaque())
-            }
-        }
+        observe(element)
         post(.windowAppeared(snapshot))
         return id
+    }
+
+    private func observe(_ element: AXUIElement) {
+        guard let observer, let refcon else { return }
+        for name in windowNotifications {
+            AXObserverAddNotification(observer, element, name as CFString, refcon.toOpaque())
+        }
     }
 
     private func snapshot(_ element: AXUIElement, _ id: WindowID) -> WindowSnapshot? {
